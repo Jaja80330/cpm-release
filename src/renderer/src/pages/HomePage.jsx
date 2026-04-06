@@ -1,24 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { Spinner } from '@fluentui/react-components'
-import {
-  bundleIcon,
-  GridRegular, GridFilled,
-  CalendarRegular, CalendarFilled,
-  ServerRegular, ServerFilled,
-  PlugConnectedRegular, PlugConnectedFilled,
-  VehicleBusRegular, VehicleBusFilled,
-  ArrowRightRegular, ArrowRightFilled,
-} from '@fluentui/react-icons'
+import CircularProgress from '@mui/material/CircularProgress'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined'
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'
+import StorageOutlinedIcon from '@mui/icons-material/StorageOutlined'
+import CableOutlinedIcon from '@mui/icons-material/CableOutlined'
+import DirectionsBusOutlinedIcon from '@mui/icons-material/DirectionsBusOutlined'
+import ArrowForwardOutlinedIcon from '@mui/icons-material/ArrowForwardOutlined'
 import { projectService } from '../services/projectService'
 
-const GridIcon    = bundleIcon(GridFilled,          GridRegular)
-const CalendarIcon = bundleIcon(CalendarFilled,     CalendarRegular)
-const ServerIcon  = bundleIcon(ServerFilled,        ServerRegular)
-const SftpIcon    = bundleIcon(PlugConnectedFilled, PlugConnectedRegular)
-const BusIcon     = bundleIcon(VehicleBusFilled,    VehicleBusRegular)
-const ArrowIcon   = bundleIcon(ArrowRightFilled,    ArrowRightRegular)
-
-// ── Statut ───────────────────────────────────────────────────────────────────
 const STATUS = {
   checking:     { dot: 'idle',    label: 'Vérification…' },
   ok:           { dot: 'success', label: 'En ligne'      },
@@ -32,19 +23,19 @@ function StatusBadge({ label, status }) {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 6,
       padding: '5px 12px', borderRadius: 6,
-      background: 'var(--colorNeutralBackground1)',
-      border: '1px solid var(--colorNeutralStroke2)',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-subtle)',
       fontSize: 12, fontWeight: 500,
-      color: 'var(--colorNeutralForeground2)',
+      color: 'var(--text-secondary)',
       userSelect: 'none',
     }}>
       {status === 'checking'
-        ? <Spinner size="extra-tiny" />
+        ? <CircularProgress size={8} thickness={5} />
         : <span className={`status-dot ${cfg.dot}`} style={{ width: 7, height: 7, flexShrink: 0 }} />
       }
       {label}
       {status !== 'checking' && (
-        <span style={{ fontSize: 10, color: 'var(--colorNeutralForeground4)' }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
           — {cfg.label}
         </span>
       )}
@@ -52,36 +43,33 @@ function StatusBadge({ label, status }) {
   )
 }
 
-// ── Carte métrique ───────────────────────────────────────────────────────────
 function MetricCard({ icon: Icon, value, label, sub, accent }) {
   return (
     <div className="w11-card" style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
         <div style={{
           width: 40, height: 40, borderRadius: 8, flexShrink: 0,
-          background: accent ? 'rgba(96,205,255,0.12)' : 'var(--colorNeutralBackground3)',
+          background: accent ? 'rgba(25,118,210,0.12)' : 'rgba(255,255,255,0.04)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: accent ? '#60cdff' : 'var(--colorNeutralForeground3)',
+          color: accent ? '#42a5f5' : 'var(--text-muted)',
         }}>
-          <Icon fontSize={20} />
+          <Icon sx={{ fontSize: 20 }} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{
             fontSize: typeof value === 'number' ? 26 : 15,
             fontWeight: 700,
-            color: 'var(--colorNeutralForeground1)',
+            color: 'var(--text-primary)',
             lineHeight: 1.15,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {value}
           </div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--colorNeutralForeground2)', marginTop: 4 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 4 }}>
             {label}
           </div>
           {sub && (
-            <div style={{ fontSize: 11, color: 'var(--colorNeutralForeground4)', marginTop: 2 }}>
-              {sub}
-            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>
           )}
         </div>
       </div>
@@ -89,7 +77,6 @@ function MetricCard({ icon: Icon, value, label, sub, accent }) {
   )
 }
 
-// ── Carte accès rapide ────────────────────────────────────────────────────────
 function QuickCard({ project, onNavigate }) {
   const thumb = project.thumbnail_url || project.thumbnailUrl
   const updated = project.updated_at || project.created_at
@@ -101,39 +88,29 @@ function QuickCard({ project, onNavigate }) {
     <div
       className="project-card"
       onClick={() => onNavigate('project-detail', project)}
-      style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}
     >
-      {/* Miniature */}
-      <div style={{
-        height: 80, borderRadius: '6px 6px 0 0',
-        background: 'var(--colorNeutralBackground3)',
-        overflow: 'hidden', margin: '-18px -18px 12px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
+      <div className="project-thumb">
         {thumb
-          ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <BusIcon fontSize={28} style={{ color: 'var(--colorNeutralForeground4)' }} />
+          ? <img src={thumb} alt="" />
+          : <DirectionsBusOutlinedIcon sx={{ fontSize: 28, color: 'var(--text-muted)', opacity: 0.4 }} />
         }
       </div>
-
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--colorNeutralForeground1)', marginBottom: 4 }}>
-        {project.name}
-      </div>
-      <div style={{ fontSize: 11, color: 'var(--colorNeutralForeground4)', marginTop: 'auto' }}>
-        Modifié le {dateStr}
-      </div>
-
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-        marginTop: 8, color: 'var(--colorBrandForeground1)', opacity: 0.7,
-      }}>
-        <ArrowIcon fontSize={14} />
+      <div className="project-card-body">
+        <div className="project-name" style={{ fontSize: 13 }}>{project.name}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 'auto', paddingTop: 6 }}>
+          Modifié le {dateStr}
+        </div>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+          marginTop: 6, color: '#1976d2', opacity: 0.7,
+        }}>
+          <ArrowForwardOutlinedIcon sx={{ fontSize: 14 }} />
+        </div>
       </div>
     </div>
   )
 }
 
-// ── Page principale ───────────────────────────────────────────────────────────
 export default function HomePage({ onNavigate }) {
   const [projects,      setProjects]      = useState([])
   const [settings,      setSettings]      = useState({})
@@ -154,7 +131,6 @@ export default function HomePage({ onNavigate }) {
         await window.api.store.set('hasLaunched', true)
       }
 
-      // Serveur API
       try {
         const data = await projectService.getAll()
         setProjects(Array.isArray(data) ? data : [])
@@ -163,7 +139,6 @@ export default function HomePage({ onNavigate }) {
         setApiStatus('error')
       }
 
-      // Service SFTP
       const configured = s?.vpsIp && s?.vpsUser && s?.sshKeyPath
       if (!configured) { setSftpStatus('unconfigured'); return }
       try {
@@ -176,13 +151,11 @@ export default function HomePage({ onNavigate }) {
     load()
   }, [])
 
-  // Tri par date décroissante
   const sorted = [...projects].sort(
     (a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0)
   )
-
-  const lastSynced   = sorted[0] ?? null
-  const recentProjects = sorted.slice(0, 4)
+  const lastSynced      = sorted[0] ?? null
+  const recentProjects  = sorted.slice(0, 4)
 
   const formatDate = (p) => {
     if (!p) return '—'
@@ -192,51 +165,50 @@ export default function HomePage({ onNavigate }) {
 
   return (
     <div className="fade-in">
-
-      {/* ── En-tête + pastilles services ──────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      {/* En-tête */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
         <div className="page-header" style={{ marginBottom: 0 }}>
           <div className="page-title">Tableau de bord</div>
           <div className="page-subtitle">État de la flotte de bus NEROSY</div>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 4 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingTop: 2 }}>
           <StatusBadge label="Serveur API"  status={apiStatus}  />
           <StatusBadge label="Service SFTP" status={sftpStatus} />
         </div>
       </div>
 
-      {/* ── Indicateurs ───────────────────────────────────────────────────── */}
+      {/* Indicateurs */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-        gap: 12,
-        marginBottom: 20,
+        gap: 10,
+        marginBottom: 18,
       }}>
         <MetricCard
-          icon={GridIcon}
+          icon={GridViewOutlinedIcon}
           value={apiStatus === 'checking' ? '…' : projects.length}
           label="Projets"
           sub="bus répertoriés sur le serveur"
           accent
         />
         <MetricCard
-          icon={CalendarIcon}
+          icon={CalendarTodayOutlinedIcon}
           value={apiStatus === 'checking' ? '…' : formatDate(lastSynced)}
           label="Dernière synchronisation projet"
           sub={lastSynced ? lastSynced.name : undefined}
         />
       </div>
 
-      {/* ── Accès rapide ──────────────────────────────────────────────────── */}
+      {/* Accès rapide */}
       {recentProjects.length > 0 && (
-        <div className="w11-card" style={{ marginBottom: 16 }}>
+        <div className="w11-card" style={{ marginBottom: 14 }}>
           <div className="w11-card-title">
-            <BusIcon fontSize={16} />
+            <DirectionsBusOutlinedIcon sx={{ fontSize: 14 }} />
             Accès rapide
           </div>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
             gap: 10,
           }}>
             {recentProjects.map(p => (
@@ -246,13 +218,13 @@ export default function HomePage({ onNavigate }) {
         </div>
       )}
 
-      {/* ── Premier lancement ─────────────────────────────────────────────── */}
+      {/* Premier lancement */}
       {isFirstLaunch && (
         <div className="w11-card" style={{
-          borderColor: 'rgba(15,108,189,0.4)',
-          background: 'rgba(15,108,189,0.06)',
+          borderColor: 'rgba(25,118,210,0.35)',
+          background: 'rgba(25,118,210,0.06)',
         }}>
-          <div style={{ fontSize: 13, color: '#60cdff', lineHeight: 1.6 }}>
+          <div style={{ fontSize: 13, color: '#42a5f5', lineHeight: 1.6 }}>
             Bienvenue dans Cinnamon ! Configurez d'abord votre connexion dans les{' '}
             <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => onNavigate('settings')}>
               Paramètres
@@ -265,7 +237,6 @@ export default function HomePage({ onNavigate }) {
           </div>
         </div>
       )}
-
     </div>
   )
 }

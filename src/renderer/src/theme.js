@@ -1,85 +1,114 @@
-import { createDarkTheme } from '@fluentui/react-components'
+import { createTheme } from '@mui/material/styles'
 
-// Palette Cinnamon — brun chaud / orange doux
-const cinnamonBrand = {
-  10: '#1a0e06',
-  20: '#2e1a0a',
-  30: '#47270f',
-  40: '#623617',
-  50: '#7d4620',
-  60: '#9a582b',
-  70: '#b86c38',
-  80: '#d48247',
-  90: '#e8975a',
-  100: '#f0a96e',
-  110: '#f5ba84',
-  120: '#f8ca9b',
-  130: '#fbd8b3',
-  140: '#fde6cc',
-  150: '#fef2e5',
-  160: '#fff8f2'
-}
-
-const baseDark = createDarkTheme(cinnamonBrand)
-
-export const cinnamonDarkTheme = {
-  ...baseDark,
-
-  // Backgrounds
-  colorNeutralBackground1: '#1a1210',
-  colorNeutralBackground2: '#221815',
-  colorNeutralBackground3: '#2a1e1a',
-  colorNeutralBackground4: '#33231e',
-  colorNeutralBackground5: '#3d2a24',
-  colorNeutralBackground6: '#47302a',
-
-  // Surfaces
-  colorNeutralBackgroundStatic: '#120d0b',
-  colorNeutralBackgroundInverted: '#f5ba84',
-
-  // Accents brand
-  colorBrandBackground: '#d48247',
-  colorBrandBackgroundHover: '#e8975a',
-  colorBrandBackgroundPressed: '#b86c38',
-  colorBrandBackgroundSelected: '#c97540',
-  colorBrandForeground1: '#f0a96e',
-  colorBrandForeground2: '#f5ba84',
-  colorBrandForegroundLink: '#e8975a',
-  colorBrandForegroundLinkHover: '#f0a96e',
-  colorBrandStroke1: '#d48247',
-  colorBrandStroke2: '#9a582b',
-
-  // Foregrounds
-  colorNeutralForeground1: '#f5ece6',
-  colorNeutralForeground2: '#ddc9bf',
-  colorNeutralForeground3: '#b8998e',
-  colorNeutralForeground4: '#8a6a60',
-  colorNeutralForegroundDisabled: '#5a3d36',
-
-  // Strokes / borders
-  colorNeutralStroke1: '#4a2f28',
-  colorNeutralStroke2: '#3d2520',
-  colorNeutralStroke3: '#2e1c18',
-  colorNeutralStrokeAccessible: '#9a582b',
-
-  // Shadows
-  colorNeutralShadowAmbient: 'rgba(0,0,0,0.5)',
-  colorNeutralShadowKey: 'rgba(0,0,0,0.6)',
-
-  // Status
-  colorStatusSuccessBackground1: '#1b2e1e',
-  colorStatusSuccessForeground1: '#6fcf97',
-  colorStatusWarningBackground1: '#2e2210',
-  colorStatusWarningForeground1: '#f2994a',
-  colorStatusDangerBackground1: '#2e1010',
-  colorStatusDangerForeground1: '#eb5757',
-
-  // Border radius
-  borderRadiusSmall: '4px',
-  borderRadiusMedium: '8px',
-  borderRadiusLarge: '12px',
-  borderRadiusXLarge: '16px',
-
-  // Font
-  fontFamilyBase: "'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif"
-}
+export const muiDarkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+    background: {
+      default: '#0b0e11',
+      paper:   '#15191d',
+    },
+    primary: {
+      main: '#1976d2',
+      light: '#42a5f5',
+      dark:  '#1565c0',
+    },
+    secondary: {
+      main: '#f44336',
+    },
+    success: {
+      main: '#6ccb5f',
+    },
+    warning: {
+      main: '#f0a030',
+    },
+    error: {
+      main: '#fc3d39',
+    },
+    text: {
+      primary:   '#e8eaed',
+      secondary: '#9aa0a6',
+      disabled:  '#5f6368',
+    },
+    divider: 'rgba(255,255,255,0.08)',
+  },
+  typography: {
+    fontFamily: "'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif",
+    fontSize: 13,
+  },
+  shape: {
+    borderRadius: 6,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 500,
+          fontSize: 13,
+        },
+      },
+    },
+    MuiTextField: {
+      defaultProps: {
+        size: 'small',
+        variant: 'outlined',
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(255,255,255,0.15)',
+          },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(255,255,255,0.3)',
+          },
+          fontSize: 13,
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontSize: 13,
+          minHeight: 40,
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          fontSize: 13,
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontSize: 11,
+          height: 20,
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundImage: 'none',
+          background: '#1e2328',
+          border: '1px solid rgba(255,255,255,0.1)',
+        },
+      },
+    },
+    MuiTooltip: {
+      styleOverrides: {
+        tooltip: {
+          fontSize: 12,
+          background: '#2d3339',
+          border: '1px solid rgba(255,255,255,0.1)',
+        },
+      },
+    },
+  },
+})

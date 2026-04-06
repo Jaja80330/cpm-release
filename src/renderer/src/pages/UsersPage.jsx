@@ -1,25 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import {
-  Button, Input, Label, MessageBar, MessageBarBody, Spinner,
-  Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell,
-  TableCellLayout, Dialog, DialogSurface, DialogTitle, DialogContent,
-  DialogActions, DialogBody, Select,
-} from '@fluentui/react-components'
-import {
-  bundleIcon,
-  AddRegular, AddFilled,
-  DeleteRegular, DeleteFilled,
-  PeopleRegular, PeopleFilled,
-  CopyRegular, CopyFilled,
-  ArrowClockwiseRegular, ArrowClockwiseFilled,
-} from '@fluentui/react-icons'
+import Button from '@mui/material/Button'
+import TextField from '@mui/material/TextField'
+import Alert from '@mui/material/Alert'
+import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import Table from '@mui/material/Table'
+import TableHead from '@mui/material/TableHead'
+import TableBody from '@mui/material/TableBody'
+import TableRow from '@mui/material/TableRow'
+import TableCell from '@mui/material/TableCell'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import FormControl from '@mui/material/FormControl'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
+import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined'
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import { usersService } from '../services/usersService'
-
-const AddIcon     = bundleIcon(AddFilled,             AddRegular)
-const DeleteIcon  = bundleIcon(DeleteFilled,           DeleteRegular)
-const PeopleIcon  = bundleIcon(PeopleFilled,           PeopleRegular)
-const CopyIcon    = bundleIcon(CopyFilled,             CopyRegular)
-const RefreshIcon = bundleIcon(ArrowClockwiseFilled,   ArrowClockwiseRegular)
 
 const ROLES = [
   { value: 'user',            label: 'Utilisateur'      },
@@ -28,12 +32,6 @@ const ROLES = [
   { value: 'super_admin',     label: 'Super Admin'      },
 ]
 const ROLE_LABELS = Object.fromEntries(ROLES.map(r => [r.value, r.label]))
-
-const FL = ({ children }) => (
-  <Label style={{ color: 'var(--colorNeutralForeground2)', fontSize: 12, display: 'block', marginBottom: 6 }}>
-    {children}
-  </Label>
-)
 
 const EMPTY_FORM = { username: '', firstName: '', lastName: '', email: '', role: 'user' }
 
@@ -46,10 +44,10 @@ export default function UsersPage({ currentUser }) {
   const [form,         setForm]         = useState(EMPTY_FORM)
   const [creating,     setCreating]     = useState(false)
   const [createError,  setCreateError]  = useState(null)
-  const [generatedPwd, setGeneratedPwd] = useState(null) // mot de passe affiché après création
+  const [generatedPwd, setGeneratedPwd] = useState(null)
 
-  const [deleting,     setDeleting]     = useState(null) // id en cours de suppression
-  const [updatingRole, setUpdatingRole] = useState(null) // id en cours de mise à jour de rôle
+  const [deleting,     setDeleting]     = useState(null)
+  const [updatingRole, setUpdatingRole] = useState(null)
   const [copied,       setCopied]       = useState(false)
 
   const load = useCallback(async () => {
@@ -102,14 +100,12 @@ export default function UsersPage({ currentUser }) {
 
   const handleRoleChange = async (u, newRole) => {
     const prevRole = u.role
-    // Optimiste : met à jour localement
     setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: newRole } : x))
     setUpdatingRole(u.id)
     try {
       console.log(`PATCH /users/${u.id} — { role: '${newRole}' }`)
       await usersService.updateRole(u.id, newRole)
     } catch (err) {
-      // Rollback
       setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: prevRole } : x))
       setLoadError(err?.response?.data?.message || err?.message || 'Impossible de modifier le rôle.')
       setTimeout(() => setLoadError(null), 4000)
@@ -119,7 +115,7 @@ export default function UsersPage({ currentUser }) {
   }
 
   const handleDelete = async (id) => {
-    if (id === currentUser?.id) return // ne pas se supprimer soi-même
+    if (id === currentUser?.id) return
     setDeleting(id)
     try {
       await usersService.remove(id)
@@ -142,174 +138,164 @@ export default function UsersPage({ currentUser }) {
   return (
     <div className="fade-in">
       {/* En-tête */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div className="page-header" style={{ marginBottom: 0 }}>
           <div className="page-title">Utilisateurs</div>
           <div className="page-subtitle">Gestion des comptes membres NEROSY</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Button appearance="subtle" icon={<RefreshIcon />} onClick={load} disabled={loading} />
-          <Button appearance="primary" icon={<AddIcon />} onClick={openModal}>
+          <Button variant="text" size="small" startIcon={<RefreshOutlinedIcon />} onClick={load} disabled={loading} />
+          <Button variant="contained" size="small" startIcon={<AddOutlinedIcon />} onClick={openModal}>
             Créer un utilisateur
           </Button>
         </div>
       </div>
 
-      {/* Dialog mot de passe temporaire — persistante jusqu'à fermeture manuelle */}
-      <Dialog open={!!generatedPwd}>
-        <DialogSurface style={{ maxWidth: 480 }}>
-          <DialogBody>
-            <DialogTitle>
-              <span style={{ color: '#6ccb5f' }}>✓</span> Utilisateur créé avec succès
-            </DialogTitle>
-            <DialogContent>
-              <div style={{ fontSize: 13, color: 'var(--colorNeutralForeground2)', marginBottom: 16, lineHeight: 1.6 }}>
-                Voici le mot de passe temporaire de ce compte. Notez-le bien —{' '}
-                <strong style={{ color: 'var(--colorNeutralForeground1)' }}>
-                  il ne sera plus jamais affiché.
-                </strong>
-              </div>
-
-              {/* Mot de passe en gros */}
-              <div style={{
-                padding: '14px 18px', borderRadius: 8,
-                background: 'rgba(108,203,95,0.08)',
-                border: '2px solid rgba(108,203,95,0.4)',
-                marginBottom: 16,
-              }}>
-                <div style={{ fontSize: 11, color: '#6ccb5f', fontWeight: 600, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  Mot de passe temporaire
-                </div>
-                <code style={{
-                  display: 'block',
-                  fontSize: 20, fontWeight: 700, letterSpacing: '0.1em',
-                  color: 'var(--colorNeutralForeground1)',
-                  fontFamily: "'Cascadia Code', 'Consolas', monospace",
-                  wordBreak: 'break-all', userSelect: 'all',
-                }}>
-                  {generatedPwd}
-                </code>
-              </div>
-
-              <MessageBar intent="warning" style={{ borderRadius: 6 }}>
-                <MessageBarBody style={{ fontSize: 12 }}>
-                  L'utilisateur devra changer ce mot de passe lors de sa première connexion.
-                </MessageBarBody>
-              </MessageBar>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                appearance="primary"
-                icon={<CopyIcon />}
-                onClick={copyPassword}
-                style={{ background: copied ? '#3d7a32' : undefined }}
-              >
-                {copied ? 'Copié !' : 'Copier le mot de passe'}
-              </Button>
-              <Button appearance="subtle" onClick={() => setGeneratedPwd(null)}>
-                Fermer
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
+      {/* Dialog mot de passe temporaire */}
+      <Dialog open={!!generatedPwd} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CheckCircleOutlinedIcon sx={{ color: '#6ccb5f', fontSize: 18 }} />
+          Utilisateur créé avec succès
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, lineHeight: 1.6 }}>
+            Voici le mot de passe temporaire de ce compte. Notez-le bien —{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>
+              il ne sera plus jamais affiché.
+            </strong>
+          </Typography>
+          <Box sx={{
+            p: '12px 16px', borderRadius: 2,
+            background: 'rgba(108,203,95,0.07)',
+            border: '2px solid rgba(108,203,95,0.35)',
+            mb: 2,
+          }}>
+            <Typography sx={{ fontSize: 10, color: '#6ccb5f', fontWeight: 700, mb: 0.8,
+              textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Mot de passe temporaire
+            </Typography>
+            <code style={{
+              display: 'block',
+              fontSize: 18, fontWeight: 700, letterSpacing: '0.08em',
+              color: 'var(--text-primary)',
+              fontFamily: "'Cascadia Code', 'Consolas', monospace",
+              wordBreak: 'break-all', userSelect: 'all',
+            }}>
+              {generatedPwd}
+            </code>
+          </Box>
+          <Alert severity="warning" sx={{ fontSize: 12, py: 0.5 }}>
+            L'utilisateur devra changer ce mot de passe lors de sa première connexion.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<ContentCopyOutlinedIcon />}
+            onClick={copyPassword}
+            sx={copied ? { background: '#3d7a32' } : {}}
+          >
+            {copied ? 'Copié !' : 'Copier le mot de passe'}
+          </Button>
+          <Button variant="text" size="small" onClick={() => setGeneratedPwd(null)}>
+            Fermer
+          </Button>
+        </DialogActions>
       </Dialog>
 
-      {/* Erreur chargement */}
       {loadError && (
-        <MessageBar intent="error" style={{ borderRadius: 6, marginBottom: 12 }}>
-          <MessageBarBody style={{ fontSize: 12 }}>{loadError}</MessageBarBody>
-        </MessageBar>
+        <Alert severity="error" sx={{ fontSize: 12, py: 0.5, mb: 1.5 }}>{loadError}</Alert>
       )}
 
       {/* Tableau */}
       <div className="w11-card" style={{ padding: 0, overflow: 'hidden' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-            <Spinner label="Chargement des utilisateurs…" />
+            <CircularProgress size={28} />
           </div>
         ) : users.length === 0 ? (
           <div className="empty-state">
-            <PeopleIcon fontSize={40} style={{ opacity: 0.25 }} />
+            <PeopleAltOutlinedIcon sx={{ fontSize: 40, opacity: 0.25 }} />
             <div className="empty-state-text">Aucun utilisateur trouvé.</div>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableHeaderCell style={{ width: 200 }}>Nom</TableHeaderCell>
-                <TableHeaderCell>E-mail</TableHeaderCell>
-                <TableHeaderCell style={{ width: 130 }}>Rôle</TableHeaderCell>
-                <TableHeaderCell style={{ width: 120 }}>Inscrit le</TableHeaderCell>
-                <TableHeaderCell style={{ width: 50 }} />
+                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 200 }}>Nom</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>E-mail</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 160 }}>Rôle</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 120 }}>Inscrit le</TableCell>
+                <TableCell sx={{ width: 50 }} />
               </TableRow>
-            </TableHeader>
+            </TableHead>
             <TableBody>
               {users.map(u => {
                 const fullName = [u.first_name || u.firstName, u.last_name || u.lastName]
                   .filter(Boolean).join(' ') || '—'
                 const isSelf = Number(u.id) === Number(currentUser?.id)
                 return (
-                  <TableRow key={u.id}>
+                  <TableRow key={u.id} hover>
                     <TableCell>
-                      <TableCellLayout>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>{fullName}</div>
-                        {isSelf && (
-                          <div style={{ fontSize: 10, color: 'var(--colorBrandForeground1)', marginTop: 2 }}>
-                            Vous
-                          </div>
-                        )}
-                      </TableCellLayout>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{fullName}</div>
+                      {isSelf && (
+                        <div style={{ fontSize: 10, color: '#42a5f5', marginTop: 1 }}>Vous</div>
+                      )}
                     </TableCell>
                     <TableCell>
-                      <span style={{ fontSize: 13, color: 'var(--colorNeutralForeground2)' }}>
-                        {u.email || '—'}
-                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{u.email || '—'}</span>
                     </TableCell>
-                    <TableCell style={{ minWidth: 160 }}>
+                    <TableCell>
                       {isSelf ? (
-                        // Propre compte : badge statique, non modifiable
                         <span style={{
                           display: 'inline-flex', alignItems: 'center',
-                          padding: '2px 10px', borderRadius: 10,
+                          padding: '2px 8px', borderRadius: 10,
                           fontSize: 11, fontWeight: 600,
-                          background: 'rgba(96,205,255,0.12)',
-                          border: '1px solid rgba(96,205,255,0.3)',
-                          color: '#60cdff',
+                          background: 'rgba(66,165,245,0.12)',
+                          border: '1px solid rgba(66,165,245,0.3)',
+                          color: '#42a5f5',
                         }}>
                           {ROLE_LABELS[u.role] || u.role}
                         </span>
                       ) : (
-                        // Autre utilisateur : dropdown modifiable
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          {updatingRole === u.id && <Spinner size="tiny" />}
-                          <Select
-                            value={u.role || 'user'}
-                            disabled={updatingRole === u.id}
-                            onChange={(_, { value }) => handleRoleChange(u, value)}
-                            style={{ fontSize: 12, minWidth: 140 }}
-                          >
-                            {ROLES.map(r => (
-                              <option key={r.value} value={r.value}>{r.label}</option>
-                            ))}
-                          </Select>
+                          {updatingRole === u.id && <CircularProgress size={12} />}
+                          <FormControl size="small" disabled={updatingRole === u.id} sx={{ minWidth: 140 }}>
+                            <Select
+                              value={u.role || 'user'}
+                              onChange={e => handleRoleChange(u, e.target.value)}
+                              sx={{ fontSize: 12 }}
+                            >
+                              {ROLES.map(r => (
+                                <MenuItem key={r.value} value={r.value} sx={{ fontSize: 12 }}>
+                                  {r.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
                         </div>
                       )}
                     </TableCell>
                     <TableCell>
-                      <span style={{ fontSize: 12, color: 'var(--colorNeutralForeground4)' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                         {formatDate(u.created_at)}
                       </span>
                     </TableCell>
                     <TableCell>
                       <Button
-                        appearance="subtle"
-                        icon={deleting === u.id ? <Spinner size="tiny" /> : <DeleteIcon />}
+                        variant="text"
                         size="small"
                         disabled={isSelf || deleting === u.id}
                         onClick={() => handleDelete(u.id)}
-                        style={{ color: isSelf ? undefined : 'var(--colorStatusDangerForeground1)' }}
+                        sx={{ minWidth: 0, color: isSelf ? undefined : '#fc3d39', p: '4px' }}
                         title={isSelf ? 'Vous ne pouvez pas supprimer votre propre compte' : 'Supprimer'}
-                      />
+                      >
+                        {deleting === u.id
+                          ? <CircularProgress size={14} />
+                          : <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
+                        }
+                      </Button>
                     </TableCell>
                   </TableRow>
                 )
@@ -319,86 +305,72 @@ export default function UsersPage({ currentUser }) {
         )}
       </div>
 
-      {/* Modal de création */}
-      <Dialog open={modalOpen} onOpenChange={(_, { open }) => !creating && setModalOpen(open)}>
-        <DialogSurface style={{ maxWidth: 420 }}>
-          <DialogBody>
-            <DialogTitle>Créer un utilisateur</DialogTitle>
-            <DialogContent>
-              <div style={{ marginBottom: 14 }}>
-                <FL>Nom d'utilisateur (identifiant) *</FL>
-                <Input
-                  value={form.username}
-                  onChange={(_, { value }) => setForm(f => ({ ...f, username: value }))}
-                  placeholder="jean.dupont"
-                  style={{ width: '100%' }}
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                <div>
-                  <FL>Prénom *</FL>
-                  <Input
-                    value={form.firstName}
-                    onChange={(_, { value }) => setForm(f => ({ ...f, firstName: value }))}
-                    placeholder="Jean"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-                <div>
-                  <FL>Nom *</FL>
-                  <Input
-                    value={form.lastName}
-                    onChange={(_, { value }) => setForm(f => ({ ...f, lastName: value }))}
-                    placeholder="Dupont"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-              </div>
-              <div style={{ marginBottom: 14 }}>
-                <FL>Adresse e-mail *</FL>
-                <Input
-                  type="email"
-                  value={form.email}
-                  onChange={(_, { value }) => setForm(f => ({ ...f, email: value }))}
-                  placeholder="jean.dupont@nerosy.fr"
-                  style={{ width: '100%' }}
-                />
-              </div>
-              <div style={{ marginBottom: 6 }}>
-                <FL>Rôle</FL>
-                <Select
-                  value={form.role}
-                  onChange={(_, { value }) => setForm(f => ({ ...f, role: value }))}
-                  style={{ width: '100%' }}
-                >
-                  <option value="user">Utilisateur</option>
-                  <option value="super_admin">Super Admin</option>
-                </Select>
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--colorNeutralForeground4)', marginTop: 10 }}>
-                Un mot de passe temporaire sera généré automatiquement par le serveur.
-              </div>
-              {createError && (
-                <MessageBar intent="error" style={{ borderRadius: 6, marginTop: 12 }}>
-                  <MessageBarBody style={{ fontSize: 12 }}>{createError}</MessageBarBody>
-                </MessageBar>
-              )}
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="subtle" onClick={() => setModalOpen(false)} disabled={creating}>
-                Annuler
-              </Button>
-              <Button
-                appearance="primary"
-                icon={creating ? <Spinner size="tiny" /> : <AddIcon />}
-                onClick={handleCreate}
-                disabled={creating || !form.username || !form.firstName || !form.lastName || !form.email}
-              >
-                Créer
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
+      {/* Modal création */}
+      <Dialog open={modalOpen} onClose={() => !creating && setModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Créer un utilisateur</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: '12px !important' }}>
+          <TextField
+            label="Nom d'utilisateur (identifiant) *"
+            value={form.username}
+            onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+            placeholder="jean.dupont"
+            fullWidth size="small"
+          />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <TextField
+              label="Prénom *"
+              value={form.firstName}
+              onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
+              placeholder="Jean"
+              size="small" fullWidth
+            />
+            <TextField
+              label="Nom *"
+              value={form.lastName}
+              onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
+              placeholder="Dupont"
+              size="small" fullWidth
+            />
+          </div>
+          <TextField
+            type="email"
+            label="Adresse e-mail *"
+            value={form.email}
+            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+            placeholder="jean.dupont@nerosy.fr"
+            fullWidth size="small"
+          />
+          <FormControl size="small" fullWidth>
+            <Select
+              value={form.role}
+              onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+              sx={{ fontSize: 12 }}
+            >
+              <MenuItem value="user" sx={{ fontSize: 12 }}>Utilisateur</MenuItem>
+              <MenuItem value="super_admin" sx={{ fontSize: 12 }}>Super Admin</MenuItem>
+            </Select>
+          </FormControl>
+          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Un mot de passe temporaire sera généré automatiquement par le serveur.
+          </Typography>
+          {createError && (
+            <Alert severity="error" sx={{ fontSize: 12, py: 0.3 }}>{createError}</Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="text" size="small" onClick={() => setModalOpen(false)} disabled={creating}>
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={creating ? <CircularProgress size={13} color="inherit" /> : <AddOutlinedIcon />}
+            onClick={handleCreate}
+            disabled={creating || !form.username || !form.firstName || !form.lastName || !form.email}
+          >
+            Créer
+          </Button>
+        </DialogActions>
       </Dialog>
     </div>
   )

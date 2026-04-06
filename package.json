@@ -22,8 +22,12 @@
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@fluentui/react-components": "^9.46.2",
     "@fluentui/react-icons": "^2.0.237",
+    "@mui/icons-material": "^7.3.9",
+    "@mui/material": "^7.3.9",
     "archiver": "^7.0.1",
     "axios": "^1.14.0",
     "electron-store": "^8.2.0",

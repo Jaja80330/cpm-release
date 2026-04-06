@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import {
-  Dialog, DialogSurface, DialogTitle, DialogBody, DialogContent, DialogActions,
-  Button, Input, Textarea, Field
-} from '@fluentui/react-components'
-import {
-  bundleIcon,
-  ArrowUploadRegular, ArrowUploadFilled,
-  DismissRegular, DismissFilled
-} from '@fluentui/react-icons'
-
-const PushIcon  = bundleIcon(ArrowUploadFilled, ArrowUploadRegular)
-const CloseIcon = bundleIcon(DismissFilled,     DismissRegular)
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import TextField from '@mui/material/TextField'
+import Button from '@mui/material/Button'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import CloseIcon from '@mui/icons-material/Close'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
 export default function PushDialog({ open, projectName, onConfirm, onCancel }) {
   const [versionName, setVersionName] = useState('')
@@ -32,79 +30,72 @@ export default function PushDialog({ open, projectName, onConfirm, onCancel }) {
     if (e.key === 'Escape') onCancel()
   }
 
+  const filePreview = (() => {
+    const now   = new Date()
+    const date  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
+    const time  = `${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`
+    const slug  = (versionName.trim() || 'Sauvegarde-automatique')
+      .replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '').replace(/-+/g, '-').slice(0, 40)
+    const proj  = (projectName || '').replace(/\s+/g, '_')
+    return `${date}_${time}_${slug}_${proj}.zip`
+  })()
+
   return (
-    <Dialog open={open} onOpenChange={(_, { open: o }) => { if (!o) onCancel() }}>
-      <DialogSurface style={{ maxWidth: 500 }} onKeyDown={handleKeyDown}>
-        <DialogTitle style={{ fontSize: 16, fontWeight: 700 }}>
-          Nouvelle version — {projectName}
-        </DialogTitle>
-        <DialogBody>
-          <DialogContent style={{ display: 'flex', flexDirection: 'column', gap: 18, paddingTop: 4 }}>
-            <Field
-              label="Nom de la version"
-              hint='Laissez vide pour "Sauvegarde automatique"'
-            >
-              <Input
-                autoFocus
-                placeholder='Ex : "Release 1.0", "Fix textures moteur"'
-                value={versionName}
-                onChange={(_, { value }) => setVersionName(value)}
-                style={{ width: '100%' }}
-              />
-            </Field>
-
-            <Field
-              label="Notes de version"
-              hint="Optionnel — décrit les modifications apportées"
-            >
-              <Textarea
-                placeholder={"- Correction des textures\n- Ajout du son moteur\n- Optimisation des fichiers..."}
-                value={changelog}
-                onChange={(_, { value }) => setChangelog(value)}
-                rows={6}
-                style={{ width: '100%', resize: 'vertical' }}
-              />
-              <div style={{ marginTop: 5, fontSize: 11, color: '#6d6d6d' }}>
-                Supporte le Markdown (ex&nbsp;: <code style={{ color: '#9d9d9d' }}># Titre</code>,{' '}
-                <code style={{ color: '#9d9d9d' }}>- Liste</code>,{' '}
-                <code style={{ color: '#9d9d9d' }}>**Gras**</code>)
-              </div>
-            </Field>
-
-            {/* Aperçu du nom de fichier */}
-            <div style={{
-              padding: '8px 12px',
-              background: 'rgba(15,108,189,0.08)',
-              border: '1px solid rgba(96,205,255,0.15)',
-              borderRadius: 6,
-              fontSize: 11,
-              color: '#9d9d9d'
-            }}>
-              <span style={{ color: '#6d6d6d' }}>Fichier généré : </span>
-              <code style={{ color: '#60cdff', fontFamily: 'monospace' }}>
-                {(() => {
-                  const now   = new Date()
-                  const date  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
-                  const time  = `${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`
-                  const slug  = (versionName.trim() || 'Sauvegarde-automatique')
-                    .replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '').replace(/-+/g, '-').slice(0, 40)
-                  const proj  = projectName.replace(/\s+/g, '_')
-                  return `${date}_${time}_${slug}_${proj}.zip`
-                })()}
-              </code>
-            </div>
-          </DialogContent>
-
-          <DialogActions style={{ paddingTop: 12 }}>
-            <Button appearance="secondary" icon={<CloseIcon />} onClick={onCancel}>
-              Annuler
-            </Button>
-            <Button appearance="primary" icon={<PushIcon />} onClick={handleConfirm}>
-              Lancer le PUSH
-            </Button>
-          </DialogActions>
-        </DialogBody>
-      </DialogSurface>
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      maxWidth="sm"
+      fullWidth
+      onKeyDown={handleKeyDown}
+    >
+      <DialogTitle sx={{ fontSize: 15, fontWeight: 700 }}>
+        Nouvelle version — {projectName}
+      </DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '12px !important' }}>
+        <TextField
+          autoFocus
+          label="Nom de la version"
+          placeholder='Ex : "Release 1.0", "Fix textures moteur"'
+          helperText='Laissez vide pour "Sauvegarde automatique"'
+          value={versionName}
+          onChange={e => setVersionName(e.target.value)}
+          fullWidth
+          size="small"
+        />
+        <TextField
+          label="Notes de version"
+          placeholder={"- Correction des textures\n- Ajout du son moteur\n- Optimisation des fichiers..."}
+          helperText="Optionnel — décrit les modifications apportées. Supporte le Markdown."
+          value={changelog}
+          onChange={e => setChangelog(e.target.value)}
+          multiline
+          rows={5}
+          fullWidth
+          size="small"
+        />
+        {/* Aperçu du nom de fichier */}
+        <Box sx={{
+          p: '8px 12px',
+          background: 'rgba(25,118,210,0.08)',
+          border: '1px solid rgba(66,165,245,0.2)',
+          borderRadius: 1.5,
+        }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+            Fichier généré :
+          </Typography>
+          <code style={{ fontSize: 11, color: '#42a5f5', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+            {filePreview}
+          </code>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button variant="outlined" startIcon={<CloseIcon />} onClick={onCancel}>
+          Annuler
+        </Button>
+        <Button variant="contained" startIcon={<CloudUploadIcon />} onClick={handleConfirm}>
+          Lancer le PUSH
+        </Button>
+      </DialogActions>
     </Dialog>
   )
 }

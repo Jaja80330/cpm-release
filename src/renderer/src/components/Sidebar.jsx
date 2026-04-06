@@ -1,25 +1,16 @@
 import React from 'react'
-import { Tooltip } from '@fluentui/react-components'
-import {
-  bundleIcon,
-  HomeRegular, HomeFilled,
-  GridRegular, GridFilled,
-  SettingsRegular, SettingsFilled,
-  ArrowExitRegular, ArrowExitFilled,
-  PeopleRegular, PeopleFilled,
-} from '@fluentui/react-icons'
-
-const LogoutIcon  = bundleIcon(ArrowExitFilled,  ArrowExitRegular)
-const HomeIcon     = bundleIcon(HomeFilled,       HomeRegular)
-const ProjectsIcon = bundleIcon(GridFilled,       GridRegular)
-const UsersIcon    = bundleIcon(PeopleFilled,     PeopleRegular)
-const SettingsIcon = bundleIcon(SettingsFilled,   SettingsRegular)
+import Tooltip from '@mui/material/Tooltip'
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
+import GridViewOutlinedIcon from '@mui/icons-material/GridViewOutlined'
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
 
 const NAV_ITEMS = [
-  { id: 'home',     Icon: HomeIcon,     label: 'Tableau de bord' },
-  { id: 'projects', Icon: ProjectsIcon, label: 'Projets' },
-  { id: 'users',    Icon: UsersIcon,    label: 'Utilisateurs',   adminOnly: true },
-  { id: 'settings', Icon: SettingsIcon, label: 'Paramètres' },
+  { id: 'home',     Icon: HomeOutlinedIcon,      label: 'Tableau de bord' },
+  { id: 'projects', Icon: GridViewOutlinedIcon,  label: 'Projets' },
+  { id: 'users',    Icon: PeopleAltOutlinedIcon, label: 'Utilisateurs', adminOnly: true },
+  { id: 'settings', Icon: SettingsOutlinedIcon,  label: 'Paramètres' },
 ]
 
 export default function Sidebar({ currentPage, onNavigate, user, onLogout, isDark }) {
@@ -32,22 +23,22 @@ export default function Sidebar({ currentPage, onNavigate, user, onLogout, isDar
 
   return (
     <nav className="sidebar">
-      {/* Logo NEROSY / Cinnamon — bascule selon le thème */}
+      {/* Logo */}
       <div style={{
-        padding: '14px 14px 10px',
+        padding: '10px 8px 8px',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        borderBottom: '1px solid var(--colorNeutralStroke3)',
-        marginBottom: 4,
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        marginBottom: 6,
       }}>
         <img
           src={isDark ? './cinnamon_logo_1.png' : './cinnamon_logo_2.png'}
           alt="Cinnamon"
           draggable={false}
           style={{
-            height: 36,
-            maxWidth: 160,
+            height: 32,
+            maxWidth: 150,
             objectFit: 'contain',
             userSelect: 'none',
             WebkitUserSelect: 'none',
@@ -68,7 +59,7 @@ export default function Sidebar({ currentPage, onNavigate, user, onLogout, isDar
               onClick={() => onNavigate(id)}
             >
               <span className="nav-icon">
-                <Icon fontSize={18} />
+                <Icon sx={{ fontSize: 18 }} />
               </span>
               <span>{label}</span>
             </div>
@@ -79,17 +70,17 @@ export default function Sidebar({ currentPage, onNavigate, user, onLogout, isDar
 
       {/* Utilisateur connecté */}
       <div style={{
-        padding: '10px 14px',
-        borderTop: '1px solid var(--colorNeutralStroke3)',
+        padding: '8px 10px',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
+        gap: 8,
       }}>
         <div style={{
-          width: 30, height: 30, borderRadius: '50%',
-          background: 'var(--colorBrandBackground)',
+          width: 28, height: 28, borderRadius: '50%',
+          background: '#1976d2',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 700, color: '#fff',
+          fontSize: 10, fontWeight: 700, color: '#fff',
           flexShrink: 0,
         }}>
           {initials}
@@ -97,29 +88,29 @@ export default function Sidebar({ currentPage, onNavigate, user, onLogout, isDar
         <div style={{ overflow: 'hidden', flex: 1 }}>
           <div style={{
             fontSize: 12, fontWeight: 600,
-            color: 'var(--colorNeutralForeground1)',
+            color: 'var(--text-primary)',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {fullName}
           </div>
-          <div style={{ fontSize: 10, color: 'var(--colorNeutralForeground4)',
+          <div style={{ fontSize: 10, color: 'var(--text-muted)',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {user?.email || '—'}
           </div>
         </div>
-        <Tooltip content="Se déconnecter" relationship="label" positioning="above">
+        <Tooltip title="Se déconnecter" placement="top">
           <button
             onClick={onLogout}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--colorNeutralForeground3)',
+              color: 'var(--text-muted)',
               display: 'flex', alignItems: 'center', padding: 4, borderRadius: 4,
-              flexShrink: 0,
+              flexShrink: 0, transition: 'color 0.15s',
             }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--colorStatusDangerForeground1)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--colorNeutralForeground3)'}
+            onMouseEnter={e => e.currentTarget.style.color = '#fc3d39'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           >
-            <LogoutIcon fontSize={16} />
+            <LogoutOutlinedIcon sx={{ fontSize: 16 }} />
           </button>
         </Tooltip>
       </div>

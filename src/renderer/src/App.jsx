@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { FluentProvider, webDarkTheme, webLightTheme, Spinner } from '@fluentui/react-components'
+import { ThemeProvider, CssBaseline } from '@mui/material'
+import { muiDarkTheme } from './theme'
+import CircularProgress from '@mui/material/CircularProgress'
+import Box from '@mui/material/Box'
 import TitleBar from './components/TitleBar'
 import Sidebar from './components/Sidebar'
 import HomePage from './pages/HomePage'
@@ -34,7 +37,7 @@ export default function App() {
   // Auth
   const [token,       setToken]       = useState(null)
   const [user,        setUser]        = useState(null)
-  const [authLoading, setAuthLoading] = useState(true) // vérifie le token au démarrage
+  const [authLoading, setAuthLoading] = useState(true)
 
   // Thème : 'system' | 'dark' | 'light'
   const [themePref,  setThemePref]  = useState('system')
@@ -43,7 +46,6 @@ export default function App() {
   // ── Initialisation ──────────────────────────────────────────────────────
   useEffect(() => {
     const init = async () => {
-      // Charger préférences et thème
       const [s, savedToken, savedProfile] = await Promise.all([
         window.api.settings.get(),
         window.api.store.get(TOKEN_KEY),
@@ -54,7 +56,6 @@ export default function App() {
       if (savedToken) {
         setAuthToken(savedToken)
         try {
-          // Valide le token et rafraîchit le profil depuis le serveur
           const fresh = await getProfile()
           const profile = extractUser(fresh)
           await window.api.store.set(PROFILE_KEY, profile)
@@ -62,7 +63,6 @@ export default function App() {
           setUser(profile)
           setCurrentPage('projects')
         } catch {
-          // Token expiré ou invalide : on nettoie
           await Promise.all([
             window.api.store.delete(TOKEN_KEY),
             window.api.store.delete(PROFILE_KEY)
@@ -74,13 +74,11 @@ export default function App() {
     }
     init()
 
-    // Thème système
     window.api.nativeTheme.isDark().then(setSystemDark)
     window.api.nativeTheme.onChange(setSystemDark)
     return () => window.api.nativeTheme.offChange()
   }, [])
 
-  // ── Thème effectif ──────────────────────────────────────────────────────
   const isDark = themePref === 'dark' || (themePref === 'system' && systemDark)
 
   useEffect(() => {
@@ -91,13 +89,11 @@ export default function App() {
   const handleLoginSuccess = async (newToken, data, staySignedIn) => {
     const profile = extractUser(data)
     if (staySignedIn) {
-      // Persistance sur disque — survit aux redémarrages
       await Promise.all([
         window.api.store.set(TOKEN_KEY, newToken),
         window.api.store.set(PROFILE_KEY, profile)
       ])
     } else {
-      // Session uniquement — on s'assure qu'aucun résidu n'est stocké
       await Promise.all([
         window.api.store.delete(TOKEN_KEY),
         window.api.store.delete(PROFILE_KEY)
@@ -141,34 +137,28 @@ export default function App() {
   }
 
   // ── Rendu ───────────────────────────────────────────────────────────────
-  const fluentTheme = isDark ? webDarkTheme : webLightTheme
-
-  // Écran de chargement initial (vérification du token)
   if (authLoading) {
     return (
-      <FluentProvider theme={fluentTheme}>
-        <div style={{
-          height: '100vh', width: '100vw',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'var(--colorNeutralBackground2)'
-        }}>
-          <Spinner size="large" label="Chargement…" />
-        </div>
-      </FluentProvider>
+      <ThemeProvider theme={muiDarkTheme}>
+        <CssBaseline />
+        <Box sx={{ height: '100vh', width: '100vw', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', background: '#0b0e11' }}>
+          <CircularProgress size={32} />
+        </Box>
+      </ThemeProvider>
     )
   }
 
-  // Écran de login si non authentifié
   if (!token) {
     return (
-      <FluentProvider theme={fluentTheme}>
+      <ThemeProvider theme={muiDarkTheme}>
+        <CssBaseline />
         <TitleBar />
         <LoginView onLoginSuccess={handleLoginSuccess} />
-      </FluentProvider>
+      </ThemeProvider>
     )
   }
 
-  // Changement de mot de passe obligatoire — sidebar masquée
   if (user?.mustChangePassword) {
     const handlePasswordChanged = async () => {
       const updated = { ...user, mustChangePassword: false }
@@ -176,20 +166,21 @@ export default function App() {
       if (token) await window.api.store.set(PROFILE_KEY, updated)
     }
     return (
-      <FluentProvider theme={fluentTheme}>
+      <ThemeProvider theme={muiDarkTheme}>
+        <CssBaseline />
         <div className="app-container">
           <TitleBar />
           <div style={{ flex: 1, overflow: 'hidden' }}>
             <ForceChangePasswordPage onDone={handlePasswordChanged} />
           </div>
         </div>
-      </FluentProvider>
+      </ThemeProvider>
     )
   }
 
-  // Application principale
   return (
-    <FluentProvider theme={fluentTheme}>
+    <ThemeProvider theme={muiDarkTheme}>
+      <CssBaseline />
       <div className="app-container">
         <TitleBar />
         <div className="main-layout">
@@ -199,6 +190,6 @@ export default function App() {
           </main>
         </div>
       </div>
-    </FluentProvider>
+    </ThemeProvider>
   )
 }

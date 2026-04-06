@@ -4,9 +4,9 @@ export default function TitleBar() {
   return (
     <div className="titlebar">
       <div className="titlebar-left">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-          <circle cx="8" cy="8" r="7" fill="var(--colorBrandBackground)" />
-          <text x="8" y="12" textAnchor="middle" fontSize="9" fontWeight="700" fill="#ffffff"
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="7" cy="7" r="6" fill="#1976d2" />
+          <text x="7" y="10.5" textAnchor="middle" fontSize="8" fontWeight="700" fill="#ffffff"
             fontFamily="Segoe UI Variable, Segoe UI, sans-serif">C</text>
         </svg>
         <span className="titlebar-logo">Cinnamon</span>
@@ -18,8 +18,8 @@ export default function TitleBar() {
           <svg width="10" height="1" viewBox="0 0 10 1"><rect width="10" height="1" fill="currentColor"/></svg>
         </button>
         <button className="titlebar-btn" onClick={() => window.api.window.maximize()} title="Agrandir">
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <rect x="0.5" y="0.5" width="9" height="9" stroke="currentColor" strokeWidth="1" fill="none"/>
+          <svg width="9" height="9" viewBox="0 0 9 9">
+            <rect x="0.5" y="0.5" width="8" height="8" stroke="currentColor" strokeWidth="1" fill="none"/>
           </svg>
         </button>
         <button className="titlebar-btn close" onClick={() => window.api.window.close()} title="Fermer">
