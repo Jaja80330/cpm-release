@@ -1,0 +1,68 @@
+{
+  "name": "cinnamon",
+  "version": "1.1.0",
+  "description": "Asset Manager élégant pour les créateurs de bus OMSI 2 - NEROSY",
+  "main": "out/main/index.js",
+  "author": "NEROSY",
+  "license": "MIT",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package": "electron-vite build && electron-builder build --win --x64",
+    "dist": "electron-vite build && electron-builder build --win --x64"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-vite": "^2.1.0",
+    "sharp": "^0.34.5",
+    "vite": "^5.1.4"
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^4.0.0",
+    "@fluentui/react-components": "^9.46.2",
+    "@fluentui/react-icons": "^2.0.237",
+    "archiver": "^7.0.1",
+    "axios": "^1.14.0",
+    "electron-store": "^8.2.0",
+    "iconv-lite": "^0.7.2",
+    "jszip": "^3.10.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "ssh2-sftp-client": "^10.0.3"
+  },
+  "build": {
+    "appId": "com.nerosy.cinnamon",
+    "productName": "Cinnamon",
+    "directories": {
+      "output": "dist_electron"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "cinnamon-splash.png",
+        "to": "cinnamon-splash.png"
+      },
+      {
+        "from": "resources/splash.html",
+        "to": "splash.html"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Cinnamon",
+      "uninstallDisplayName": "Cinnamon (NEROSY)"
+    }
+  }
+}

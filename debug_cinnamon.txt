@@ -1,0 +1,1317 @@
+[2026-04-04T01:23:30.640Z] === PUSH START ===
+[2026-04-04T01:23:30.641Z] Projet : French Cityliner
+[2026-04-04T01:23:31.294Z] SSH établie.
+[2026-04-04T01:23:31.654Z] Version : v2
+[2026-04-04T01:23:31.754Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T01:23:31.755Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T01:23:31.755Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T01:23:31.756Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T01:23:31.756Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T01:23:31.756Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T01:23:31.757Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T01:23:31.757Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T01:23:31.757Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T01:23:31.758Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T01:23:31.758Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T01:23:31.759Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T01:23:31.759Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T01:23:31.760Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T01:23:31.760Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T01:23:31.761Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T01:23:31.761Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T01:23:31.761Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T01:23:31.762Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T01:23:31.762Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T01:23:31.763Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T01:23:31.763Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T01:23:31.764Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T01:23:31.764Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T01:23:31.765Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T01:23:31.765Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T01:23:31.766Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T01:23:31.766Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T01:23:31.766Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T01:23:31.767Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T01:23:31.767Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T01:23:31.767Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T01:23:31.768Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T01:23:31.768Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T01:23:31.769Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T01:23:31.769Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T01:23:31.770Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T01:23:31.770Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T01:23:31.770Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T01:23:31.771Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T01:23:31.771Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T01:23:31.771Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T01:23:31.772Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T01:23:31.772Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T01:23:31.772Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T01:23:31.773Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T01:23:31.773Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T01:23:31.773Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T01:23:31.774Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T01:23:31.774Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T01:23:31.775Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T01:23:31.775Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T01:23:31.775Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T01:23:31.776Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T01:23:31.776Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T01:23:31.776Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T01:23:31.777Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T01:23:31.777Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T01:23:31.777Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T01:23:31.777Z] Total : 2301 fichier(s)
+[2026-04-04T01:23:31.778Z] [1/2] Création de l'archive
+[2026-04-04T01:24:17.149Z] Archive : v2_2026-04-04_03h23_French_Cityliner.zip (787484.7 Ko)
+[2026-04-04T01:24:17.150Z] [2/2] Transfert vers le VPS
+[2026-04-04T01:24:28.144Z] Transfert terminé.
+[2026-04-04T01:24:28.145Z] v2 envoyée avec succès !
+[2026-04-04T01:24:28.145Z] === PUSH OK ===
+[2026-04-04T01:29:58.414Z] === PUSH START ===
+[2026-04-04T01:29:58.415Z] Projet : French Cityliner
+[2026-04-04T01:29:59.045Z] SSH établie.
+[2026-04-04T01:29:59.405Z] Version : v3
+[2026-04-04T01:29:59.426Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T01:29:59.426Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T01:29:59.427Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T01:29:59.427Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T01:29:59.428Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T01:29:59.428Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T01:29:59.429Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T01:29:59.429Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T01:29:59.429Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T01:29:59.430Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T01:29:59.430Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T01:29:59.431Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T01:29:59.431Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T01:29:59.431Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T01:29:59.432Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T01:29:59.432Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T01:29:59.433Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T01:29:59.433Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T01:29:59.433Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T01:29:59.434Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T01:29:59.434Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T01:29:59.435Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T01:29:59.435Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T01:29:59.436Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T01:29:59.436Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T01:29:59.437Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T01:29:59.437Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T01:29:59.438Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T01:29:59.438Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T01:29:59.438Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T01:29:59.438Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T01:29:59.439Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T01:29:59.439Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T01:29:59.439Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T01:29:59.439Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T01:29:59.440Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T01:29:59.440Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T01:29:59.440Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T01:29:59.441Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T01:29:59.441Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T01:29:59.441Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T01:29:59.442Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T01:29:59.442Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T01:29:59.442Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T01:29:59.442Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T01:29:59.443Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T01:29:59.443Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T01:29:59.443Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T01:29:59.444Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T01:29:59.444Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T01:29:59.444Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T01:29:59.445Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T01:29:59.445Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T01:29:59.445Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T01:29:59.445Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T01:29:59.446Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T01:29:59.446Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T01:29:59.446Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T01:29:59.447Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T01:29:59.447Z] Total : 2301 fichier(s)
+[2026-04-04T01:29:59.447Z] [1/2] Création de l'archive
+[2026-04-04T01:30:35.736Z] Archive : v3_2026-04-04_03h29_French_Cityliner.zip (787484.7 Ko)
+[2026-04-04T01:30:35.736Z] [2/2] Transfert vers le VPS
+[2026-04-04T01:30:46.760Z] Transfert terminé.
+[2026-04-04T01:30:46.760Z] v3 envoyée avec succès !
+[2026-04-04T01:30:46.760Z] === PUSH OK ===
+[2026-04-04T01:35:23.714Z] === PUSH START ===
+[2026-04-04T01:35:23.714Z] Projet : French Cityliner
+[2026-04-04T01:35:24.333Z] SSH établie.
+[2026-04-04T01:35:24.693Z] Version : v1
+[2026-04-04T01:35:24.710Z]   [vehicles] 2126 fichier(s)
+[2026-04-04T01:35:24.711Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T01:35:24.711Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T01:35:24.712Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T01:35:24.712Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T01:35:24.713Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T01:35:24.713Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T01:35:24.714Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T01:35:24.715Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T01:35:24.715Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T01:35:24.716Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T01:35:24.716Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T01:35:24.717Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T01:35:24.717Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T01:35:24.718Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T01:35:24.718Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T01:35:24.718Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T01:35:24.719Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T01:35:24.719Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T01:35:24.719Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T01:35:24.720Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T01:35:24.720Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T01:35:24.720Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T01:35:24.721Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T01:35:24.721Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T01:35:24.722Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T01:35:24.722Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T01:35:24.722Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T01:35:24.722Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T01:35:24.723Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T01:35:24.723Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T01:35:24.723Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T01:35:24.724Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T01:35:24.724Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T01:35:24.725Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T01:35:24.725Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T01:35:24.725Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T01:35:24.726Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T01:35:24.726Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T01:35:24.726Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T01:35:24.727Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T01:35:24.727Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T01:35:24.727Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T01:35:24.728Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T01:35:24.728Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T01:35:24.728Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T01:35:24.728Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T01:35:24.729Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T01:35:24.729Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T01:35:24.729Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T01:35:24.730Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T01:35:24.730Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T01:35:24.730Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T01:35:24.730Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T01:35:24.731Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T01:35:24.731Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T01:35:24.732Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T01:35:24.732Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T01:35:24.732Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T01:35:24.732Z] Total : 2302 fichier(s)
+[2026-04-04T01:35:24.733Z] [1/2] Création de l'archive
+[2026-04-04T01:36:00.679Z] Archive : v1_2026-04-04_03h35_French_Cityliner.zip (787485.0 Ko)
+[2026-04-04T01:36:00.679Z] [2/2] Transfert vers le VPS
+[2026-04-04T01:36:11.748Z] Transfert terminé.
+[2026-04-04T01:36:11.748Z] v1 envoyée avec succès !
+[2026-04-04T01:36:11.749Z] === PUSH OK ===
+[2026-04-04T11:40:16.482Z] === PUSH START ===
+[2026-04-04T11:40:16.485Z] Projet : French Cityliner
+[2026-04-04T11:40:17.499Z] SSH établie.
+[2026-04-04T11:40:17.859Z] Version : v2
+[2026-04-04T11:40:17.908Z]   [vehicles] 2126 fichier(s)
+[2026-04-04T11:40:17.909Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T11:40:17.910Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T11:40:17.910Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T11:40:17.910Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T11:40:17.911Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T11:40:17.911Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T11:40:17.912Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T11:40:17.912Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T11:40:17.912Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T11:40:17.913Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T11:40:17.913Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T11:40:17.914Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T11:40:17.914Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T11:40:17.914Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T11:40:17.915Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T11:40:17.915Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T11:40:17.916Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T11:40:17.916Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T11:40:17.916Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T11:40:17.917Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T11:40:17.917Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T11:40:17.917Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T11:40:17.918Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T11:40:17.918Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T11:40:17.918Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T11:40:17.919Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T11:40:17.919Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T11:40:17.920Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T11:40:17.920Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T11:40:17.920Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T11:40:17.920Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T11:40:17.921Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T11:40:17.922Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T11:40:17.922Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T11:40:17.922Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T11:40:17.922Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T11:40:17.923Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T11:40:17.923Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T11:40:17.923Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T11:40:17.924Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T11:40:17.924Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T11:40:17.925Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T11:40:17.925Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T11:40:17.925Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T11:40:17.926Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T11:40:17.926Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T11:40:17.926Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T11:40:17.927Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T11:40:17.927Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T11:40:17.927Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T11:40:17.928Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T11:40:17.928Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T11:40:17.929Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T11:40:17.929Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T11:40:17.929Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T11:40:17.930Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T11:40:17.930Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T11:40:17.931Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T11:40:17.931Z] Total : 2302 fichier(s)
+[2026-04-04T11:40:17.931Z] [1/2] Création de l'archive
+[2026-04-04T11:41:03.806Z] Archive : v2_2026-04-04_13h40_French_Cityliner.zip (787485.0 Ko)
+[2026-04-04T11:41:03.807Z] [2/2] Transfert vers le VPS
+[2026-04-04T11:41:14.866Z] Transfert terminé.
+[2026-04-04T11:41:14.866Z] v2 envoyée avec succès !
+[2026-04-04T11:41:14.866Z] === PUSH OK ===
+[2026-04-04T11:41:31.233Z] === PULL:INSTALL v2_2026-04-04_13h40_French_Cityliner.zip ===
+[2026-04-04T11:41:31.234Z] [1/3] Connexion au VPS
+[2026-04-04T11:41:31.873Z] SSH établie.
+[2026-04-04T11:41:32.161Z] Fichier : v2_2026-04-04_13h40_French_Cityliner.zip (787485.0 Ko)
+[2026-04-04T11:41:32.161Z] [2/3] Téléchargement de v2_2026-04-04_13h40_French_Cityliner.zip
+[2026-04-04T11:41:43.973Z] Téléchargement terminé.
+[2026-04-04T11:41:43.974Z] [3/3] Extraction et déploiement
+[2026-04-04T11:42:01.210Z] Déployé : 2242 fichier(s)
+[2026-04-04T11:42:01.210Z] Installation de v2_2026-04-04_13h40_French_Cityliner.zip terminée !
+[2026-04-04T11:42:01.211Z] === PULL:INSTALL OK ===
+[2026-04-04T11:42:48.919Z] === PUSH START ===
+[2026-04-04T11:42:48.919Z] Projet : Valiant Citybus Facelift
+[2026-04-04T11:42:49.719Z] SSH établie.
+[2026-04-04T11:42:50.222Z] Version : v1
+[2026-04-04T11:42:50.292Z]   [vehicles] 4238 fichier(s)
+[2026-04-04T11:42:50.292Z]   [addons] 6 fichier(s)
+[2026-04-04T11:42:50.293Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T11:42:50.293Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T11:42:50.294Z]   [fonts] AD-big.oft + 2 image(s)
+[2026-04-04T11:42:50.294Z]   [fonts] AD_IBIS-2_5x7.oft + 2 image(s)
+[2026-04-04T11:42:50.294Z]   [fonts] AD_Actia_DISPLAY_Gauge_colour.oft + 2 image(s)
+[2026-04-04T11:42:50.295Z]   [fonts] AD_Actia_DISPLAY_Gauge_colour_white.oft + 2 image(s)
+[2026-04-04T11:42:50.295Z]   [fonts] AD_font_arialbd64.oft + 2 image(s)
+[2026-04-04T11:42:50.295Z]   [fonts] AD_font_EUROSTILE.oft + 2 image(s)
+[2026-04-04T11:42:50.296Z]   [fonts] AD_font_HelveticaNeue64.oft + 2 image(s)
+[2026-04-04T11:42:50.296Z]   [fonts] AD_Bahnschrift_SemiBold.oft + 4 image(s)
+[2026-04-04T11:42:50.297Z]   [fonts] AD_eurostile_bis.oft + 2 image(s)
+[2026-04-04T11:42:50.297Z]   [fonts] AD_font_arialbdMAJ.oft + 2 image(s)
+[2026-04-04T11:42:50.298Z]   [fonts] AD_font_arialMAJ.oft + 2 image(s)
+[2026-04-04T11:42:50.298Z]   [fonts] AD_font_businfo.oft + 2 image(s)
+[2026-04-04T11:42:50.298Z]   [fonts] AD_MSFont_Faremaster.oft + 2 image(s)
+[2026-04-04T11:42:50.299Z]   [fonts] AD_font_arial64.oft + 2 image(s)
+[2026-04-04T11:42:50.299Z]   [fonts] AD_font_RATP.oft + 2 image(s)
+[2026-04-04T11:42:50.299Z]   [fonts] AD_font_ubuntu.oft + 2 image(s)
+[2026-04-04T11:42:50.300Z]   [fonts] AD_font_ubuntu_MAJ.oft + 2 image(s)
+[2026-04-04T11:42:50.300Z]   [fonts] BUSE_ADIC.oft + 2 image(s)
+[2026-04-04T11:42:50.300Z]   [fonts] CRNL_Adtranz_DFI.oft + 2 image(s)
+[2026-04-04T11:42:50.301Z] Total : 4309 fichier(s)
+[2026-04-04T11:42:50.301Z] [1/2] Création de l'archive
+[2026-04-04T11:43:45.553Z] Archive : v1_2026-04-04_13h42_Valiant_Citybus_Facelift.zip (810447.4 Ko)
+[2026-04-04T11:43:45.554Z] [2/2] Transfert vers le VPS
+[2026-04-04T11:43:56.917Z] Transfert terminé.
+[2026-04-04T11:43:56.917Z] v1 envoyée avec succès !
+[2026-04-04T11:43:56.917Z] === PUSH OK ===
+[2026-04-04T11:52:03.921Z] === PUSH START ===
+[2026-04-04T11:52:03.921Z] Projet : French Cityliner
+[2026-04-04T11:52:03.922Z] Version : "26.3.0"
+[2026-04-04T11:52:03.945Z]   [vehicles] 2126 fichier(s)
+[2026-04-04T11:52:03.946Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T11:52:03.947Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T11:52:03.948Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T11:52:03.949Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T11:52:03.949Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T11:52:03.950Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T11:52:03.950Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T11:52:03.951Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T11:52:03.951Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T11:52:03.952Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T11:52:03.952Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T11:52:03.953Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T11:52:03.953Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T11:52:03.954Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T11:52:03.954Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T11:52:03.954Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T11:52:03.955Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T11:52:03.955Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T11:52:03.956Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T11:52:03.956Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T11:52:03.956Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T11:52:03.957Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T11:52:03.957Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T11:52:03.957Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T11:52:03.958Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T11:52:03.958Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T11:52:03.959Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T11:52:03.959Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T11:52:03.959Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T11:52:03.960Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T11:52:03.960Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T11:52:03.960Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T11:52:03.961Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T11:52:03.961Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T11:52:03.961Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T11:52:03.961Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T11:52:03.962Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T11:52:03.962Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T11:52:03.962Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T11:52:03.963Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T11:52:03.963Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T11:52:03.964Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T11:52:03.964Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T11:52:03.964Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T11:52:03.965Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T11:52:03.965Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T11:52:03.965Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T11:52:03.966Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T11:52:03.966Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T11:52:03.966Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T11:52:03.967Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T11:52:03.967Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T11:52:03.967Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T11:52:03.968Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T11:52:03.968Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T11:52:03.968Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T11:52:03.969Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T11:52:03.969Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T11:52:03.969Z] Total : 2302 fichier(s)
+[2026-04-04T11:52:03.969Z] [1/2] Création de l'archive
+[2026-04-04T11:52:48.519Z] Archive : 2026-04-04_13h52_2630_French_Cityliner.zip (787485.0 Ko)
+[2026-04-04T11:52:48.520Z] [2/2] Transfert vers le VPS
+[2026-04-04T11:52:49.316Z] SSH établie.
+[2026-04-04T11:53:00.427Z] Transfert terminé.
+[2026-04-04T11:53:00.714Z] Métadonnées enregistrées.
+[2026-04-04T11:53:00.715Z] "26.3.0" envoyée avec succès !
+[2026-04-04T11:53:00.715Z] === PUSH OK ===
+[2026-04-04T11:55:39.249Z] === PUSH START ===
+[2026-04-04T11:55:39.250Z] Projet : French Cityliner
+[2026-04-04T11:55:39.250Z] Version : "1.0.0-rc.1"
+[2026-04-04T11:55:39.271Z]   [vehicles] 2126 fichier(s)
+[2026-04-04T11:55:39.272Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T11:55:39.273Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T11:55:39.273Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T11:55:39.273Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T11:55:39.274Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T11:55:39.274Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T11:55:39.275Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T11:55:39.275Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T11:55:39.276Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T11:55:39.276Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T11:55:39.277Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T11:55:39.277Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T11:55:39.277Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T11:55:39.278Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T11:55:39.279Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T11:55:39.279Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T11:55:39.279Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T11:55:39.280Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T11:55:39.280Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T11:55:39.280Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T11:55:39.281Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T11:55:39.281Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T11:55:39.282Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T11:55:39.282Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T11:55:39.283Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T11:55:39.283Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T11:55:39.283Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T11:55:39.284Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T11:55:39.284Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T11:55:39.284Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T11:55:39.284Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T11:55:39.285Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T11:55:39.285Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T11:55:39.285Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T11:55:39.286Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T11:55:39.286Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T11:55:39.286Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T11:55:39.287Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T11:55:39.287Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T11:55:39.287Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T11:55:39.288Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T11:55:39.288Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T11:55:39.288Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T11:55:39.288Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T11:55:39.289Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T11:55:39.289Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T11:55:39.290Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T11:55:39.290Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T11:55:39.290Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T11:55:39.291Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T11:55:39.291Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T11:55:39.291Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T11:55:39.292Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T11:55:39.292Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T11:55:39.292Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T11:55:39.293Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T11:55:39.293Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T11:55:39.293Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T11:55:39.293Z] Total : 2302 fichier(s)
+[2026-04-04T11:55:39.294Z] [1/2] Création de l'archive
+[2026-04-04T11:56:15.485Z] Archive : 2026-04-04_13h55_100-rc1_French_Cityliner.zip (787485.0 Ko)
+[2026-04-04T11:56:15.486Z] [2/2] Transfert vers le VPS
+[2026-04-04T11:56:16.126Z] SSH établie.
+[2026-04-04T11:56:27.246Z] Transfert terminé.
+[2026-04-04T11:56:27.534Z] Métadonnées enregistrées.
+[2026-04-04T11:56:27.534Z] "1.0.0-rc.1" envoyée avec succès !
+[2026-04-04T11:56:27.534Z] === PUSH OK ===
+[2026-04-04T12:06:08.879Z] === PULL:INSTALL 2026-04-04_13h55_100-rc1_French_Cityliner.zip ===
+[2026-04-04T12:06:08.879Z] [1/3] Connexion au VPS
+[2026-04-04T12:06:09.506Z] SSH établie.
+[2026-04-04T12:06:09.793Z] Fichier : 2026-04-04_13h55_100-rc1_French_Cityliner.zip (787485.0 Ko)
+[2026-04-04T12:06:09.794Z] [2/3] Téléchargement de 2026-04-04_13h55_100-rc1_French_Cityliner.zip
+[2026-04-04T12:06:21.547Z] Téléchargement terminé.
+[2026-04-04T12:06:21.548Z] [3/3] Extraction et déploiement
+[2026-04-04T12:06:39.936Z] Déployé : 2242 fichier(s)
+[2026-04-04T12:06:39.936Z] Installation de 2026-04-04_13h55_100-rc1_French_Cityliner.zip terminée !
+[2026-04-04T12:06:39.937Z] === PULL:INSTALL OK ===
+[2026-04-04T12:09:43.823Z] === PULL:INSTALL 2026-04-04_13h55_100-rc1_French_Cityliner.zip ===
+[2026-04-04T12:09:43.824Z] [1/3] Connexion au VPS
+[2026-04-04T12:09:44.458Z] SSH établie.
+[2026-04-04T12:09:44.746Z] Fichier : 2026-04-04_13h55_100-rc1_French_Cityliner.zip (787485.0 Ko)
+[2026-04-04T12:09:44.746Z] [2/3] Téléchargement de 2026-04-04_13h55_100-rc1_French_Cityliner.zip
+[2026-04-04T12:09:56.458Z] Téléchargement terminé.
+[2026-04-04T12:09:56.459Z] [3/3] Extraction et déploiement
+[2026-04-04T12:10:13.436Z] Manifest .cin écrit (2242 fichier(s)).
+[2026-04-04T12:10:13.436Z] Déployé : 2242 fichier(s)
+[2026-04-04T12:10:13.436Z] Installation de 2026-04-04_13h55_100-rc1_French_Cityliner.zip terminée !
+[2026-04-04T12:10:13.436Z] === PULL:INSTALL OK ===
+[2026-04-04T12:10:20.392Z] Désinstallation French Cityliner : 2242 fichier(s) supprimé(s)
+[2026-04-04T12:10:39.147Z] === PULL:INSTALL 2026-04-04_13h55_100-rc1_French_Cityliner.zip ===
+[2026-04-04T12:10:39.148Z] [1/3] Connexion au VPS
+[2026-04-04T12:10:39.784Z] SSH établie.
+[2026-04-04T12:10:40.072Z] Fichier : 2026-04-04_13h55_100-rc1_French_Cityliner.zip (787485.0 Ko)
+[2026-04-04T12:10:40.073Z] [2/3] Téléchargement de 2026-04-04_13h55_100-rc1_French_Cityliner.zip
+[2026-04-04T12:10:51.938Z] Téléchargement terminé.
+[2026-04-04T12:10:51.939Z] [3/3] Extraction et déploiement
+[2026-04-04T12:11:09.028Z] Manifest .cin écrit (2242 fichier(s)).
+[2026-04-04T12:11:09.029Z] Déployé : 2242 fichier(s)
+[2026-04-04T12:11:09.029Z] Installation de 2026-04-04_13h55_100-rc1_French_Cityliner.zip terminée !
+[2026-04-04T12:11:09.029Z] === PULL:INSTALL OK ===
+[2026-04-04T12:41:48.303Z] === PUSH START ===
+[2026-04-04T12:41:48.304Z] Projet : French Cityliner
+[2026-04-04T12:41:48.304Z] Version : "1.0.0"
+[2026-04-04T12:41:48.329Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T12:41:48.330Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T12:41:48.331Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T12:41:48.331Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T12:41:48.332Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T12:41:48.332Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T12:41:48.333Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T12:41:48.334Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T12:41:48.335Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T12:41:48.335Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T12:41:48.336Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T12:41:48.336Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T12:41:48.337Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T12:41:48.337Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T12:41:48.338Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T12:41:48.338Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T12:41:48.339Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T12:41:48.339Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T12:41:48.340Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T12:41:48.340Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T12:41:48.340Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T12:41:48.341Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T12:41:48.341Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T12:41:48.342Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T12:41:48.342Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T12:41:48.343Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T12:41:48.343Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T12:41:48.344Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T12:41:48.344Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T12:41:48.345Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T12:41:48.345Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T12:41:48.345Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T12:41:48.346Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T12:41:48.346Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T12:41:48.346Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T12:41:48.347Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T12:41:48.347Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T12:41:48.347Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T12:41:48.348Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T12:41:48.348Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T12:41:48.349Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T12:41:48.349Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T12:41:48.350Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T12:41:48.350Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T12:41:48.350Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T12:41:48.351Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T12:41:48.351Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T12:41:48.351Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T12:41:48.352Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T12:41:48.352Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T12:41:48.353Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T12:41:48.353Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T12:41:48.353Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T12:41:48.354Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T12:41:48.354Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T12:41:48.354Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T12:41:48.355Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T12:41:48.355Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T12:41:48.356Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T12:41:48.356Z] Total : 2301 fichier(s)
+[2026-04-04T12:41:48.356Z] [1/2] Création de l'archive
+[2026-04-04T12:42:25.380Z] Archive : 2026-04-04_14h41_100_French_Cityliner.zip (787484.7 Ko)
+[2026-04-04T12:42:25.380Z] [2/2] Transfert vers le VPS
+[2026-04-04T12:42:26.158Z] SSH établie.
+[2026-04-04T12:42:37.266Z] Transfert terminé.
+[2026-04-04T12:42:37.554Z] Métadonnées enregistrées.
+[2026-04-04T12:42:37.554Z] "1.0.0" envoyée avec succès !
+[2026-04-04T12:42:37.555Z] === PUSH OK ===
+[2026-04-04T12:54:37.945Z] === PUSH START ===
+[2026-04-04T12:54:37.945Z] Projet : French Cityliner
+[2026-04-04T12:54:37.946Z] Version : "1.2.3"
+[2026-04-04T12:54:37.970Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T12:54:37.971Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T12:54:37.971Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T12:54:37.972Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T12:54:37.972Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T12:54:37.973Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T12:54:37.973Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T12:54:37.974Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T12:54:37.974Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T12:54:37.974Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T12:54:37.975Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T12:54:37.975Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T12:54:37.976Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T12:54:37.976Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T12:54:37.977Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T12:54:37.977Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T12:54:37.978Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T12:54:37.978Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T12:54:37.979Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T12:54:37.979Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T12:54:37.980Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T12:54:37.980Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T12:54:37.980Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T12:54:37.981Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T12:54:37.981Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T12:54:37.982Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T12:54:37.982Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T12:54:37.983Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T12:54:37.983Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T12:54:37.983Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T12:54:37.984Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T12:54:37.984Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T12:54:37.984Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T12:54:37.985Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T12:54:37.985Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T12:54:37.985Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T12:54:37.986Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T12:54:37.986Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T12:54:37.986Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T12:54:37.987Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T12:54:37.987Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T12:54:37.987Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T12:54:37.988Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T12:54:37.988Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T12:54:37.988Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T12:54:37.989Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T12:54:37.989Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T12:54:37.989Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T12:54:37.990Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T12:54:37.990Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T12:54:37.990Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T12:54:37.991Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T12:54:37.991Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T12:54:37.991Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T12:54:37.992Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T12:54:37.992Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T12:54:37.992Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T12:54:37.993Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T12:54:37.993Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T12:54:37.993Z] Total : 2301 fichier(s)
+[2026-04-04T12:54:37.993Z] [1/2] Création de l'archive
+[2026-04-04T12:55:14.280Z] Archive : 2026-04-04_14h54_123_French_Cityliner.zip (787484.7 Ko)
+[2026-04-04T12:55:14.281Z] [2/2] Transfert vers le VPS
+[2026-04-04T12:55:14.578Z] ERREUR : connect: getConnection: All configured authentication methods failed
+[2026-04-04T12:55:14.579Z] STACK : Error: connect: getConnection: All configured authentication methods failed
+    at SftpClient.fmtError (C:\Users\fares\Cinnamon\node_modules\ssh2-sftp-client\src\index.js:87:22)
+    at SftpClient.connect (C:\Users\fares\Cinnamon\node_modules\ssh2-sftp-client\src\index.js:225:37)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async C:\Users\fares\Cinnamon\out\main\index.js:251:7
+    at async WebContents.<anonymous> (node:electron/js2c/browser_init:2:78381)
+[2026-04-04T17:17:30.084Z] === PUSH START ===
+[2026-04-04T17:17:30.091Z] Projet : French Cityliner
+[2026-04-04T17:17:30.091Z] Version : "2.0.0-alpha.4"
+[2026-04-04T17:17:30.173Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T17:17:30.174Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T17:17:30.174Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T17:17:30.175Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T17:17:30.175Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T17:17:30.176Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T17:17:30.177Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T17:17:30.177Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T17:17:30.178Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T17:17:30.178Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T17:17:30.179Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T17:17:30.179Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T17:17:30.180Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T17:17:30.180Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T17:17:30.180Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T17:17:30.181Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T17:17:30.181Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T17:17:30.182Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T17:17:30.182Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T17:17:30.183Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T17:17:30.183Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T17:17:30.184Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T17:17:30.184Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T17:17:30.185Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T17:17:30.185Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T17:17:30.185Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T17:17:30.186Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T17:17:30.186Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T17:17:30.187Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T17:17:30.187Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T17:17:30.187Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T17:17:30.188Z]   [fonts] NEROSY_Lumiplan_7x3.oft + 2 image(s)
+[2026-04-04T17:17:30.188Z]   [fonts] NEROSY_Lumiplan_7x4.oft + 2 image(s)
+[2026-04-04T17:17:30.188Z]   [fonts] NEROSY_Lumiplan_7x5.oft + 2 image(s)
+[2026-04-04T17:17:30.189Z]   [fonts] NEROSY_Lumiplan_7x6.oft + 2 image(s)
+[2026-04-04T17:17:30.189Z]   [fonts] NEROSY_Lumiplan_8x3.oft + 2 image(s)
+[2026-04-04T17:17:30.190Z]   [fonts] NEROSY_Lumiplan_8x4.oft + 2 image(s)
+[2026-04-04T17:17:30.190Z]   [fonts] NEROSY_Lumiplan_8x5.oft + 2 image(s)
+[2026-04-04T17:17:30.190Z]   [fonts] NEROSY_Lumiplan_8x6.oft + 2 image(s)
+[2026-04-04T17:17:30.190Z]   [fonts] NEROSY_Lumiplan_10x4.oft + 2 image(s)
+[2026-04-04T17:17:30.191Z]   [fonts] NEROSY_Lumiplan_10x5.oft + 2 image(s)
+[2026-04-04T17:17:30.191Z]   [fonts] NEROSY_Lumiplan_10x7.oft + 2 image(s)
+[2026-04-04T17:17:30.191Z]   [fonts] NEROSY_Lumiplan_16x5.oft + 2 image(s)
+[2026-04-04T17:17:30.192Z]   [fonts] NEROSY_Lumiplan_16x6.oft + 2 image(s)
+[2026-04-04T17:17:30.192Z]   [fonts] NEROSY_Lumiplan_16x7.oft + 2 image(s)
+[2026-04-04T17:17:30.192Z]   [fonts] NEROSY_Lumiplan_16x8.oft + 2 image(s)
+[2026-04-04T17:17:30.193Z]   [fonts] NEROSY_Lumiplan_16x9.oft + 2 image(s)
+[2026-04-04T17:17:30.194Z]   [fonts] NEROSY_Lumiplan_16x10.oft + 2 image(s)
+[2026-04-04T17:17:30.194Z]   [fonts] NEROSY_Lumiplan_16x12.oft + 2 image(s)
+[2026-04-04T17:17:30.194Z]   [fonts] NEROSY_Maxol_7x5.oft + 2 image(s)
+[2026-04-04T17:17:30.195Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T17:17:30.195Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T17:17:30.195Z]   [fonts] NEROSY_Maxol_14x10.oft + 2 image(s)
+[2026-04-04T17:17:30.196Z]   [fonts] NEROSY_Maxol_Symbols.oft + 2 image(s)
+[2026-04-04T17:17:30.196Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T17:17:30.197Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T17:17:30.197Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T17:17:30.197Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T17:17:30.198Z]   [fonts] s400nf-lcd.oft + 2 image(s)
+[2026-04-04T17:17:30.198Z] Total : 2301 fichier(s)
+[2026-04-04T17:17:30.198Z] [1/2] Création de l'archive
+[2026-04-04T17:18:15.834Z] Archive : 2026-04-04_19h17_200-alpha4_French_Cityliner.zip (787484.7 Ko)
+[2026-04-04T17:18:15.835Z] [2/2] Transfert vers le VPS
+[2026-04-04T17:18:17.387Z] SSH établie.
+[2026-04-04T17:18:28.717Z] Transfert terminé.
+[2026-04-04T17:18:28.997Z] Métadonnées enregistrées.
+[2026-04-04T17:18:28.997Z] "2.0.0-alpha.4" envoyée avec succès !
+[2026-04-04T17:18:28.998Z] === PUSH OK ===
+[2026-04-04T18:11:21.933Z] === PUSH START ===
+[2026-04-04T18:11:21.934Z] Projet : French Cityliner
+[2026-04-04T18:11:21.934Z] Version : "2.0.0-alpha.4.5"
+[2026-04-04T18:11:21.934Z] Aucun fichier à archiver.
+[2026-04-04T18:12:19.515Z] === PULL:INSTALL 2026-04-04_19h17_200-alpha4_French_Cityliner.zip ===
+[2026-04-04T18:12:19.516Z] [1/3] Connexion au VPS
+[2026-04-04T18:12:20.169Z] SSH établie.
+[2026-04-04T18:12:20.446Z] Fichier : 2026-04-04_19h17_200-alpha4_French_Cityliner.zip (787484.7 Ko)
+[2026-04-04T18:12:20.447Z] [2/3] Téléchargement de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip
+[2026-04-04T18:12:32.234Z] Téléchargement terminé.
+[2026-04-04T18:12:32.234Z] [3/3] Extraction et déploiement
+[2026-04-04T18:12:32.985Z] Manifest .cin écrit (0 fichier(s)).
+[2026-04-04T18:12:32.985Z] Déployé : 0 fichier(s)
+[2026-04-04T18:12:32.986Z] Installation de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip terminée !
+[2026-04-04T18:12:32.986Z] === PULL:INSTALL OK ===
+[2026-04-04T18:14:34.293Z] === PUSH START ===
+[2026-04-04T18:14:34.293Z] Projet : French Cityliner
+[2026-04-04T18:14:34.294Z] Version : "test"
+[2026-04-04T18:14:34.294Z] Aucun fichier à archiver.
+[2026-04-04T18:15:26.510Z] === PUSH START ===
+[2026-04-04T18:15:26.511Z] Projet : Testbus
+[2026-04-04T18:15:26.511Z] Version : "1.0.0"
+[2026-04-04T18:15:26.512Z] Aucun fichier à archiver.
+[2026-04-04T18:28:29.346Z] === PUSH START ===
+[2026-04-04T18:28:29.347Z] Projet : French Cityliner
+[2026-04-04T18:28:29.347Z] Version : "tyrt"
+[2026-04-04T18:28:29.347Z] Aucun fichier à archiver.
+[2026-04-04T18:28:33.064Z] === PUSH START ===
+[2026-04-04T18:28:33.064Z] Projet : French Cityliner
+[2026-04-04T18:28:33.065Z] Version : "yrtytr"
+[2026-04-04T18:28:33.065Z] Aucun fichier à archiver.
+[2026-04-04T18:28:49.964Z] === PULL:INSTALL 2026-04-04_19h17_200-alpha4_French_Cityliner.zip ===
+[2026-04-04T18:28:49.964Z] [1/3] Connexion au VPS
+[2026-04-04T18:28:50.598Z] SSH établie.
+[2026-04-04T18:28:50.874Z] Fichier : 2026-04-04_19h17_200-alpha4_French_Cityliner.zip (787484.7 Ko)
+[2026-04-04T18:28:50.875Z] [2/3] Téléchargement de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip
+[2026-04-04T18:29:02.683Z] Téléchargement terminé.
+[2026-04-04T18:29:02.683Z] [3/3] Extraction et déploiement
+[2026-04-04T18:29:03.423Z] Manifest .cin écrit (0 fichier(s)).
+[2026-04-04T18:29:03.423Z] Déployé : 0 fichier(s)
+[2026-04-04T18:29:03.424Z] Installation de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip terminée !
+[2026-04-04T18:29:03.424Z] === PULL:INSTALL OK ===
+[2026-04-04T18:34:42.196Z] === PUSH START ===
+[2026-04-04T18:34:42.196Z] Projet : French Cityliner
+[2026-04-04T18:34:42.197Z] Version : "1.0.0"
+[2026-04-04T18:34:42.197Z] Aucun fichier à archiver.
+[2026-04-04T18:39:13.395Z] === PUSH START ===
+[2026-04-04T18:39:13.395Z] Projet : French Cityliner
+[2026-04-04T18:39:13.396Z] Version : "Sauvegarde automatique"
+[2026-04-04T18:39:13.418Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T18:39:13.418Z] Total : 2125 fichier(s)
+[2026-04-04T18:39:13.419Z] [1/2] Création de l'archive
+[2026-04-04T18:39:48.787Z] Archive : 2026-04-04_20h39_Sauvegarde-automatique_French_Cityliner.zip (785747.1 Ko)
+[2026-04-04T18:39:48.788Z] [2/2] Transfert vers le VPS
+[2026-04-04T18:39:49.772Z] SSH établie.
+[2026-04-04T18:40:00.954Z] Transfert terminé.
+[2026-04-04T18:40:01.232Z] Métadonnées enregistrées.
+[2026-04-04T18:40:01.232Z] "Sauvegarde automatique" envoyée avec succès !
+[2026-04-04T18:40:01.232Z] === PUSH OK ===
+[2026-04-04T18:42:38.259Z] === PUSH START ===
+[2026-04-04T18:42:38.259Z] Projet : French Cityliner
+[2026-04-04T18:42:38.260Z] Version : "2.0.0-alpha.5"
+[2026-04-04T18:42:38.275Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T18:42:38.276Z] Total : 2125 fichier(s)
+[2026-04-04T18:42:38.277Z] [1/2] Création de l'archive
+[2026-04-04T18:43:13.475Z] Archive : 2026-04-04_20h42_200-alpha5_French_Cityliner.zip (785747.1 Ko)
+[2026-04-04T18:43:13.476Z] [2/2] Transfert vers le VPS
+[2026-04-04T18:43:14.473Z] SSH établie.
+[2026-04-04T18:43:25.710Z] Transfert terminé.
+[2026-04-04T18:43:25.986Z] Métadonnées enregistrées.
+[2026-04-04T18:43:25.987Z] "2.0.0-alpha.5" envoyée avec succès !
+[2026-04-04T18:43:25.987Z] === PUSH OK ===
+[2026-04-04T18:48:50.080Z] === PUSH START ===
+[2026-04-04T18:48:50.080Z] Projet : French Cityliner
+[2026-04-04T18:48:50.081Z] Version : "2.0.0-alpha.6"
+[2026-04-04T18:48:50.101Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T18:48:50.102Z] Total : 2125 fichier(s)
+[2026-04-04T18:48:50.102Z] [1/2] Création de l'archive
+[2026-04-04T18:49:26.110Z] Archive : 2026-04-04_20h48_200-alpha6_French_Cityliner.zip (785747.1 Ko)
+[2026-04-04T18:49:26.110Z] [2/2] Transfert vers le VPS
+[2026-04-04T18:49:26.756Z] SSH établie.
+[2026-04-04T18:49:37.887Z] Transfert terminé.
+[2026-04-04T18:49:38.165Z] Métadonnées enregistrées.
+[2026-04-04T18:49:38.166Z] "2.0.0-alpha.6" envoyée avec succès !
+[2026-04-04T18:49:38.166Z] === PUSH OK ===
+[2026-04-04T18:50:54.242Z] === PUSH START ===
+[2026-04-04T18:50:54.242Z] Projet : French Cityliner
+[2026-04-04T18:50:54.242Z] Version : "2.0.0-alpha.7"
+[2026-04-04T18:50:54.258Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T18:50:54.259Z] Total : 2125 fichier(s)
+[2026-04-04T18:50:54.259Z] [1/2] Création de l'archive
+[2026-04-04T18:51:29.534Z] Archive : 2026-04-04_20h50_200-alpha7_French_Cityliner.zip (785747.1 Ko)
+[2026-04-04T18:51:29.535Z] [2/2] Transfert vers le VPS
+[2026-04-04T18:51:30.192Z] SSH établie.
+[2026-04-04T18:51:41.247Z] Transfert terminé.
+[2026-04-04T18:51:41.525Z] Métadonnées enregistrées.
+[2026-04-04T18:51:41.526Z] "2.0.0-alpha.7" envoyée avec succès !
+[2026-04-04T18:51:41.526Z] === PUSH OK ===
+[2026-04-04T18:56:21.977Z] === PUSH START ===
+[2026-04-04T18:56:21.978Z] Projet : French Cityliner
+[2026-04-04T18:56:21.978Z] Version : "2.0.0-alpha.8"
+[2026-04-04T18:56:21.998Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T18:56:21.998Z] Total : 2125 fichier(s)
+[2026-04-04T18:56:21.999Z] [1/2] Création de l'archive
+[2026-04-04T18:56:57.619Z] Archive : 2026-04-04_20h56_200-alpha8_French_Cityliner.zip (785747.1 Ko)
+[2026-04-04T18:56:57.619Z] [2/2] Transfert vers le VPS
+[2026-04-04T18:56:58.271Z] SSH établie.
+[2026-04-04T18:57:09.434Z] Transfert terminé.
+[2026-04-04T18:57:09.712Z] Métadonnées enregistrées.
+[2026-04-04T18:57:09.713Z] "2.0.0-alpha.8" envoyée avec succès !
+[2026-04-04T18:57:09.722Z] Manifest .cin écrit (2125 fichier(s)).
+[2026-04-04T18:57:09.722Z] === PUSH OK ===
+[2026-04-04T18:57:18.691Z] === PULL:INSTALL 2026-04-04_19h17_200-alpha4_French_Cityliner.zip ===
+[2026-04-04T18:57:18.691Z] [1/3] Connexion au VPS
+[2026-04-04T18:57:19.695Z] SSH établie.
+[2026-04-04T18:57:19.976Z] Fichier : 2026-04-04_19h17_200-alpha4_French_Cityliner.zip (787484.7 Ko)
+[2026-04-04T18:57:19.977Z] [2/3] Téléchargement de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip
+[2026-04-04T18:57:31.799Z] Téléchargement terminé.
+[2026-04-04T18:57:31.799Z] [3/3] Extraction et déploiement
+[2026-04-04T18:57:48.967Z] Manifest .cin écrit (2125 fichier(s)).
+[2026-04-04T18:57:48.968Z] Déployé : 2125 fichier(s)
+[2026-04-04T18:57:48.968Z] Installation de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip terminée !
+[2026-04-04T18:57:48.968Z] === PULL:INSTALL OK ===
+[2026-04-04T22:18:58.485Z] === PUSH START ===
+[2026-04-04T22:18:58.485Z] Projet : French Cityliner
+[2026-04-04T22:18:58.486Z] Version : "2.0.0-alpha.5"
+[2026-04-04T22:18:58.511Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T22:18:58.512Z]   [fonts] 2_HH109_HVV.oft + 2 image(s)
+[2026-04-04T22:18:58.512Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T22:18:58.512Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T22:18:58.513Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T22:18:58.513Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T22:18:58.514Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T22:18:58.514Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T22:18:58.515Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T22:18:58.515Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T22:18:58.515Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T22:18:58.516Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T22:18:58.516Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T22:18:58.517Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T22:18:58.517Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T22:18:58.517Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T22:18:58.518Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T22:18:58.518Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T22:18:58.519Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T22:18:58.519Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T22:18:58.520Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T22:18:58.520Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T22:18:58.520Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T22:18:58.521Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T22:18:58.521Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T22:18:58.521Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T22:18:58.522Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T22:18:58.522Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T22:18:58.523Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T22:18:58.523Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T22:18:58.524Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T22:18:58.524Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T22:18:58.524Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T22:18:58.525Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T22:18:58.525Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T22:18:58.526Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T22:18:58.526Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T22:18:58.526Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T22:18:58.527Z] Total : 2238 fichier(s)
+[2026-04-04T22:18:58.527Z] [1/2] Création de l'archive
+[2026-04-04T22:19:42.776Z] Archive : 2026-04-05_00h18_200-alpha5_French_Cityliner.zip (787432.5 Ko)
+[2026-04-04T22:19:42.776Z] [2/2] Transfert vers le VPS
+[2026-04-04T22:19:44.167Z] SSH établie.
+[2026-04-04T22:19:55.326Z] Transfert terminé.
+[2026-04-04T22:19:55.605Z] Métadonnées enregistrées.
+[2026-04-04T22:19:55.606Z] "2.0.0-alpha.5" envoyée avec succès !
+[2026-04-04T22:19:55.611Z] Manifest .cin écrit (2238 fichier(s)).
+[2026-04-04T22:19:55.611Z] === PUSH OK ===
+[2026-04-04T22:24:00.782Z] === PUSH START ===
+[2026-04-04T22:24:00.783Z] Projet : French Cityliner
+[2026-04-04T22:24:00.784Z] Version : "Version test"
+[2026-04-04T22:24:00.807Z]   [vehicles] 2125 fichier(s)
+[2026-04-04T22:24:00.807Z]   [fonts] 2_HH109_HVV.oft + 2 image(s)
+[2026-04-04T22:24:00.808Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-04T22:24:00.808Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-04T22:24:00.808Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-04T22:24:00.809Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-04T22:24:00.809Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-04T22:24:00.810Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-04T22:24:00.810Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-04T22:24:00.811Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-04T22:24:00.811Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-04T22:24:00.812Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-04T22:24:00.812Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-04T22:24:00.813Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-04T22:24:00.813Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-04T22:24:00.813Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-04T22:24:00.814Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-04T22:24:00.814Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-04T22:24:00.814Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-04T22:24:00.815Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-04T22:24:00.815Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-04T22:24:00.816Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-04T22:24:00.816Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-04T22:24:00.816Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-04T22:24:00.817Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-04T22:24:00.817Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-04T22:24:00.817Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-04T22:24:00.818Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-04T22:24:00.818Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-04T22:24:00.818Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-04T22:24:00.819Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-04T22:24:00.819Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-04T22:24:00.820Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-04T22:24:00.820Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-04T22:24:00.821Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-04T22:24:00.821Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-04T22:24:00.822Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-04T22:24:00.822Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-04T22:24:00.822Z] Total : 2238 fichier(s)
+[2026-04-04T22:24:00.823Z] [1/2] Création de l'archive
+[2026-04-04T22:24:36.211Z] Archive : 2026-04-05_00h24_Version-test_French_Cityliner.zip (787432.5 Ko)
+[2026-04-04T22:24:36.211Z] [2/2] Transfert vers le VPS
+[2026-04-04T22:24:37.217Z] SSH établie.
+[2026-04-04T22:24:48.365Z] Transfert terminé.
+[2026-04-04T22:24:48.641Z] Métadonnées enregistrées.
+[2026-04-04T22:24:48.642Z] "Version test" envoyée avec succès !
+[2026-04-04T22:24:48.647Z] Manifest .cin écrit (2238 fichier(s)).
+[2026-04-04T22:24:48.647Z] === PUSH OK ===
+[2026-04-04T22:42:02.245Z] === PULL:INSTALL 2026-04-05_00h18_200-alpha5_French_Cityliner.zip ===
+[2026-04-04T22:42:02.245Z] [1/3] Connexion au VPS
+[2026-04-04T22:42:02.900Z] SSH établie.
+[2026-04-04T22:42:03.181Z] Fichier : 2026-04-05_00h18_200-alpha5_French_Cityliner.zip (787432.5 Ko)
+[2026-04-04T22:42:03.182Z] [2/3] Téléchargement de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip
+[2026-04-04T22:42:14.970Z] Téléchargement terminé.
+[2026-04-04T22:42:14.971Z] [3/3] Extraction et déploiement
+[2026-04-04T22:42:31.652Z] Manifest .cin écrit (2198 fichier(s)).
+[2026-04-04T22:42:31.653Z] Déployé : 2198 fichier(s)
+[2026-04-04T22:42:31.653Z] Installation de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip terminée !
+[2026-04-04T22:42:31.653Z] === PULL:INSTALL OK ===
+[2026-04-04T22:42:46.909Z] === PULL:INSTALL 2026-04-05_00h24_Version-test_French_Cityliner.zip ===
+[2026-04-04T22:42:46.910Z] [1/3] Connexion au VPS
+[2026-04-04T22:42:47.564Z] SSH établie.
+[2026-04-04T22:42:47.844Z] Fichier : 2026-04-05_00h24_Version-test_French_Cityliner.zip (787432.5 Ko)
+[2026-04-04T22:42:47.844Z] [2/3] Téléchargement de 2026-04-05_00h24_Version-test_French_Cityliner.zip
+[2026-04-04T22:42:59.669Z] Téléchargement terminé.
+[2026-04-04T22:42:59.669Z] [3/3] Extraction et déploiement
+[2026-04-04T22:43:16.077Z] Manifest .cin écrit (2198 fichier(s)).
+[2026-04-04T22:43:16.077Z] Déployé : 2198 fichier(s)
+[2026-04-04T22:43:16.078Z] Installation de 2026-04-05_00h24_Version-test_French_Cityliner.zip terminée !
+[2026-04-04T22:43:16.078Z] === PULL:INSTALL OK ===
+[2026-04-04T22:52:48.540Z] === PULL:INSTALL 2026-04-05_00h18_200-alpha5_French_Cityliner.zip ===
+[2026-04-04T22:52:48.541Z] [1/3] Connexion au VPS
+[2026-04-04T22:52:49.178Z] SSH établie.
+[2026-04-04T22:52:49.457Z] Fichier : 2026-04-05_00h18_200-alpha5_French_Cityliner.zip (787432.5 Ko)
+[2026-04-04T22:52:49.457Z] [2/3] Téléchargement de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip
+[2026-04-04T22:53:01.271Z] Téléchargement terminé.
+[2026-04-04T22:53:01.272Z] [3/3] Extraction et déploiement
+[2026-04-04T22:53:18.027Z] Manifest .cin écrit (2198 fichier(s)).
+[2026-04-04T22:53:18.027Z] Déployé : 2198 fichier(s)
+[2026-04-04T22:53:18.028Z] Installation de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip terminée !
+[2026-04-04T22:53:18.028Z] === PULL:INSTALL OK ===
+[2026-04-04T23:44:58.141Z] === PULL:INSTALL 2026-04-05_00h18_200-alpha5_French_Cityliner.zip ===
+[2026-04-04T23:44:58.142Z] [1/3] Connexion au VPS
+[2026-04-04T23:44:58.789Z] SSH établie.
+[2026-04-04T23:44:59.068Z] Fichier : 2026-04-05_00h18_200-alpha5_French_Cityliner.zip (787432.5 Ko)
+[2026-04-04T23:44:59.069Z] [2/3] Téléchargement de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip
+[2026-04-04T23:45:10.963Z] Téléchargement terminé.
+[2026-04-04T23:45:10.964Z] [3/3] Extraction et déploiement
+[2026-04-04T23:45:27.926Z] Manifest .cin écrit (2198 fichier(s)).
+[2026-04-04T23:45:27.927Z] Déployé : 2198 fichier(s)
+[2026-04-04T23:45:27.927Z] Installation de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip terminée !
+[2026-04-04T23:45:27.927Z] === PULL:INSTALL OK ===
+[2026-04-05T00:19:10.073Z] === PULL:INSTALL 2026-04-04_19h17_200-alpha4_French_Cityliner.zip ===
+[2026-04-05T00:19:10.073Z] [1/3] Connexion au VPS
+[2026-04-05T00:19:10.715Z] SSH établie.
+[2026-04-05T00:19:10.996Z] Fichier : 2026-04-04_19h17_200-alpha4_French_Cityliner.zip (787484.7 Ko)
+[2026-04-05T00:19:10.996Z] [2/3] Téléchargement de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip
+[2026-04-05T00:19:22.756Z] Téléchargement terminé.
+[2026-04-05T00:19:22.756Z] [3/3] Extraction et déploiement
+[2026-04-05T00:19:39.895Z] Manifest .cin écrit (2241 fichier(s)).
+[2026-04-05T00:19:39.895Z] Déployé : 2241 fichier(s)
+[2026-04-05T00:19:39.895Z] Installation de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip terminée !
+[2026-04-05T00:19:39.896Z] === PULL:INSTALL OK ===
+[2026-04-05T00:20:07.145Z] Désinstallation French Cityliner : 2241 fichier(s) supprimé(s)
+[2026-04-05T00:20:13.596Z] === PULL:INSTALL 2026-04-04_19h17_200-alpha4_French_Cityliner.zip ===
+[2026-04-05T00:20:13.597Z] [1/3] Connexion au VPS
+[2026-04-05T00:20:14.256Z] SSH établie.
+[2026-04-05T00:20:14.536Z] Fichier : 2026-04-04_19h17_200-alpha4_French_Cityliner.zip (787484.7 Ko)
+[2026-04-05T00:20:14.537Z] [2/3] Téléchargement de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip
+[2026-04-05T00:20:26.378Z] Téléchargement terminé.
+[2026-04-05T00:20:26.379Z] [3/3] Extraction et déploiement
+[2026-04-05T00:20:42.830Z] Manifest .cin écrit (2241 fichier(s)).
+[2026-04-05T00:20:42.830Z] Déployé : 2241 fichier(s)
+[2026-04-05T00:20:42.830Z] Installation de 2026-04-04_19h17_200-alpha4_French_Cityliner.zip terminée !
+[2026-04-05T00:20:42.830Z] === PULL:INSTALL OK ===
+[2026-04-05T00:21:24.707Z] === PULL:INSTALL 2026-04-05_00h18_200-alpha5_French_Cityliner.zip ===
+[2026-04-05T00:21:24.708Z] [1/3] Connexion au VPS
+[2026-04-05T00:21:25.370Z] SSH établie.
+[2026-04-05T00:21:25.652Z] Fichier : 2026-04-05_00h18_200-alpha5_French_Cityliner.zip (787432.5 Ko)
+[2026-04-05T00:21:25.652Z] [2/3] Téléchargement de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip
+[2026-04-05T00:21:37.494Z] Téléchargement terminé.
+[2026-04-05T00:21:37.495Z] [3/3] Extraction et déploiement
+[2026-04-05T00:21:55.297Z] Manifest .cin écrit (2198 fichier(s)).
+[2026-04-05T00:21:55.297Z] Déployé : 2198 fichier(s)
+[2026-04-05T00:21:55.297Z] Installation de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip terminée !
+[2026-04-05T00:21:55.301Z] === PULL:INSTALL OK ===
+[2026-04-05T22:33:53.704Z] === PUSH START ===
+[2026-04-05T22:33:53.705Z] Projet : French Cityliner
+[2026-04-05T22:33:53.706Z] Version : "2.0.0-test.1"
+[2026-04-05T22:33:53.770Z]   [vehicles] 2125 fichier(s)
+[2026-04-05T22:33:53.771Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-05T22:33:53.772Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-05T22:33:53.772Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-05T22:33:53.773Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-05T22:33:53.773Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-05T22:33:53.774Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-05T22:33:53.774Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-05T22:33:53.775Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-05T22:33:53.775Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-05T22:33:53.776Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-05T22:33:53.776Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-05T22:33:53.777Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-05T22:33:53.777Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-05T22:33:53.778Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-05T22:33:53.778Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-05T22:33:53.778Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-05T22:33:53.779Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-05T22:33:53.779Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-05T22:33:53.780Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-05T22:33:53.780Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-05T22:33:53.780Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-05T22:33:53.781Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-05T22:33:53.781Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-05T22:33:53.782Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-05T22:33:53.782Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-05T22:33:53.782Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-05T22:33:53.783Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-05T22:33:53.783Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-05T22:33:53.784Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-05T22:33:53.784Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-05T22:33:53.784Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-05T22:33:53.785Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-05T22:33:53.785Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-05T22:33:53.785Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-05T22:33:53.786Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-05T22:33:53.786Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-05T22:33:53.786Z] Total : 2235 fichier(s)
+[2026-04-05T22:33:53.786Z] [1/2] Création de l'archive
+[2026-04-05T22:34:39.209Z] Archive : 2026-04-06_00h33_200-test1_French_Cityliner.zip (787417.5 Ko)
+[2026-04-05T22:34:39.209Z] [2/2] Transfert vers le VPS
+[2026-04-05T22:34:40.403Z] SSH établie.
+[2026-04-05T22:34:51.587Z] Transfert terminé.
+[2026-04-05T22:34:51.868Z] Métadonnées enregistrées.
+[2026-04-05T22:34:51.869Z] "2.0.0-test.1" envoyée avec succès !
+[2026-04-05T22:34:51.876Z] Manifest .cin écrit (2235 fichier(s)).
+[2026-04-05T22:34:51.876Z] === PUSH OK ===
+[2026-04-05T23:41:34.747Z] === PULL:INSTALL 2026-04-05_00h18_200-alpha5_French_Cityliner.zip ===
+[2026-04-05T23:41:34.748Z] [1/3] Connexion au VPS
+[2026-04-05T23:41:35.395Z] SSH établie.
+[2026-04-05T23:41:35.675Z] Fichier : 2026-04-05_00h18_200-alpha5_French_Cityliner.zip (787432.5 Ko)
+[2026-04-05T23:41:35.676Z] [2/3] Téléchargement de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip
+[2026-04-05T23:41:47.548Z] Téléchargement terminé.
+[2026-04-05T23:41:47.549Z] [3/3] Extraction et déploiement
+[2026-04-05T23:42:05.521Z] Manifest .cin écrit (2198 fichier(s)).
+[2026-04-05T23:42:05.522Z] Déployé : 2198 fichier(s)
+[2026-04-05T23:42:05.522Z] Installation de 2026-04-05_00h18_200-alpha5_French_Cityliner.zip terminée !
+[2026-04-05T23:42:05.522Z] === PULL:INSTALL OK ===
+[2026-04-05T23:42:15.729Z] === PUSH START ===
+[2026-04-05T23:42:15.730Z] Projet : French Cityliner
+[2026-04-05T23:42:15.730Z] Version : "2.0.0-alpha.5"
+[2026-04-05T23:42:15.748Z]   [vehicles] 2125 fichier(s)
+[2026-04-05T23:42:15.749Z]   [fonts] ADIC_Podium1.oft + 2 image(s)
+[2026-04-05T23:42:15.749Z]   [fonts] ADIC-lcd.oft + 2 image(s)
+[2026-04-05T23:42:15.750Z]   [fonts] Lumiplan_0_8x3_100.oft + 2 image(s)
+[2026-04-05T23:42:15.751Z]   [fonts] Lumiplan_1_8x4_101.oft + 2 image(s)
+[2026-04-05T23:42:15.751Z]   [fonts] Lumiplan_2_8x5_102.oft + 2 image(s)
+[2026-04-05T23:42:15.752Z]   [fonts] Lumiplan_2_8x5_102_LED.oft + 2 image(s)
+[2026-04-05T23:42:15.752Z]   [fonts] Lumiplan_3_8x7_103.oft + 2 image(s)
+[2026-04-05T23:42:15.753Z]   [fonts] Lumiplan_3_8x7_103_inverted.oft + 2 image(s)
+[2026-04-05T23:42:15.753Z]   [fonts] Lumiplan_6_10x7_110.oft + 2 image(s)
+[2026-04-05T23:42:15.753Z]   [fonts] Lumiplan_9_16x5_6.oft + 2 image(s)
+[2026-04-05T23:42:15.754Z]   [fonts] Lumiplan_9_16x5_112.oft + 2 image(s)
+[2026-04-05T23:42:15.754Z]   [fonts] Lumiplan_a_10x3_104.oft + 2 image(s)
+[2026-04-05T23:42:15.755Z]   [fonts] Lumiplan_A_16x7_113.oft + 2 image(s)
+[2026-04-05T23:42:15.755Z]   [fonts] Lumiplan_b_10x4_105.oft + 2 image(s)
+[2026-04-05T23:42:15.756Z]   [fonts] Lumiplan_B_16x12_119.oft + 2 image(s)
+[2026-04-05T23:42:15.757Z]   [fonts] Lumiplan_c_10x5_106.oft + 2 image(s)
+[2026-04-05T23:42:15.757Z]   [fonts] Lumiplan_C_19x10_9.oft + 2 image(s)
+[2026-04-05T23:42:15.758Z]   [fonts] Lumiplan_d_10x7_107.oft + 2 image(s)
+[2026-04-05T23:42:15.758Z]   [fonts] Lumiplan_e_10x4_108.oft + 2 image(s)
+[2026-04-05T23:42:15.758Z]   [fonts] Lumiplan_f_10x5_109.oft + 2 image(s)
+[2026-04-05T23:42:15.759Z]   [fonts] Lumiplan_G_24x12_129.oft + 2 image(s)
+[2026-04-05T23:42:15.759Z]   [fonts] Lumiplan_j_16x6_116.oft + 2 image(s)
+[2026-04-05T23:42:15.760Z]   [fonts] Lumiplan_k_16x8_117.oft + 2 image(s)
+[2026-04-05T23:42:15.760Z]   [fonts] Lumiplan_l_16x10_118.oft + 2 image(s)
+[2026-04-05T23:42:15.760Z]   [fonts] Lumiplan_m_20x7_120.oft + 2 image(s)
+[2026-04-05T23:42:15.761Z]   [fonts] Lumiplan_n_20x9_121.oft + 2 image(s)
+[2026-04-05T23:42:15.761Z]   [fonts] Lumiplan_r_20x10_125.oft + 2 image(s)
+[2026-04-05T23:42:15.762Z]   [fonts] mineo_arial_bold.oft + 2 image(s)
+[2026-04-05T23:42:15.762Z]   [fonts] mineo_arial_regular.oft + 2 image(s)
+[2026-04-05T23:42:15.763Z]   [fonts] NEROSY_license_SNVDREG.oft + 2 image(s)
+[2026-04-05T23:42:15.763Z]   [fonts] NEROSY_Maxol_7x5LED.oft + 2 image(s)
+[2026-04-05T23:42:15.763Z]   [fonts] NEROSY_Maxol_8x5LED.oft + 2 image(s)
+[2026-04-05T23:42:15.764Z]   [fonts] NEROSY_Segoe_UI_Bold.oft + 2 image(s)
+[2026-04-05T23:42:15.764Z]   [fonts] NEROSY_Segoe_UI_Regular.oft + 2 image(s)
+[2026-04-05T23:42:15.765Z]   [fonts] NEROSY_Thales_15x9.oft + 2 image(s)
+[2026-04-05T23:42:15.765Z]   [fonts] NEROSY_VDV_icons.oft + 4 image(s)
+[2026-04-05T23:42:15.765Z] Total : 2235 fichier(s)
+[2026-04-05T23:42:15.765Z] [1/2] Création de l'archive
+[2026-04-05T23:42:52.039Z] Archive : 2026-04-06_01h42_200-alpha5_French_Cityliner.zip (787417.5 Ko)
+[2026-04-05T23:42:52.039Z] [2/2] Transfert vers le VPS
+[2026-04-05T23:42:53.068Z] SSH établie.
+[2026-04-05T23:43:04.256Z] Transfert terminé.
+[2026-04-05T23:43:04.535Z] Métadonnées enregistrées.
+[2026-04-05T23:43:04.537Z] "2.0.0-alpha.5" envoyée avec succès !
+[2026-04-05T23:43:04.544Z] Manifest .cin écrit (2235 fichier(s)).
+[2026-04-05T23:43:04.545Z] === PUSH OK ===
+[2026-04-05T23:44:00.618Z] Désinstallation French Cityliner : 2196 fichier(s) supprimé(s)
+[2026-04-05T23:46:16.974Z] === PUSH START ===
+[2026-04-05T23:46:16.974Z] Projet : French Cityliner
+[2026-04-05T23:46:16.975Z] Version : "26.4.0-alpha.1"
+[2026-04-05T23:46:16.984Z]   [vehicles] 0 fichier(s)
+[2026-04-05T23:46:16.984Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\ADIC_Podium1.oft
+[2026-04-05T23:46:16.985Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\ADIC-lcd.oft
+[2026-04-05T23:46:16.985Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_0_8x3_100.oft
+[2026-04-05T23:46:16.985Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_1_8x4_101.oft
+[2026-04-05T23:46:16.985Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_2_8x5_102.oft
+[2026-04-05T23:46:16.986Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_2_8x5_102_LED.oft
+[2026-04-05T23:46:16.986Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_3_8x7_103.oft
+[2026-04-05T23:46:16.986Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_3_8x7_103_inverted.oft
+[2026-04-05T23:46:16.986Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_6_10x7_110.oft
+[2026-04-05T23:46:16.986Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_9_16x5_6.oft
+[2026-04-05T23:46:16.986Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_9_16x5_112.oft
+[2026-04-05T23:46:16.987Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_a_10x3_104.oft
+[2026-04-05T23:46:16.987Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_A_16x7_113.oft
+[2026-04-05T23:46:16.987Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_b_10x4_105.oft
+[2026-04-05T23:46:16.987Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_B_16x12_119.oft
+[2026-04-05T23:46:16.987Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_c_10x5_106.oft
+[2026-04-05T23:46:16.988Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_C_19x10_9.oft
+[2026-04-05T23:46:16.988Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_d_10x7_107.oft
+[2026-04-05T23:46:16.988Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_e_10x4_108.oft
+[2026-04-05T23:46:16.988Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_f_10x5_109.oft
+[2026-04-05T23:46:16.988Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_G_24x12_129.oft
+[2026-04-05T23:46:16.988Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_j_16x6_116.oft
+[2026-04-05T23:46:16.989Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_k_16x8_117.oft
+[2026-04-05T23:46:16.989Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_l_16x10_118.oft
+[2026-04-05T23:46:16.989Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_m_20x7_120.oft
+[2026-04-05T23:46:16.989Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_n_20x9_121.oft
+[2026-04-05T23:46:16.990Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_r_20x10_125.oft
+[2026-04-05T23:46:16.990Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\mineo_arial_bold.oft
+[2026-04-05T23:46:16.990Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\mineo_arial_regular.oft
+[2026-04-05T23:46:16.990Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_license_SNVDREG.oft
+[2026-04-05T23:46:16.991Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Maxol_7x5LED.oft
+[2026-04-05T23:46:16.991Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Maxol_8x5LED.oft
+[2026-04-05T23:46:16.991Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Segoe_UI_Bold.oft
+[2026-04-05T23:46:16.991Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Segoe_UI_Regular.oft
+[2026-04-05T23:46:16.992Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Thales_15x9.oft
+[2026-04-05T23:46:16.992Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_VDV_icons.oft
+[2026-04-05T23:46:16.992Z] Aucun fichier à archiver.
+[2026-04-05T23:46:42.569Z] === PUSH START ===
+[2026-04-05T23:46:42.569Z] Projet : French Cityliner
+[2026-04-05T23:46:42.570Z] Version : "26.4.0-alpha.1"
+[2026-04-05T23:46:42.577Z]   [vehicles] 0 fichier(s)
+[2026-04-05T23:46:42.578Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\ADIC_Podium1.oft
+[2026-04-05T23:46:42.578Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\ADIC-lcd.oft
+[2026-04-05T23:46:42.578Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_0_8x3_100.oft
+[2026-04-05T23:46:42.578Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_1_8x4_101.oft
+[2026-04-05T23:46:42.578Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_2_8x5_102.oft
+[2026-04-05T23:46:42.579Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_2_8x5_102_LED.oft
+[2026-04-05T23:46:42.579Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_3_8x7_103.oft
+[2026-04-05T23:46:42.579Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_3_8x7_103_inverted.oft
+[2026-04-05T23:46:42.579Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_6_10x7_110.oft
+[2026-04-05T23:46:42.579Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_9_16x5_6.oft
+[2026-04-05T23:46:42.579Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_9_16x5_112.oft
+[2026-04-05T23:46:42.579Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_a_10x3_104.oft
+[2026-04-05T23:46:42.579Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_A_16x7_113.oft
+[2026-04-05T23:46:42.580Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_b_10x4_105.oft
+[2026-04-05T23:46:42.580Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_B_16x12_119.oft
+[2026-04-05T23:46:42.580Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_c_10x5_106.oft
+[2026-04-05T23:46:42.580Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_C_19x10_9.oft
+[2026-04-05T23:46:42.580Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_d_10x7_107.oft
+[2026-04-05T23:46:42.580Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_e_10x4_108.oft
+[2026-04-05T23:46:42.580Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_f_10x5_109.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_G_24x12_129.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_j_16x6_116.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_k_16x8_117.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_l_16x10_118.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_m_20x7_120.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_n_20x9_121.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\Lumiplan_r_20x10_125.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\mineo_arial_bold.oft
+[2026-04-05T23:46:42.581Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\mineo_arial_regular.oft
+[2026-04-05T23:46:42.582Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_license_SNVDREG.oft
+[2026-04-05T23:46:42.582Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Maxol_7x5LED.oft
+[2026-04-05T23:46:42.582Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Maxol_8x5LED.oft
+[2026-04-05T23:46:42.582Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Segoe_UI_Bold.oft
+[2026-04-05T23:46:42.582Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Segoe_UI_Regular.oft
+[2026-04-05T23:46:42.582Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_Thales_15x9.oft
+[2026-04-05T23:46:42.582Z]   OFT introuvable : D:\SteamLibrary\steamapps\common\OMSI 2\Fonts\NEROSY_VDV_icons.oft
+[2026-04-05T23:46:42.582Z] Aucun fichier à archiver.
+[2026-04-05T23:47:40.452Z] === PUSH START ===
+[2026-04-05T23:47:40.453Z] Projet : French Cityliner
+[2026-04-05T23:47:40.453Z] Version : "26.4.0-alpha.1"
+[2026-04-05T23:47:40.460Z]   [vehicles] 0 fichier(s)
+[2026-04-05T23:47:40.460Z] Aucun fichier à archiver.
+[2026-04-05T23:48:51.693Z] === PUSH START ===
+[2026-04-05T23:48:51.694Z] Projet : French Cityliner
+[2026-04-05T23:48:51.694Z] Version : "26.4.0-alpha.1"
+[2026-04-05T23:48:51.701Z]   [vehicles] 0 fichier(s)
+[2026-04-05T23:48:51.701Z] Aucun fichier à archiver.
+[2026-04-05T23:49:23.330Z] === PUSH START ===
+[2026-04-05T23:49:23.330Z] Projet : French Cityliner
+[2026-04-05T23:49:23.331Z] Version : "26.4.0-alpha.1"
+[2026-04-05T23:49:23.341Z]   [vehicles] 0 fichier(s)
+[2026-04-05T23:49:23.341Z] Aucun fichier à archiver.
+[2026-04-05T23:51:04.811Z] === PULL:INSTALL 2026-04-06_01h42_200-alpha5_French_Cityliner.zip ===
+[2026-04-05T23:51:04.812Z] [1/3] Connexion au VPS
+[2026-04-05T23:51:05.485Z] SSH établie.
+[2026-04-05T23:51:05.765Z] Fichier : 2026-04-06_01h42_200-alpha5_French_Cityliner.zip (787417.5 Ko)
+[2026-04-05T23:51:05.766Z] [2/3] Téléchargement de 2026-04-06_01h42_200-alpha5_French_Cityliner.zip
+[2026-04-05T23:51:17.627Z] Téléchargement terminé.
+[2026-04-05T23:51:17.627Z] [3/3] Extraction et déploiement
+[2026-04-05T23:51:36.626Z] Manifest .cin écrit (2125 fichier(s)).
+[2026-04-05T23:51:36.626Z] Déployé : 2125 fichier(s)
+[2026-04-05T23:51:36.626Z] Installation de 2026-04-06_01h42_200-alpha5_French_Cityliner.zip terminée !
+[2026-04-05T23:51:36.627Z] === PULL:INSTALL OK ===
+[2026-04-05T23:54:28.531Z] === PUSH START ===
+[2026-04-05T23:54:28.532Z] Projet : French Cityliner
+[2026-04-05T23:54:28.532Z] Version : "26.4.0"
+[2026-04-05T23:54:28.555Z]   [vehicles] 2125 fichier(s) → D:\SteamLibrary\steamapps\common\OMSI 2\Vehicles\AA-FR_BusBundle
+[2026-04-05T23:54:28.555Z]   [addons] chemin non configuré
+[2026-04-05T23:54:28.556Z]   [sounds] chemin non configuré
+[2026-04-05T23:54:28.556Z] Total : 2125 fichier(s)
+[2026-04-05T23:54:28.556Z] [1/2] Création de l'archive
+[2026-04-05T23:55:05.109Z] Archive : 2026-04-06_01h54_2640_French_Cityliner.zip (785747.1 Ko)
+[2026-04-05T23:55:05.109Z] [2/2] Transfert vers le VPS
+[2026-04-05T23:55:06.152Z] SSH établie.
+[2026-04-05T23:55:17.322Z] Transfert terminé.
+[2026-04-05T23:55:17.601Z] Métadonnées enregistrées.
+[2026-04-05T23:55:17.602Z] "26.4.0" envoyée avec succès !
+[2026-04-05T23:55:17.608Z] Manifest .cin écrit (2125 fichier(s)).
+[2026-04-05T23:55:17.608Z] === PUSH OK ===
+[2026-04-06T00:03:18.363Z] === PUSH START ===
+[2026-04-06T00:03:18.363Z] Projet : French Cityliner
+[2026-04-06T00:03:18.363Z] Version : "Master"
+[2026-04-06T00:03:18.381Z]   [vehicles] 2125 fichier(s) → D:\SteamLibrary\steamapps\common\OMSI 2\Vehicles\AA-FR_BusBundle
+[2026-04-06T00:03:18.381Z]   [addons] chemin non configuré
+[2026-04-06T00:03:18.382Z]   [sounds] chemin non configuré
+[2026-04-06T00:03:18.382Z] Total : 2125 fichier(s)
+[2026-04-06T00:03:18.382Z] [1/2] Création de l'archive
+[2026-04-06T00:03:54.448Z] Archive : 2026-04-06_02h03_Master_French_Cityliner.zip (785747.1 Ko)
+[2026-04-06T00:03:54.449Z] [2/2] Transfert vers le VPS
+[2026-04-06T00:03:55.109Z] SSH établie.
+[2026-04-06T00:04:06.258Z] Transfert terminé.
+[2026-04-06T00:04:06.537Z] Métadonnées enregistrées.
+[2026-04-06T00:04:06.537Z] "Master" envoyée avec succès !
+[2026-04-06T00:04:06.543Z] Manifest .cin écrit (2125 fichier(s)).
+[2026-04-06T00:04:06.543Z] === PUSH OK ===
+[2026-04-06T00:48:56.549Z] === PUSH START ===
+[2026-04-06T00:48:56.549Z] Projet : French Cityliner
+[2026-04-06T00:48:56.550Z] Version : "26.4.0"
+[2026-04-06T00:48:56.571Z]   [vehicles] 2125 fichier(s) → D:\SteamLibrary\steamapps\common\OMSI 2\Vehicles\AA-FR_BusBundle
+[2026-04-06T00:48:56.572Z]   [addons] chemin non configuré
+[2026-04-06T00:48:56.572Z]   [sounds] chemin non configuré
+[2026-04-06T00:48:56.572Z] Total : 2125 fichier(s)
+[2026-04-06T00:48:56.572Z] [1/2] Création de l'archive
+[2026-04-06T00:49:32.470Z] Archive : 2026-04-06_02h48_2640_French_Cityliner.zip (785747.1 Ko)
+[2026-04-06T00:49:32.470Z] [2/2] Transfert vers le VPS
+[2026-04-06T00:49:33.504Z] SSH établie.
+[2026-04-06T00:49:44.642Z] Transfert terminé.
+[2026-04-06T00:49:44.924Z] Métadonnées enregistrées.
+[2026-04-06T00:49:44.925Z] "26.4.0" envoyée avec succès !
+[2026-04-06T00:49:44.934Z] Manifest .cin écrit (2125 fichier(s)).
+[2026-04-06T00:49:44.934Z] === PUSH OK ===
+[2026-04-06T01:21:54.178Z] === PUSH START ===
+[2026-04-06T01:21:54.179Z] Projet : French Cityliner
+[2026-04-06T01:21:54.179Z] Version : "26.4.1"
+[2026-04-06T01:21:54.202Z]   [vehicles] 2125 fichier(s) → D:\SteamLibrary\steamapps\common\OMSI 2\Vehicles\AA-FR_BusBundle
+[2026-04-06T01:21:54.202Z]   [addons] chemin non configuré
+[2026-04-06T01:21:54.203Z]   [sounds] chemin non configuré
+[2026-04-06T01:21:54.203Z] Total : 2125 fichier(s)
+[2026-04-06T01:21:54.203Z] [1/2] Création de l'archive
+[2026-04-06T01:22:30.925Z] Archive : 2026-04-06_03h21_2641_French_Cityliner.zip (785747.1 Ko)
+[2026-04-06T01:22:30.925Z] [2/2] Transfert vers le VPS
+[2026-04-06T01:22:31.582Z] SSH établie.
+[2026-04-06T01:22:42.637Z] Transfert terminé.
+[2026-04-06T01:22:42.918Z] Métadonnées enregistrées.
+[2026-04-06T01:22:42.919Z] "26.4.1" envoyée avec succès !
+[2026-04-06T01:22:42.925Z] Manifest .cin écrit (2125 fichier(s)).
+[2026-04-06T01:22:42.925Z] === PUSH OK ===
+[2026-04-06T01:35:57.903Z] === PUSH START ===
+[2026-04-06T01:35:57.904Z] Projet : French Cityliner
+[2026-04-06T01:35:57.904Z] Version : "26.4.0-alpha.1"
+[2026-04-06T01:35:57.923Z]   [vehicles] 2125 fichier(s) → D:\SteamLibrary\steamapps\common\OMSI 2\Vehicles\AA-FR_BusBundle
+[2026-04-06T01:35:57.924Z]   [addons] chemin non configuré
+[2026-04-06T01:35:57.924Z]   [sounds] chemin non configuré
+[2026-04-06T01:35:57.924Z] Total : 2125 fichier(s)
+[2026-04-06T01:35:57.924Z] [1/2] Création de l'archive
+[2026-04-06T01:36:37.884Z] Archive : 2026-04-06_03h35_2640-alpha1_French_Cityliner.zip (785747.1 Ko)
+[2026-04-06T01:36:37.885Z] [2/2] Transfert vers le VPS
+[2026-04-06T01:36:38.988Z] SSH établie.
+[2026-04-06T01:36:50.153Z] Transfert terminé.
+[2026-04-06T01:36:50.434Z] Métadonnées enregistrées.
+[2026-04-06T01:36:50.435Z] "26.4.0-alpha.1" envoyée avec succès !
+[2026-04-06T01:36:50.440Z] Manifest .cin écrit (2125 fichier(s)).
+[2026-04-06T01:36:50.440Z] === PUSH OK ===
