@@ -676,13 +676,24 @@ function CopyButton({ text }) {
   )
 }
 
-// ── Modale de progression O3D ──────────────────────────────────────────────
-function O3dProgressModal({ open, progress }) {
+// ── Modale de progression — Diagnostic complet ─────────────────────────────
+function DiagProgressModal({ open, progress }) {
+  const PHASE_ORDER  = ['collecting', 'scanning_meshes', 'scanning_cfg', 'scanning_ctc', 'scanning_bus']
+  const PHASE_LABELS = {
+    collecting:      'Collecte des fichiers…',
+    scanning_meshes: 'Analyse binaire des modèles 3D (.o3d)…',
+    scanning_cfg:    'Lecture des configurations model*.cfg…',
+    scanning_ctc:    'Lecture des fichiers CTC…',
+    scanning_bus:    'Lecture des fichiers .bus / .org…',
+  }
+
   const phase       = progress?.phase       ?? 'collecting'
   const current     = progress?.current     ?? 0
   const total       = progress?.total       ?? 0
   const currentFile = progress?.currentFile ?? ''
-  const pct         = total > 0 ? Math.round((current / total) * 100) : 0
+  const phaseIdx    = Math.max(0, PHASE_ORDER.indexOf(phase))
+  const phasePct    = total > 0 ? current / total : 0
+  const overallPct  = Math.min(99, Math.round(((phaseIdx + phasePct) / PHASE_ORDER.length) * 100))
 
   return (
     <Dialog
@@ -701,25 +712,24 @@ function O3dProgressModal({ open, progress }) {
       }}
     >
       <DialogTitle sx={{ fontSize: 15, fontWeight: 700, pb: 0.5 }}>
-        Analyse des modèles 3D
+        Analyse approfondie en cours…
       </DialogTitle>
       <DialogContent sx={{ pt: '12px !important' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
 
-          {/* Pourcentage centré */}
+          {/* Pourcentage global */}
           <div style={{
-            textAlign: 'center',
-            fontSize: 40, fontWeight: 800, letterSpacing: '-2px',
-            color: '#42a5f5', fontFamily: 'Inter, sans-serif',
-            lineHeight: 1,
+            textAlign: 'center', fontSize: 40, fontWeight: 800,
+            letterSpacing: '-2px', color: '#42a5f5',
+            fontFamily: 'Inter, sans-serif', lineHeight: 1,
           }}>
-            {total > 0 ? `${pct} %` : '—'}
+            {overallPct}&nbsp;%
           </div>
 
-          {/* Barre de progression */}
+          {/* Barre globale */}
           <LinearProgress
-            variant={total > 0 ? 'determinate' : 'indeterminate'}
-            value={pct}
+            variant="determinate"
+            value={overallPct}
             sx={{
               height: 7, borderRadius: 4,
               backgroundColor: 'rgba(255,255,255,0.07)',
@@ -727,51 +737,145 @@ function O3dProgressModal({ open, progress }) {
             }}
           />
 
-          {/* Fichier courant */}
-          <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', minHeight: 18 }}>
-            {phase === 'collecting'
-              ? 'Collecte des fichiers binaires .o3d…'
-              : (
-                <>
-                  {current} / {total} —{' '}
-                  <code style={{ fontFamily: 'monospace', color: 'var(--text-secondary)', fontSize: 11 }}>
-                    {currentFile}
-                  </code>
-                </>
+          {/* Étapes */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 2 }}>
+            {PHASE_ORDER.map((p, i) => {
+              const isActive = p === phase
+              const isDone   = i < phaseIdx
+              return (
+                <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+                  <span style={{
+                    width: 14, flexShrink: 0, textAlign: 'center', fontWeight: 700,
+                    color: isDone ? '#6ccb5f' : isActive ? '#42a5f5' : 'rgba(255,255,255,0.18)',
+                  }}>
+                    {isDone ? '✓' : isActive ? '›' : '·'}
+                  </span>
+                  <span style={{
+                    flex: 1,
+                    color: isDone ? '#6ccb5f' : isActive ? 'var(--text-primary)' : 'rgba(255,255,255,0.25)',
+                  }}>
+                    {PHASE_LABELS[p]}
+                  </span>
+                  {isActive && total > 0 && (
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>
+                      {current} / {total}
+                    </span>
+                  )}
+                </div>
               )
-            }
+            })}
           </div>
 
+          {/* Fichier courant */}
+          {currentFile && (
+            <div style={{
+              textAlign: 'center', fontSize: 11,
+              color: 'var(--text-muted)', fontFamily: 'monospace', minHeight: 16,
+            }}>
+              {currentFile}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
   )
 }
 
+// ── Ligne fichier orphelin ─────────────────────────────────────────────────
+function OrphanRow({ name, relativePath, size, onDelete }) {
+  function fmt(b) {
+    if (!b) return '—'
+    if (b < 1024)    return `${b} o`
+    if (b < 1048576) return `${(b / 1024).toFixed(1)} Ko`
+    return `${(b / 1048576).toFixed(1)} Mo`
+  }
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10,
+      padding: '6px 10px', borderRadius: 6, marginBottom: 4,
+      background: 'rgba(240,160,48,0.04)',
+      border: '1px solid rgba(240,160,48,0.14)',
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 12, fontFamily: 'monospace', color: 'var(--text-primary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {name}
+        </div>
+        {relativePath && (
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace', marginTop: 1 }}>
+            {relativePath}
+          </div>
+        )}
+      </div>
+      <span style={{ fontSize: 10, color: 'var(--text-muted)', flexShrink: 0 }}>{fmt(size)}</span>
+      <Button
+        size="small"
+        variant="outlined"
+        color="error"
+        onClick={onDelete}
+        sx={{
+          fontSize: 10, textTransform: 'none', py: 0.3, px: 1.2,
+          minWidth: 'auto', borderRadius: '5px', flexShrink: 0,
+          borderColor: 'rgba(252,61,57,0.4)',
+          '&:hover': { borderColor: '#fc3d39', background: 'rgba(252,61,57,0.07)' },
+        }}
+      >
+        Supprimer
+      </Button>
+    </div>
+  )
+}
+
 // ── Onglet Contrôle & Alertes ──────────────────────────────────────────────
-/**
- * scanProgress     : null = terminé | { phase, current, total, currentFile } = en cours
- * fontTotal        : null = pas encore scanné | 0 = aucun .cfg | N = scannés
- * o3dResults       : [{o3dName, o3dFile, textures:[{name,found}], hasMissing}]
- * o3dScanned       : le scan O3D a déjà tourné au moins une fois
- * o3dTotalMissing  : nombre total de textures manquantes
- * onScanO3d        : callback pour lancer le scan
- * canScan          : vehicles + omsiPath configurés
- */
-function TabAvertissements({ fontWarnings, scanProgress, fontTotal,
-                              o3dResults, o3dScanned, o3dTotalMissing,
-                              onScanO3d, canScan }) {
+function TabAvertissements({
+  fontWarnings, scanProgress, fontTotal,
+  diagResult, diagScanned,
+  onScanDiag, onDeleteFile, onDeleteAll,
+  canScan,
+}) {
   const isScanning = scanProgress !== null
   const isDone     = !isScanning && fontTotal !== null
+  const total      = scanProgress?.total   ?? fontTotal ?? 0
+  const current    = scanProgress?.current ?? 0
+  const pct        = total > 0 ? Math.round((current / total) * 100) : 0
 
-  const total   = scanProgress?.total ?? fontTotal ?? 0
-  const current = scanProgress?.current ?? 0
-  const pct     = total > 0 ? Math.round((current / total) * 100) : 0
+  const [confirmFile, setConfirmFile] = useState(null)   // { absPath, name } | null
+  const [cleanStep1,  setCleanStep1]  = useState(false)
+  const [cleanStep2,  setCleanStep2]  = useState(false)
+
+  const ACCORD_SX = {
+    background: 'rgba(255,255,255,0.025)',
+    border: '1px solid rgba(255,255,255,0.07)',
+    borderRadius: '8px !important',
+    '&:before': { display: 'none' },
+    boxShadow: 'none',
+    '&.Mui-expanded': { margin: '0 !important' },
+  }
+  const ACCORD_SUM_SX = {
+    minHeight: 40, px: 1.5,
+    '&.Mui-expanded': { minHeight: 40 },
+    '& .MuiAccordionSummary-content': { my: '8px', alignItems: 'center', gap: 1 },
+  }
+
+  const orphanMeshes    = diagResult?.orphanMeshes    || []
+  const orphanTextures  = diagResult?.orphanTextures  || []
+  const missingTextures = diagResult?.missingTextures || []
+  const hasOrphans      = orphanMeshes.length > 0 || orphanTextures.length > 0
+  const totalOrphanSize = [...orphanMeshes, ...orphanTextures].reduce((a, f) => a + (f.size || 0), 0)
+
+  function fmt(b) {
+    if (!b) return '—'
+    if (b < 1024)    return `${b} o`
+    if (b < 1048576) return `${(b / 1024).toFixed(1)} Ko`
+    return `${(b / 1048576).toFixed(1)} Mo`
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {/* ── Carte principale ──────────────────────────────────────────── */}
+      {/* ── BLOC FONTS ────────────────────────────────────────────────────── */}
       <div className="w11-card" style={{ marginBottom: 0 }}>
 
         {/* En-tête */}
@@ -904,35 +1008,38 @@ function TabAvertissements({ fontWarnings, scanProgress, fontTotal,
 
       </div>
 
-      {/* ── Bloc Modèles 3D ──────────────────────────────────────────────── */}
+      {/* ── BLOC ANALYSE MODÈLES & TEXTURES ──────────────────────────────── */}
       <div className="w11-card" style={{ marginBottom: 0 }}>
 
-        {/* En-tête */}
         <div className="w11-card-title" style={{ marginBottom: 10 }}>
           <DescriptionOutlinedIcon sx={{ fontSize: 14 }} />
           <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: 11 }}>
-            Analyse des Modèles 3D (Meshes &amp; Textures)
+            📦 Analyse des Modèles &amp; Textures
           </span>
-          {o3dScanned && o3dTotalMissing > 0 && (
-            <Tooltip title={`${o3dTotalMissing} texture(s) manquante(s)`} placement="top">
+          {diagScanned && missingTextures.length === 0 && !hasOrphans && (
+            <CheckCircleOutlinedIcon sx={{ fontSize: 15, color: '#6ccb5f', ml: 'auto' }} />
+          )}
+          {diagScanned && (missingTextures.length > 0 || hasOrphans) && (
+            <Tooltip title={`${missingTextures.length} manquante(s) · ${orphanMeshes.length + orphanTextures.length} orphelin(s)`}>
               <WarningAmberOutlinedIcon sx={{ fontSize: 15, color: '#f0a030', ml: 'auto' }} />
             </Tooltip>
           )}
-          {o3dScanned && o3dTotalMissing === 0 && (
-            <CheckCircleOutlinedIcon sx={{ fontSize: 15, color: '#6ccb5f', ml: 'auto' }} />
-          )}
         </div>
 
-        {/* État initial — bouton de lancement */}
-        {!o3dScanned && (
+        {/* État initial */}
+        {!diagScanned && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, lineHeight: 1.6 }}>
-              Scanne les fichiers <code style={{ fontFamily: 'monospace' }}>.o3d</code> du projet
-              et vérifie que chaque texture référencée est présente dans les dossiers
-              <code style={{ fontFamily: 'monospace' }}> Texture/</code>.
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.7 }}>
+              Analyse les binaires <code style={{ fontFamily: 'monospace' }}>.o3d</code>,
+              les configurations <code style={{ fontFamily: 'monospace' }}>model*.cfg</code>,
+              les <code style={{ fontFamily: 'monospace' }}>.ctc</code> et{' '}
+              <code style={{ fontFamily: 'monospace' }}>.bus/.org</code> pour détecter
+              les textures manquantes et les fichiers orphelins (racine de{' '}
+              <code style={{ fontFamily: 'monospace' }}>Texture/</code> uniquement,
+              sous-dossiers exclus).
             </div>
             <Tooltip
-              title={!canScan ? 'Configurez le chemin OMSI 2 dans les Paramètres pour activer ce scan.' : ''}
+              title={!canScan ? 'Configurez le dossier Vehicles dans les paramètres du projet.' : ''}
               placement="right"
             >
               <span>
@@ -941,149 +1048,297 @@ function TabAvertissements({ fontWarnings, scanProgress, fontTotal,
                   size="small"
                   disabled={!canScan}
                   startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 15 }} />}
-                  onClick={onScanO3d}
+                  onClick={onScanDiag}
                   sx={{
                     borderRadius: '7px', textTransform: 'none', fontSize: 13,
                     borderColor: 'rgba(255,255,255,0.18)',
                     '&:hover': { borderColor: '#42a5f5', color: '#42a5f5' },
                   }}
                 >
-                  Analyser les dépendances binaires
+                  Lancer l'analyse approfondie
                 </Button>
               </span>
             </Tooltip>
           </div>
         )}
 
-        {/* Aucun .o3d trouvé */}
-        {o3dScanned && o3dResults.length === 0 && (
-          <Alert severity="info" variant="outlined" sx={{ borderRadius: '7px', fontSize: 13 }}>
-            Aucun fichier <code>.o3d</code> trouvé dans ce projet.
-          </Alert>
-        )}
+        {/* Résultats */}
+        {diagScanned && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-        {/* Résultats — regroupés par texture manquante */}
-        {o3dScanned && o3dResults.length > 0 && (() => {
-          // Inversion de l'index : texture manquante → liste des .o3d qui l'utilisent
-          const missingMap = {}
-          for (const item of o3dResults) {
-            for (const tex of item.textures) {
-              if (tex.found) continue
-              if (!missingMap[tex.name]) missingMap[tex.name] = new Set()
-              missingMap[tex.name].add(item.o3dName)
-            }
-          }
-          const missingByTexture = Object.entries(missingMap)
-            .map(([textureName, usedBySet]) => ({ textureName, usedBy: [...usedBySet].sort() }))
-            .sort((a, b) => a.textureName.localeCompare(b.textureName))
-          const affectedModels = new Set(missingByTexture.flatMap(m => m.usedBy)).size
+            {/* Résumé en chips */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+              <Chip size="small"
+                label={`${missingTextures.length} texture${missingTextures.length !== 1 ? 's' : ''} manquante${missingTextures.length !== 1 ? 's' : ''}`}
+                sx={{
+                  fontSize: 11,
+                  background: missingTextures.length > 0 ? 'rgba(252,61,57,0.10)' : 'rgba(108,203,95,0.10)',
+                  color:      missingTextures.length > 0 ? '#fc3d39' : '#6ccb5f',
+                  border:     `1px solid ${missingTextures.length > 0 ? 'rgba(252,61,57,0.30)' : 'rgba(108,203,95,0.30)'}`,
+                }} />
+              <Chip size="small"
+                label={`${orphanMeshes.length} mesh${orphanMeshes.length !== 1 ? 'es' : ''} orphelin${orphanMeshes.length !== 1 ? 's' : ''}`}
+                sx={{
+                  fontSize: 11,
+                  background: orphanMeshes.length > 0 ? 'rgba(240,160,48,0.10)' : 'rgba(108,203,95,0.10)',
+                  color:      orphanMeshes.length > 0 ? '#f0a030' : '#6ccb5f',
+                  border:     `1px solid ${orphanMeshes.length > 0 ? 'rgba(240,160,48,0.30)' : 'rgba(108,203,95,0.30)'}`,
+                }} />
+              <Chip size="small"
+                label={`${orphanTextures.length} texture${orphanTextures.length !== 1 ? 's' : ''} orpheline${orphanTextures.length !== 1 ? 's' : ''}`}
+                sx={{
+                  fontSize: 11,
+                  background: orphanTextures.length > 0 ? 'rgba(240,160,48,0.10)' : 'rgba(108,203,95,0.10)',
+                  color:      orphanTextures.length > 0 ? '#f0a030' : '#6ccb5f',
+                  border:     `1px solid ${orphanTextures.length > 0 ? 'rgba(240,160,48,0.30)' : 'rgba(108,203,95,0.30)'}`,
+                }} />
+              {hasOrphans && totalOrphanSize > 0 && (
+                <Chip size="small"
+                  label={`Gain potentiel : ${fmt(totalOrphanSize)}`}
+                  sx={{
+                    fontSize: 11, fontWeight: 700,
+                    background: 'rgba(66,165,245,0.10)',
+                    color:      '#42a5f5',
+                    border:     '1px solid rgba(66,165,245,0.28)',
+                  }} />
+              )}
+            </div>
 
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-              {/* ── Synthèse globale ────────────────────────────────────── */}
-              {missingByTexture.length === 0 ? (
-                /* Grand message succès */
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  gap: 10, padding: '28px 16px', textAlign: 'center',
-                }}>
-                  <CheckCircleOutlinedIcon sx={{ fontSize: 44, color: '#6ccb5f' }} />
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#6ccb5f', lineHeight: 1.3 }}>
-                    Félicitations !
+            {/* ── Accordion Textures manquantes ─────────────────────────── */}
+            {missingTextures.length > 0 && (
+              <Accordion defaultExpanded sx={ACCORD_SX}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={ACCORD_SUM_SX}>
+                  <CancelOutlinedIcon sx={{ fontSize: 14, color: '#fc3d39' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#fc3d39' }}>
+                    Textures manquantes ({missingTextures.length})
+                  </span>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.6 }}>
+                    Référencées dans les binaires .o3d mais introuvables dans{' '}
+                    <code style={{ fontFamily: 'monospace' }}>Texture/</code>.
                   </div>
-                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 360 }}>
-                    Toutes les textures natives des modèles 3D sont présentes dans votre installation OMSI 2.
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Bandeau de synthèse */}
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '9px 14px', borderRadius: 8,
-                    background: 'rgba(252,61,57,0.06)',
-                    border: '1px solid rgba(252,61,57,0.22)',
-                  }}>
-                    <CancelOutlinedIcon sx={{ fontSize: 16, color: '#fc3d39', flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
-                      <strong style={{ color: '#fc3d39' }}>{missingByTexture.length}</strong>{' '}
-                      texture{missingByTexture.length > 1 ? 's manquantes' : ' manquante'} détectée{missingByTexture.length > 1 ? 's' : ''}{' '}
-                      dans{' '}
-                      <strong style={{ color: '#fc3d39' }}>{affectedModels}</strong>{' '}
-                      modèle{affectedModels > 1 ? 's' : ''} 3D.
-                    </span>
-                  </div>
-
-                  {/* ── Cartes par texture manquante ────────────────────── */}
-                  {missingByTexture.map(({ textureName, usedBy }) => (
-                    <div
-                      key={textureName}
-                      style={{
-                        background: 'rgba(252,61,57,0.035)',
-                        border: '1px solid rgba(252,61,57,0.18)',
-                        borderRadius: 9,
-                        padding: '10px 14px 12px',
-                      }}
-                    >
-                      {/* En-tête carte : nom texture + bouton copier */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                        <CancelOutlinedIcon sx={{ fontSize: 14, color: '#fc3d39', flexShrink: 0 }} />
-                        <span style={{
-                          fontFamily: 'monospace', fontSize: 13, fontWeight: 700,
+                  {missingTextures.map(({ textureName, usedBy }) => (
+                    <div key={textureName} style={{
+                      background: 'rgba(252,61,57,0.035)',
+                      border: '1px solid rgba(252,61,57,0.18)',
+                      borderRadius: 9, padding: '10px 14px 12px', marginBottom: 6,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                        <CancelOutlinedIcon sx={{ fontSize: 13, color: '#fc3d39', flexShrink: 0 }} />
+                        <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700,
                           color: '#fc3d39', flex: 1,
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        }}>
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {textureName}
                         </span>
                         <CopyButton text={textureName} />
                       </div>
-
-                      {/* Liste des .o3d concernés */}
-                      <div style={{ paddingLeft: 22 }}>
-                        <div style={{
-                          fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
-                          letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: 6,
-                        }}>
-                          Utilisée par les objets :
+                      <div style={{ paddingLeft: 23 }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
+                          letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: 6 }}>
+                          Utilisée par :
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                           {usedBy.map((o3dName, i) => (
-                            <Chip
-                              key={`ub-${i}`}
-                              label={o3dName}
-                              size="small"
-                              sx={{
-                                fontFamily: 'monospace', fontSize: 11,
+                            <Chip key={`ub-${i}`} label={o3dName} size="small" variant="outlined"
+                              sx={{ fontFamily: 'monospace', fontSize: 11,
                                 color: 'var(--text-secondary)',
                                 borderColor: 'rgba(255,255,255,0.12)',
-                                background: 'rgba(255,255,255,0.04)',
-                              }}
-                              variant="outlined"
-                            />
+                                background: 'rgba(255,255,255,0.04)' }} />
                           ))}
                         </div>
                       </div>
                     </div>
                   ))}
-                </>
-              )}
+                </AccordionDetails>
+              </Accordion>
+            )}
 
-              {/* Bouton relancer */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  size="small" variant="text" onClick={onScanO3d}
-                  sx={{ fontSize: 11, textTransform: 'none', color: 'var(--text-muted)',
-                    '&:hover': { color: '#42a5f5' } }}
-                >
-                  Relancer l'analyse
+            {/* ── Accordion Modèles 3D orphelins ────────────────────────── */}
+            <Accordion defaultExpanded={orphanMeshes.length > 0} sx={ACCORD_SX}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={ACCORD_SUM_SX}>
+                <DescriptionOutlinedIcon sx={{ fontSize: 14,
+                  color: orphanMeshes.length > 0 ? '#f0a030' : '#6ccb5f' }} />
+                <span style={{ fontSize: 13, fontWeight: 600, flex: 1,
+                  color: orphanMeshes.length > 0 ? '#f0a030' : 'var(--text-secondary)' }}>
+                  🏗️ Modèles 3D orphelins — .o3d / .x ({orphanMeshes.length})
+                </span>
+                {orphanMeshes.length > 0 && (
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)',
+                    background: 'rgba(255,255,255,0.05)', padding: '1px 7px', borderRadius: 10 }}>
+                    {fmt(orphanMeshes.reduce((a, f) => a + (f.size || 0), 0))}
+                  </span>
+                )}
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
+                {orphanMeshes.length === 0 ? (
+                  <Alert severity="success" variant="outlined" sx={{ borderRadius: '7px', fontSize: 12 }}>
+                    Aucun modèle 3D orphelin détecté.
+                  </Alert>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.6 }}>
+                      Présents dans <code style={{ fontFamily: 'monospace' }}>Model/</code> mais jamais
+                      cités sous la balise{' '}
+                      <code style={{ fontFamily: 'monospace' }}>[mesh]</code> dans les model*.cfg.
+                    </div>
+                    {orphanMeshes.map(m => (
+                      <OrphanRow key={m.absPath} name={m.name} relativePath={m.relativePath}
+                        size={m.size} onDelete={() => setConfirmFile({ absPath: m.absPath, name: m.name })} />
+                    ))}
+                  </>
+                )}
+              </AccordionDetails>
+            </Accordion>
+
+            {/* ── Accordion Textures orphelines ─────────────────────────── */}
+            <Accordion defaultExpanded={orphanTextures.length > 0} sx={ACCORD_SX}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={ACCORD_SUM_SX}>
+                <ImageOutlinedIcon sx={{ fontSize: 14,
+                  color: orphanTextures.length > 0 ? '#f0a030' : '#6ccb5f' }} />
+                <span style={{ fontSize: 13, fontWeight: 600, flex: 1,
+                  color: orphanTextures.length > 0 ? '#f0a030' : 'var(--text-secondary)' }}>
+                  🖼️ Textures orphelines — racine Texture/ ({orphanTextures.length})
+                </span>
+                {orphanTextures.length > 0 && (
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)',
+                    background: 'rgba(255,255,255,0.05)', padding: '1px 7px', borderRadius: 10 }}>
+                    {fmt(orphanTextures.reduce((a, f) => a + (f.size || 0), 0))}
+                  </span>
+                )}
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
+                {orphanTextures.length === 0 ? (
+                  <Alert severity="success" variant="outlined" sx={{ borderRadius: '7px', fontSize: 12 }}>
+                    Aucune texture orpheline à la racine de Texture/.
+                  </Alert>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.6 }}>
+                      À la racine de <code style={{ fontFamily: 'monospace' }}>Texture/</code> mais
+                      non citées dans .o3d, model*.cfg, .ctc, .bus ni .org.
+                      Les sous-dossiers (Werbung, Scripts…) sont exclus de cette analyse.
+                    </div>
+                    {orphanTextures.map(t => (
+                      <OrphanRow key={t.absPath} name={t.name} relativePath=""
+                        size={t.size} onDelete={() => setConfirmFile({ absPath: t.absPath, name: t.name })} />
+                    ))}
+                  </>
+                )}
+              </AccordionDetails>
+            </Accordion>
+
+            {/* Actions globales */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
+              <Button size="small" variant="text" onClick={onScanDiag}
+                sx={{ fontSize: 11, textTransform: 'none', color: 'var(--text-muted)',
+                  '&:hover': { color: '#42a5f5' } }}>
+                Relancer l'analyse
+              </Button>
+              {hasOrphans && (
+                <Button size="small" variant="contained" color="error"
+                  onClick={() => setCleanStep1(true)}
+                  sx={{ fontSize: 12, textTransform: 'none', borderRadius: '7px', fontWeight: 700 }}>
+                  Tout nettoyer ({fmt(totalOrphanSize)})
                 </Button>
-              </div>
-
+              )}
             </div>
-          )
-        })()}
+          </div>
+        )}
       </div>
+
+      {/* ── Confirmation suppression individuelle ──────────────────────────── */}
+      <Dialog open={!!confirmFile} onClose={() => setConfirmFile(null)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: '12px', background: '#0c0f14',
+          border: '1px solid rgba(255,255,255,0.09)' } }}>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700, pb: 0.5 }}>Confirmer la suppression</DialogTitle>
+        <DialogContent sx={{ pt: '10px !important' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            Supprimer définitivement ce fichier ?
+          </div>
+          <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6,
+            background: 'rgba(252,61,57,0.07)', border: '1px solid rgba(252,61,57,0.2)' }}>
+            <code style={{ fontSize: 12, color: '#fc3d39', fontFamily: 'monospace' }}>
+              {confirmFile?.name}
+            </code>
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmFile(null)} sx={{ textTransform: 'none' }}>Annuler</Button>
+          <Button color="error" variant="outlined"
+            onClick={() => { onDeleteFile(confirmFile.absPath); setConfirmFile(null) }}
+            sx={{ textTransform: 'none' }}>
+            Supprimer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Tout nettoyer — Étape 1 ────────────────────────────────────────── */}
+      <Dialog open={cleanStep1} onClose={() => setCleanStep1(false)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: '12px', background: '#0c0f14',
+          border: '1px solid rgba(255,255,255,0.09)' } }}>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700, pb: 0.5 }}>Confirmer le nettoyage</DialogTitle>
+        <DialogContent sx={{ pt: '10px !important' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            Vous allez supprimer{' '}
+            <strong style={{ color: '#f0a030' }}>
+              {orphanMeshes.length + orphanTextures.length} fichier{orphanMeshes.length + orphanTextures.length !== 1 ? 's' : ''} orphelin{orphanMeshes.length + orphanTextures.length !== 1 ? 's' : ''}
+            </strong>{' '}
+            représentant{' '}
+            <strong style={{ color: '#42a5f5' }}>{fmt(totalOrphanSize)}</strong>{' '}
+            d'espace disque.
+          </div>
+          <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 6,
+            background: 'rgba(252,61,57,0.05)', border: '1px solid rgba(252,61,57,0.18)',
+            fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+            ⚠ Cette action est <strong style={{ color: '#fc3d39' }}>irréversible</strong> — les
+            fichiers seront supprimés définitivement du disque.
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCleanStep1(false)} sx={{ textTransform: 'none' }}>Annuler</Button>
+          <Button color="warning" variant="outlined"
+            onClick={() => { setCleanStep1(false); setCleanStep2(true) }}
+            sx={{ textTransform: 'none' }}>
+            Continuer →
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Tout nettoyer — Étape 2 (dernière confirmation) ───────────────── */}
+      <Dialog open={cleanStep2} onClose={() => setCleanStep2(false)} maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: '12px', background: '#0c0f14',
+          border: '1px solid rgba(255,255,255,0.09)' } }}>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700, pb: 0.5, color: '#fc3d39' }}>
+          ⚠️ Dernière confirmation
+        </DialogTitle>
+        <DialogContent sx={{ pt: '10px !important' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+            Confirmer la suppression définitive de{' '}
+            <strong style={{ color: '#fc3d39' }}>
+              {orphanMeshes.length + orphanTextures.length} fichier{orphanMeshes.length + orphanTextures.length !== 1 ? 's' : ''}
+            </strong>{' '}
+            orphelins ?
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+            Il n'y a aucun moyen d'annuler cette opération.
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCleanStep2(false)} sx={{ textTransform: 'none' }}>Annuler</Button>
+          <Button color="error" variant="contained"
+            onClick={() => {
+              setCleanStep2(false)
+              onDeleteAll([
+                ...orphanMeshes.map(m => m.absPath),
+                ...orphanTextures.map(t => t.absPath),
+              ])
+            }}
+            sx={{ textTransform: 'none', fontWeight: 700 }}>
+            SUPPRIMER DÉFINITIVEMENT
+          </Button>
+        </DialogActions>
+      </Dialog>
 
     </div>
   )
@@ -2146,11 +2401,10 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
   const [fontWarnings,        setFontWarnings]        = useState([])
   const [fontTotal,           setFontTotal]           = useState(null)   // null = pas encore scanné
   const [scanProgress,        setScanProgress]        = useState(null)   // null | {phase,current,total,currentFile}
-  const [o3dResults,          setO3dResults]          = useState([])
-  const [o3dScanned,          setO3dScanned]          = useState(false)
-  const [o3dTotalMissing,     setO3dTotalMissing]     = useState(0)
-  const [o3dProgress,         setO3dProgress]         = useState(null)   // null | {phase,current,total,currentFile}
-  const [o3dModalOpen,        setO3dModalOpen]        = useState(false)
+  const [diagResult,    setDiagResult]    = useState(null)   // { missingTextures, orphanMeshes, orphanTextures }
+  const [diagScanned,   setDiagScanned]   = useState(false)
+  const [diagProgress,  setDiagProgress]  = useState(null)   // null | {phase,current,total,currentFile}
+  const [diagModalOpen, setDiagModalOpen] = useState(false)
 
   const [appearanceOpen,  setAppearanceOpen]  = useState(false)
   const [pushDialogOpen, setPushDialogOpen] = useState(false)
@@ -2232,23 +2486,51 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
     }
   }, [fullProject?.id])
 
-  const handleScanO3d = useCallback(async () => {
-    if (!project.vehicles || !settings.omsiPath) return
-    window.api.omsi.offO3dProgress()
-    window.api.omsi.onO3dProgress(setO3dProgress)
-    setO3dModalOpen(true)
-    setO3dProgress({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
+  const handleFullDiag = useCallback(async () => {
+    if (!project.vehicles) return
+    window.api.omsi.offDiagProgress()
+    window.api.omsi.onDiagProgress(setDiagProgress)
+    setDiagModalOpen(true)
+    setDiagProgress({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
     try {
-      const res = await window.api.omsi.scanO3dTextures(project.vehicles, settings.omsiPath)
-      setO3dResults(res?.results || [])
-      setO3dTotalMissing(res?.totalMissing || 0)
-      setO3dScanned(true)
+      const res = await window.api.omsi.fullDiagnostic(project.vehicles)
+      setDiagResult(res || null)
+      setDiagScanned(true)
     } finally {
-      setO3dProgress(null)
-      setO3dModalOpen(false)
-      window.api.omsi.offO3dProgress()
+      setDiagProgress(null)
+      setDiagModalOpen(false)
+      window.api.omsi.offDiagProgress()
     }
-  }, [project, settings])
+  }, [project])
+
+  const handleDeleteFile = useCallback(async (absPath) => {
+    const res = await window.api.file.delete(absPath)
+    if (res?.success) {
+      setDiagResult(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          orphanMeshes:   (prev.orphanMeshes   || []).filter(f => f.absPath !== absPath),
+          orphanTextures: (prev.orphanTextures  || []).filter(f => f.absPath !== absPath),
+        }
+      })
+    }
+  }, [])
+
+  const handleDeleteAll = useCallback(async (paths) => {
+    const res = await window.api.file.deleteMany(paths)
+    if (res?.deleted?.length) {
+      const deletedSet = new Set(res.deleted)
+      setDiagResult(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          orphanMeshes:   (prev.orphanMeshes   || []).filter(f => !deletedSet.has(f.absPath)),
+          orphanTextures: (prev.orphanTextures  || []).filter(f => !deletedSet.has(f.absPath)),
+        }
+      })
+    }
+  }, [])
 
   const refreshCinStatus = useCallback(() => {
     window.api.cinnamon.readStatus(project, settings).then(setCinStatus)
@@ -2406,7 +2688,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
         result={pushResult} onClose={closePush} mode="push" />
       <SyncModal open={pullOpen} step={pullStep} progress={pullProgress}
         result={pullResult} onClose={closePull} mode="pull" />
-      <O3dProgressModal open={o3dModalOpen} progress={o3dProgress} />
+      <DiagProgressModal open={diagModalOpen} progress={diagProgress} />
 
       {appearanceOpen && (
         <AppearanceModal
@@ -2645,11 +2927,12 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
           fontWarnings={fontWarnings}
           scanProgress={scanProgress}
           fontTotal={fontTotal}
-          o3dResults={o3dResults}
-          o3dScanned={o3dScanned}
-          o3dTotalMissing={o3dTotalMissing}
-          onScanO3d={handleScanO3d}
-          canScan={!!(project.vehicles && settings.omsiPath)}
+          diagResult={diagResult}
+          diagScanned={diagScanned}
+          onScanDiag={handleFullDiag}
+          onDeleteFile={handleDeleteFile}
+          onDeleteAll={handleDeleteAll}
+          canScan={!!project.vehicles}
         />
       )}
       {TAB_IDS[activeTab] === 'team' && isOwnerOrAdmin && (

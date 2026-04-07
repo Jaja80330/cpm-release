@@ -56,10 +56,15 @@ contextBridge.exposeInMainWorld('api', {
     scanO3dTextures:      (vehiclesPath, omsiPath) => ipcRenderer.invoke('omsi:scanO3dTextures',  vehiclesPath, omsiPath),
     onO3dProgress:        (cb) => ipcRenderer.on('omsi:scanO3d:progress',    (_, d) => cb(d)),
     offO3dProgress:       ()   => ipcRenderer.removeAllListeners('omsi:scanO3d:progress'),
+    fullDiagnostic:       (vehiclesPath) => ipcRenderer.invoke('omsi:fullDiagnostic', vehiclesPath),
+    onDiagProgress:       (cb) => ipcRenderer.on('omsi:diagnostic:progress', (_, d) => cb(d)),
+    offDiagProgress:      ()   => ipcRenderer.removeAllListeners('omsi:diagnostic:progress'),
   },
   file: {
-    readAsDataUrl: (filePath) => ipcRenderer.invoke('file:readAsDataUrl', filePath),
-    readBuffer:    (filePath) => ipcRenderer.invoke('file:readBuffer',    filePath)
+    readAsDataUrl: (filePath)   => ipcRenderer.invoke('file:readAsDataUrl', filePath),
+    readBuffer:    (filePath)   => ipcRenderer.invoke('file:readBuffer',    filePath),
+    delete:        (filePath)   => ipcRenderer.invoke('file:delete',        filePath),
+    deleteMany:    (filePaths)  => ipcRenderer.invoke('file:deleteMany',    filePaths),
   },
   oft: {
     parse: (oftPath) => ipcRenderer.invoke('oft:parse', oftPath)

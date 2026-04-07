@@ -1275,6 +1275,248 @@ app.whenReady().then(() => {
     return { success: true }
   })
 
+  // ── Diagnostic complet : orphelins + textures manquantes ────────────────────
+  // Scanne Model/ (binaires .o3d + .cfg), Texture/ racine, .ctc, .bus, .org.
+  // Retourne missingTextures, orphanMeshes, orphanTextures avec tailles.
+  ipcMain.handle('omsi:fullDiagnostic', async (event, vehiclesPath) => {
+    const push = (data) => {
+      try { event.sender.send('omsi:diagnostic:progress', data) } catch { /* fenêtre fermée */ }
+    }
+
+    if (!vehiclesPath) return { success: false, error: 'Chemin Vehicles non configuré.' }
+
+    try {
+      const modelDir   = path.join(vehiclesPath, 'Model')
+      const textureDir = path.join(vehiclesPath, 'Texture')
+      const IMG_EXTS   = new Set(['.bmp', '.dds', '.tga', '.png', '.jpg', '.jpeg'])
+      const MESH_EXTS  = new Set(['.o3d', '.x'])
+      const IMG_REGEX  = /[a-zA-Z0-9_][a-zA-Z0-9_\-.]{0,62}\.(?:tga|bmp|dds|jpg|jpeg|png)/gi
+
+      // ── Collecte ────────────────────────────────────────────────────────
+      push({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
+
+      async function walk(dir, filterFn) {
+        const out = []
+        let entries
+        try { entries = await readdir(dir, { withFileTypes: true }) } catch { return out }
+        for (const e of entries) {
+          const full = path.join(dir, e.name)
+          if (e.isDirectory()) out.push(...(await walk(full, filterFn)))
+          else if (e.isFile() && filterFn(e.name)) out.push(full)
+        }
+        return out
+      }
+
+      const meshFiles   = existsSync(modelDir)   ? await walk(modelDir,    n => MESH_EXTS.has(path.extname(n).toLowerCase())) : []
+      const cfgFiles    = existsSync(modelDir)   ? await walk(modelDir,    n => n.toLowerCase().endsWith('.cfg'))              : []
+      const ctcFiles    = await walk(vehiclesPath, n => n.toLowerCase().endsWith('.ctc'))
+      const busFiles    = await findBusFiles(vehiclesPath)
+      const orgFiles    = await walk(vehiclesPath, n => n.toLowerCase().endsWith('.org'))
+      const allBusOrg   = [...new Set([...busFiles, ...orgFiles])]
+
+      // Textures à la RACINE SEULEMENT de Texture/ (pas de sous-dossiers)
+      const rootTextureMap = {} // key = name.lower → { name, absPath, size }
+      if (existsSync(textureDir)) {
+        let texEntries
+        try { texEntries = await readdir(textureDir, { withFileTypes: true }) } catch { texEntries = [] }
+        for (const e of texEntries) {
+          if (!e.isFile()) continue
+          if (!IMG_EXTS.has(path.extname(e.name).toLowerCase())) continue
+          const absPath = path.join(textureDir, e.name)
+          let size = 0
+          try { size = (await stat(absPath)).size } catch {}
+          rootTextureMap[e.name.toLowerCase()] = { name: e.name, absPath, size }
+        }
+      }
+
+      // ── Phase scan_meshes : binaire .o3d ──────────────────────────────
+      push({ phase: 'scanning_meshes', current: 0, total: meshFiles.length, currentFile: '' })
+
+      const o3dTextureRefs  = new Set() // textures extraites des binaires .o3d
+      const meshScanResults = []        // pour textures manquantes
+
+      for (let i = 0; i < meshFiles.length; i++) {
+        const meshPath = meshFiles[i]
+        const meshName = path.basename(meshPath)
+        push({ phase: 'scanning_meshes', current: i + 1, total: meshFiles.length, currentFile: meshName })
+
+        if (!meshPath.toLowerCase().endsWith('.o3d')) continue
+
+        try {
+          const buffer   = await readFile(meshPath)
+          const str      = buffer.toString('latin1')
+          const seen     = new Set()
+          const textures = []
+
+          for (const m of str.matchAll(IMG_REGEX)) {
+            const name = m[0].trim()
+            const key  = name.toLowerCase()
+            if (seen.has(key)) continue
+            seen.add(key)
+            o3dTextureRefs.add(key)
+            textures.push({ name, found: Object.prototype.hasOwnProperty.call(rootTextureMap, key) })
+          }
+          if (textures.length > 0) {
+            meshScanResults.push({
+              o3dName:    meshName,
+              o3dFile:    path.relative(vehiclesPath, meshPath).replace(/\\/g, '/'),
+              textures,
+              hasMissing: textures.some(t => !t.found),
+            })
+          }
+        } catch { /* fichier illisible */ }
+      }
+
+      // ── Phase scanning_cfg : model*.cfg ───────────────────────────────
+      push({ phase: 'scanning_cfg', current: 0, total: cfgFiles.length, currentFile: '' })
+
+      const meshCitedInCfg = new Set() // basename.lower des meshes cités dans [mesh]
+      const cfgTextureRefs = new Set() // textures (lowercase) citées dans les cfg
+
+      for (let i = 0; i < cfgFiles.length; i++) {
+        const cfgPath = cfgFiles[i]
+        push({ phase: 'scanning_cfg', current: i + 1, total: cfgFiles.length, currentFile: path.basename(cfgPath) })
+
+        let content
+        try {
+          const buffer = await readFile(cfgPath)
+          content = iconv.decode(buffer, 'win1252')
+        } catch { continue }
+
+        const lines = content.split(/\r?\n/)
+        for (let j = 0; j < lines.length; j++) {
+          const tag = lines[j].trim().toLowerCase()
+
+          // [mesh] → première ligne non-vide suivante = chemin du mesh
+          if (tag === '[mesh]') {
+            for (let k = j + 1; k < lines.length; k++) {
+              const v = lines[k].trim()
+              if (!v || v.startsWith(';')) continue
+              meshCitedInCfg.add(path.basename(v).toLowerCase())
+              break
+            }
+          }
+
+          // Textures : lignes se terminant par une extension image
+          const trimmed = lines[j].trim()
+          if (IMG_EXTS.has(path.extname(trimmed).toLowerCase())) {
+            cfgTextureRefs.add(path.basename(trimmed).toLowerCase())
+          }
+        }
+      }
+
+      // ── Phase scanning_ctc : fichiers CTC ─────────────────────────────
+      push({ phase: 'scanning_ctc', current: 0, total: ctcFiles.length, currentFile: '' })
+
+      const ctcTextureRefs = new Set()
+
+      for (let i = 0; i < ctcFiles.length; i++) {
+        push({ phase: 'scanning_ctc', current: i + 1, total: ctcFiles.length, currentFile: path.basename(ctcFiles[i]) })
+        try {
+          const buf     = await readFile(ctcFiles[i])
+          const content = iconv.decode(buf, 'win1252')
+          for (const line of content.split(/\r?\n/)) {
+            const l = line.trim()
+            if (IMG_EXTS.has(path.extname(l).toLowerCase()))
+              ctcTextureRefs.add(path.basename(l).toLowerCase())
+          }
+        } catch { /* ignoré */ }
+      }
+
+      // ── Phase scanning_bus : .bus et .org ─────────────────────────────
+      push({ phase: 'scanning_bus', current: 0, total: allBusOrg.length, currentFile: '' })
+
+      const busTextureRefs = new Set()
+
+      for (let i = 0; i < allBusOrg.length; i++) {
+        push({ phase: 'scanning_bus', current: i + 1, total: allBusOrg.length, currentFile: path.basename(allBusOrg[i]) })
+        try {
+          const buf     = await readFile(allBusOrg[i])
+          const content = iconv.decode(buf, 'win1252')
+          for (const line of content.split(/\r?\n/)) {
+            const l = line.trim()
+            if (IMG_EXTS.has(path.extname(l).toLowerCase()))
+              busTextureRefs.add(path.basename(l).toLowerCase())
+          }
+        } catch { /* ignoré */ }
+      }
+
+      // ── Calcul des orphelins ───────────────────────────────────────────
+      const orphanMeshes = []
+      for (const meshPath of meshFiles) {
+        const meshName = path.basename(meshPath)
+        if (!meshCitedInCfg.has(meshName.toLowerCase())) {
+          let size = 0
+          try { size = (await stat(meshPath)).size } catch {}
+          orphanMeshes.push({
+            name:         meshName,
+            relativePath: path.relative(vehiclesPath, meshPath).replace(/\\/g, '/'),
+            absPath:      meshPath,
+            size,
+          })
+        }
+      }
+
+      const usedTextureKeys = new Set([
+        ...cfgTextureRefs,
+        ...o3dTextureRefs,
+        ...ctcTextureRefs,
+        ...busTextureRefs,
+      ])
+
+      const orphanTextures = []
+      for (const [key, info] of Object.entries(rootTextureMap)) {
+        if (!usedTextureKeys.has(key)) orphanTextures.push(info)
+      }
+
+      // Textures manquantes (référencées dans .o3d mais absentes de Texture/ racine)
+      const missingMap = {}
+      for (const item of meshScanResults) {
+        for (const tex of item.textures) {
+          if (tex.found) continue
+          if (!missingMap[tex.name]) missingMap[tex.name] = new Set()
+          missingMap[tex.name].add(item.o3dName)
+        }
+      }
+      const missingTextures = Object.entries(missingMap)
+        .map(([textureName, set]) => ({ textureName, usedBy: [...set].sort() }))
+        .sort((a, b) => a.textureName.localeCompare(b.textureName))
+
+      return {
+        success: true,
+        missingTextures,
+        orphanMeshes,
+        orphanTextures,
+        totalMeshesScanned: meshFiles.length,
+        totalCfgScanned:    cfgFiles.length,
+      }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  // ── Suppression fichier unique ─────────────────────────────────────────────
+  ipcMain.handle('file:delete', async (_, filePath) => {
+    try {
+      await unlink(filePath)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  // ── Suppression de plusieurs fichiers ──────────────────────────────────────
+  ipcMain.handle('file:deleteMany', async (_, filePaths) => {
+    const results = await Promise.allSettled(filePaths.map(fp => unlink(fp)))
+    const deleted = []
+    const errors  = []
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') deleted.push(filePaths[i])
+      else errors.push({ path: filePaths[i], error: r.reason?.message })
+    })
+    return { success: errors.length === 0, deleted, errors }
+  })
+
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
 
