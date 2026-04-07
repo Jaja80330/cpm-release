@@ -63,6 +63,11 @@ export const projectService = {
     return response.data
   },
 
+  async getRecentActivity() {
+    const response = await api.get('/activity/recent')
+    return response.data
+  },
+
   async getVersions(projectId) {
     const response = await api.get(`/projects/${projectId}/versions`)
     return response.data
@@ -80,6 +85,50 @@ export const projectService = {
 
   async deprecateVersion(projectId, versionId) {
     const response = await api.patch(`/projects/${projectId}/versions/${versionId}/deprecate`)
+    return response.data
+  },
+
+  // ── Apparence (bannière / logo) ────────────────────────────────────────────
+  async uploadBanner(projectId, file) {
+    const form = new FormData()
+    form.append('banner', file)
+    const response = await api.put(`/projects/${projectId}/banner`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+
+  async deleteBanner(projectId) {
+    const response = await api.delete(`/projects/${projectId}/banner`)
+    return response.data
+  },
+
+  async uploadLogo(projectId, file) {
+    const form = new FormData()
+    form.append('logo', file)
+    const response = await api.put(`/projects/${projectId}/logo`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+
+  async deleteLogo(projectId) {
+    const response = await api.delete(`/projects/${projectId}/logo`)
+    return response.data
+  },
+
+  // ── Screenshots ────────────────────────────────────────────────────────────
+  async addScreenshots(projectId, files) {
+    const form = new FormData()
+    files.forEach(f => form.append('images', f))
+    const response = await api.post(`/projects/${projectId}/screenshots`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+
+  async deleteScreenshot(projectId, screenshotId) {
+    const response = await api.delete(`/projects/${projectId}/screenshots/${screenshotId}`)
     return response.data
   }
 }

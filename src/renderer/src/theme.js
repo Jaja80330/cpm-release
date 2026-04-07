@@ -32,8 +32,16 @@ export const muiDarkTheme = createTheme({
     divider: 'rgba(255,255,255,0.08)',
   },
   typography: {
-    fontFamily: "'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif",
+    fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
     fontSize: 13,
+    h1: { fontWeight: 700 },
+    h2: { fontWeight: 700 },
+    h3: { fontWeight: 600 },
+    h4: { fontWeight: 600 },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 },
+    body1: { fontWeight: 400 },
+    body2: { fontWeight: 400 },
   },
   shape: {
     borderRadius: 6,

@@ -11,6 +11,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage'
 import SettingsPage from './pages/SettingsPage'
 import LoginView from './pages/LoginView'
 import UsersPage from './pages/UsersPage'
+import ToolsPage from './pages/ToolsPage'
 import ForceChangePasswordPage from './pages/ForceChangePasswordPage'
 import { setAuthToken, getProfile } from './services/authService'
 
@@ -31,8 +32,9 @@ function extractUser(data) {
 }
 
 export default function App() {
-  const [currentPage,   setCurrentPage]   = useState('home')
-  const [activeProject, setActiveProject] = useState(null)
+  const [currentPage,      setCurrentPage]      = useState('home')
+  const [activeProject,    setActiveProject]    = useState(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // Auth
   const [token,       setToken]       = useState(null)
@@ -61,7 +63,7 @@ export default function App() {
           await window.api.store.set(PROFILE_KEY, profile)
           setToken(savedToken)
           setUser(profile)
-          setCurrentPage('projects')
+          setCurrentPage('home')
         } catch {
           await Promise.all([
             window.api.store.delete(TOKEN_KEY),
@@ -102,7 +104,7 @@ export default function App() {
     setAuthToken(newToken)
     setToken(newToken)
     setUser(profile)
-    setCurrentPage('projects')
+    setCurrentPage('home')
   }
 
   const handleLogout = async () => {
@@ -132,6 +134,7 @@ export default function App() {
       case 'project-detail': return <ProjectDetailPage project={activeProject} onNavigate={navigate} user={user} />
       case 'settings':       return <SettingsPage onThemeChange={setThemePref} onLogout={handleLogout} user={user} onUserChange={setUser} />
       case 'users':          return <UsersPage currentUser={user} />
+      case 'tools':          return <ToolsPage user={user} />
       default:               return <HomePage onNavigate={navigate} />
     }
   }
@@ -184,7 +187,15 @@ export default function App() {
       <div className="app-container">
         <TitleBar />
         <div className="main-layout">
-          <Sidebar currentPage={sidebarPage} onNavigate={navigate} user={user} onLogout={handleLogout} isDark={isDark} />
+          <Sidebar
+            currentPage={sidebarPage}
+            onNavigate={navigate}
+            user={user}
+            onLogout={handleLogout}
+            isDark={isDark}
+            isCollapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+          />
           <main className="content-area">
             {renderPage()}
           </main>

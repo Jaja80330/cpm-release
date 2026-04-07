@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, dialog, nativeTheme } from 'electro
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import Store from 'electron-store'
-import { existsSync, appendFileSync, createWriteStream, readFileSync } from 'fs'
+import { existsSync, appendFileSync, createWriteStream, readFileSync, watch as fsWatch } from 'fs'
 import { readdir, mkdir, readFile, writeFile, unlink, stat, rename, chmod } from 'fs/promises'
 import path from 'path'
 import archiver from 'archiver'
@@ -12,6 +12,7 @@ import { utils as ssh2Utils } from 'ssh2'
 import iconv from 'iconv-lite'
 import crypto from 'node:crypto'
 import os from 'node:os'
+import { exec } from 'child_process'
 
 const store = new Store()
 
@@ -235,6 +236,43 @@ app.whenReady().then(() => {
       defaultPath: options.defaultPath
     })
     return r.canceled ? [] : r.filePaths
+  })
+
+  ipcMain.handle('dialog:saveFile', async (_, options = {}) => {
+    const r = await dialog.showSaveDialog(win, {
+      filters:     options.filters     || [],
+      defaultPath: options.defaultPath || '',
+    })
+    return r.canceled ? null : r.filePath
+  })
+
+  // ── Bus editor ───────────────────────────────────────────────────────────
+  ipcMain.handle('bus:readFile', async (_, filePath) => {
+    try {
+      const buf     = await readFile(filePath)
+      const content = iconv.decode(buf, 'win1252')
+      return { success: true, content }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('bus:writeFile', async (_, filePath, content) => {
+    try {
+      const buf = iconv.encode(content, 'win1252')
+      await writeFile(filePath, buf)
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('bus:fileExists', (_, busDir, relativePath) => {
+    try {
+      return existsSync(path.join(busDir, relativePath))
+    } catch {
+      return false
+    }
   })
 
   // ── Packaging projet : ZIP structuré + SFTP ──────────────────────────────
@@ -790,8 +828,17 @@ app.whenReady().then(() => {
       const data = await readFile(cinFile, 'utf8')
       const manifest = JSON.parse(data)
       let deleted = 0
+
+      // Sécurité : Les polices sont partagées entre les bus, elles ne doivent
+      // jamais être supprimées automatiquement.
+      const fontsGuard = path.join(settings.omsiPath, 'Fonts').toLowerCase() + path.sep
+
       for (const relPath of (manifest.files || [])) {
         const absPath = path.join(settings.omsiPath, relPath)
+        if (absPath.toLowerCase().startsWith(fontsGuard)) {
+          debugLog(`[Uninstall] Polices exclues (partagées) : ${absPath}`)
+          continue
+        }
         try { await unlink(absPath); deleted++ } catch { /* déjà absent */ }
       }
       await unlink(cinFile)
@@ -937,6 +984,295 @@ app.whenReady().then(() => {
     } catch (err) {
       return { success: false, error: err.message }
     }
+  })
+
+  // ── Launchpad OMSI ───────────────────────────────────────────────────────────
+
+  /** Vérifie si Omsi.exe ou Busbetrieb-Simulator.exe est actif (Windows). */
+  function isOmsiRunning() {
+    return new Promise((resolve) => {
+      exec('tasklist /NH /FO CSV', (err, stdout) => {
+        if (err) { resolve(false); return }
+        const lower = stdout.toLowerCase()
+        resolve(lower.includes('"omsi.exe"') || lower.includes('"busbetrieb-simulator.exe"'))
+      })
+    })
+  }
+
+  // Intervalle de monitoring — démarre quand la fenêtre est prête
+  let processMonitorInterval = null
+  win.once('ready-to-show', () => {
+    processMonitorInterval = setInterval(async () => {
+      if (win.isDestroyed()) { clearInterval(processMonitorInterval); return }
+      const running = await isOmsiRunning()
+      try { win.webContents.send('omsi:processStatus', { running }) } catch { /* fenêtre détruite */ }
+    }, 2500)
+  })
+  win.on('closed', () => { clearInterval(processMonitorInterval) })
+
+  ipcMain.handle('omsi:getProcessStatus', async () => {
+    const running = await isOmsiRunning()
+    return { running }
+  })
+
+  ipcMain.handle('omsi:launch', async () => {
+    await shell.openExternal('steam://rungameid/252530')
+    return { success: true }
+  })
+
+  ipcMain.handle('omsi:launchEditor', async () => {
+    await shell.openExternal('steam://run/252530//-editor/')
+    return { success: true }
+  })
+
+  ipcMain.handle('omsi:launchBBS', (_, omsiPath) => {
+    if (!omsiPath) return { success: false, error: 'Chemin OMSI non configuré.' }
+    const launcher = path.join(omsiPath, 'Busbetrieb-Simulator', 'launcher.exe')
+    if (!existsSync(launcher)) {
+      return { success: false, error: `BBS introuvable : ${launcher}` }
+    }
+    exec(`"${launcher}"`, (err) => {
+      if (err) debugLog(`[BBS] Erreur de lancement : ${err.message}`)
+    })
+    return { success: true }
+  })
+
+  // ── Scanner de polices Model.cfg ────────────────────────────────────────────
+  // Parcourt tous les .cfg du dossier Model du projet, extrait les noms de
+  // polices (.oft) référencés dans les sections [texttexture] (3ème ligne
+  // après le tag) et vérifie leur présence dans {omsiPath}/Fonts/.
+  ipcMain.handle('omsi:scanModelFonts', async (event, vehiclesPath, omsiPath) => {
+    const push = (data) => {
+      try { event.sender.send('omsi:scanFonts:progress', data) } catch { /* fenêtre fermée */ }
+    }
+
+    if (!vehiclesPath || !omsiPath) return { success: false, missing: [], total: 0 }
+    try {
+      const modelDir = path.join(vehiclesPath, 'Model')
+      if (!existsSync(modelDir)) return { success: true, missing: [], total: 0 }
+
+      // Phase 1 : collecte récursive de tous les .cfg
+      push({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
+      const cfgFiles = []
+      async function walkCfg(dir) {
+        let entries
+        try { entries = await readdir(dir, { withFileTypes: true }) } catch { return }
+        for (const e of entries) {
+          const full = path.join(dir, e.name)
+          if (e.isDirectory()) await walkCfg(full)
+          else if (e.name.toLowerCase().endsWith('.cfg')) cfgFiles.push(full)
+        }
+      }
+      await walkCfg(modelDir)
+
+      // Phase 2 : analyse fichier par fichier avec progression
+      const total    = cfgFiles.length
+      const fontsDir = path.join(omsiPath, 'Fonts')
+      const missing  = []
+      const seen     = new Set()
+
+      for (let idx = 0; idx < cfgFiles.length; idx++) {
+        const cfgPath    = cfgFiles[idx]
+        const currentFile = path.basename(cfgPath)
+        push({ phase: 'scanning', current: idx + 1, total, currentFile })
+
+        let content
+        try {
+          const buffer = await readFile(cfgPath)
+          content = iconv.decode(buffer, 'win1252')
+        } catch { continue }
+
+        const lines = content.split(/\r?\n/)
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].trim().toLowerCase() !== '[texttexture]') continue
+          // 3ème ligne après le tag [texttexture]
+          const fontLine = (lines[i + 3] ?? '').trim()
+          if (!fontLine.toLowerCase().endsWith('.oft')) continue
+          const fontName = path.basename(fontLine)
+          const key      = fontName.toLowerCase()
+          if (seen.has(key)) continue
+          seen.add(key)
+          if (!existsSync(path.join(fontsDir, fontName))) {
+            missing.push({
+              fontName,
+              cfgFile: path.relative(vehiclesPath, cfgPath).replace(/\\/g, '/'),
+            })
+          }
+        }
+      }
+
+      return { success: true, missing, total }
+    } catch (err) {
+      return { success: false, error: err.message, missing: [], total: 0 }
+    }
+  })
+
+  // ── Scanner binaire .o3d (textures) ─────────────────────────────────────────
+  // Lit chaque fichier .o3d en tant que Buffer (latin1), extrait via regex les
+  // noms de textures (.tga/.bmp/.dds/.jpg/.png), puis vérifie leur présence
+  // dans {vehiclesPath}/Texture/ et {omsiPath}/Texture/.
+  ipcMain.handle('omsi:scanO3dTextures', async (event, vehiclesPath, omsiPath) => {
+    const push = (data) => {
+      try { event.sender.send('omsi:scanO3d:progress', data) } catch { /* fenêtre fermée */ }
+    }
+
+    if (!vehiclesPath || !omsiPath) return { success: false, results: [], totalMissing: 0 }
+
+    try {
+      push({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
+
+      // Collecte récursive de tous les .o3d
+      const o3dFiles = []
+      async function walkO3d(dir) {
+        let entries
+        try { entries = await readdir(dir, { withFileTypes: true }) } catch { return }
+        for (const e of entries) {
+          const full = path.join(dir, e.name)
+          if (e.isDirectory()) await walkO3d(full)
+          else if (e.name.toLowerCase().endsWith('.o3d')) o3dFiles.push(full)
+        }
+      }
+      await walkO3d(vehiclesPath)
+
+      const total = o3dFiles.length
+      // Dossiers de textures à vérifier (ordre de priorité)
+      const textureDirs = [
+        path.join(vehiclesPath, 'Texture'),
+        path.join(omsiPath,     'Texture'),
+      ]
+
+      const results      = []
+      let   totalMissing = 0
+
+      for (let idx = 0; idx < o3dFiles.length; idx++) {
+        const o3dPath = o3dFiles[idx]
+        const o3dName = path.basename(o3dPath)
+        push({ phase: 'scanning', current: idx + 1, total, currentFile: o3dName })
+
+        const textures = []
+        try {
+          const buffer = await readFile(o3dPath)
+          // Décode en latin1 pour préserver tous les octets du binaire
+          const str    = buffer.toString('latin1')
+          // Extrait les noms de fichiers textures : commence par alnum/underscore,
+          // peut contenir tirets/points, finit par une extension image reconnue.
+          const regex  = /[a-zA-Z0-9_][a-zA-Z0-9_\-.]{0,62}\.(?:tga|bmp|dds|jpg|jpeg|png)/gi
+          const seen   = new Set()
+
+          for (const m of str.matchAll(regex)) {
+            const name = m[0].trim()
+            const key  = name.toLowerCase()
+            if (seen.has(key)) continue
+            seen.add(key)
+            const found = textureDirs.some(d => existsSync(path.join(d, name)))
+            if (!found) totalMissing++
+            textures.push({ name, found })
+          }
+        } catch { /* fichier illisible — on passe */ }
+
+        if (textures.length > 0) {
+          results.push({
+            o3dFile:    path.relative(vehiclesPath, o3dPath).replace(/\\/g, '/'),
+            o3dName,
+            textures,
+            hasMissing: textures.some(t => !t.found),
+          })
+        }
+      }
+
+      return { success: true, results, total, totalMissing }
+    } catch (err) {
+      return { success: false, error: err.message, results: [], totalMissing: 0 }
+    }
+  })
+
+  // ── OMSI Log Parser ─────────────────────────────────────────────────────────
+  let omsiWatcher     = null
+  let omsiWatchTimer  = null
+
+  /**
+   * Lit et parse logfile.txt.
+   * - Encodage Windows-1252 (iconv-lite déjà importé)
+   * - Extrait la date/heure de lancement dans les 30 premières lignes
+   * - Filtre Warning: / Error: avec dédoublonnage par contenu normalisé
+   * - Conserve l'heure de la 1ʳᵉ apparition (numéro de ligne)
+   */
+  function _parseOmsiLog(logPath) {
+    const buffer  = readFileSync(logPath)
+    const content = iconv.decode(buffer, 'win1252')
+    const lines   = content.split(/\r?\n/)
+
+    // Date de lancement : cherche dd.mm.yyyy hh:mm:ss dans les 30 premières lignes
+    let launchTime = null
+    const DATE_RE = /(\d{2}\.\d{2}\.\d{4}\s+\d{2}:\d{2}:\d{2})/
+    for (let i = 0; i < Math.min(30, lines.length); i++) {
+      const m = lines[i].match(DATE_RE)
+      if (m) { launchTime = m[1]; break }
+    }
+
+    const seen    = new Set()
+    const entries = []
+    lines.forEach((raw, idx) => {
+      const line = raw.trim()
+      if (!line) return
+      let type = null
+      if (line.includes('Warning:')) type = 'warning'
+      else if (line.includes('Error:')) type = 'error'
+      if (!type) return
+      // Normalise pour le dédoublonnage : retire les préfixes numériques/timestamps
+      const key = line.replace(/^[\d\s.:[\]]+/, '').trim() || line
+      if (seen.has(key)) return
+      seen.add(key)
+      entries.push({ lineNum: idx + 1, type, text: line })
+    })
+
+    return { launchTime, entries, totalLines: lines.length }
+  }
+
+  ipcMain.handle('omsi:parseLog', (_, omsiPath) => {
+    try {
+      if (!omsiPath) return { success: false, error: 'Chemin OMSI non configuré.' }
+      const logPath = path.join(omsiPath, 'logfile.txt')
+      if (!existsSync(logPath)) return { success: false, error: `Fichier introuvable : ${logPath}` }
+      return { success: true, ..._parseOmsiLog(logPath) }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('omsi:watchLog:start', (event, omsiPath) => {
+    try {
+      if (!omsiPath) return { success: false, error: 'Chemin OMSI non configuré.' }
+      const logPath = path.join(omsiPath, 'logfile.txt')
+      if (!existsSync(logPath)) return { success: false, error: `Fichier introuvable : ${logPath}` }
+
+      // Arrête l'éventuel watcher précédent
+      if (omsiWatcher) { try { omsiWatcher.close() } catch {} omsiWatcher = null }
+
+      const push = () => {
+        try {
+          event.sender.send('omsi:log:update', { success: true, ..._parseOmsiLog(logPath) })
+        } catch (e) {
+          event.sender.send('omsi:log:update', { success: false, error: e.message })
+        }
+      }
+
+      // Envoi immédiat + debounce 600 ms sur les changements suivants
+      push()
+      omsiWatcher = fsWatch(logPath, () => {
+        clearTimeout(omsiWatchTimer)
+        omsiWatchTimer = setTimeout(push, 600)
+      })
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('omsi:watchLog:stop', () => {
+    clearTimeout(omsiWatchTimer)
+    if (omsiWatcher) { try { omsiWatcher.close() } catch {} omsiWatcher = null }
+    return { success: true }
   })
 
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })

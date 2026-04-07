@@ -28,11 +28,34 @@ contextBridge.exposeInMainWorld('api', {
   },
   dialog: {
     selectFolder: (options)  => ipcRenderer.invoke('dialog:selectFolder', options),
-    selectFile:   (options)  => ipcRenderer.invoke('dialog:selectFile', options),
-    selectFiles:  (options)  => ipcRenderer.invoke('dialog:selectFiles', options)
+    selectFile:   (options)  => ipcRenderer.invoke('dialog:selectFile',   options),
+    selectFiles:  (options)  => ipcRenderer.invoke('dialog:selectFiles',  options),
+    saveFile:     (options)  => ipcRenderer.invoke('dialog:saveFile',     options),
+  },
+  bus: {
+    readFile:   (filePath)              => ipcRenderer.invoke('bus:readFile',   filePath),
+    writeFile:  (filePath, content)     => ipcRenderer.invoke('bus:writeFile',  filePath, content),
+    fileExists: (busDir, relativePath)  => ipcRenderer.invoke('bus:fileExists', busDir, relativePath),
   },
   omsi: {
-    validatePath: (p) => ipcRenderer.invoke('omsi:validatePath', p)
+    launch:            ()         => ipcRenderer.invoke('omsi:launch'),
+    launchEditor:      ()         => ipcRenderer.invoke('omsi:launchEditor'),
+    launchBBS:         (omsiPath) => ipcRenderer.invoke('omsi:launchBBS', omsiPath),
+    validatePath:      (p)        => ipcRenderer.invoke('omsi:validatePath', p),
+    parseLog:          (omsiPath) => ipcRenderer.invoke('omsi:parseLog',       omsiPath),
+    watchStart:        (omsiPath) => ipcRenderer.invoke('omsi:watchLog:start', omsiPath),
+    watchStop:         ()         => ipcRenderer.invoke('omsi:watchLog:stop'),
+    onLogUpdate:       (cb)       => ipcRenderer.on('omsi:log:update',      (_, d) => cb(d)),
+    offLogUpdate:      ()         => ipcRenderer.removeAllListeners('omsi:log:update'),
+    getProcessStatus:  ()         => ipcRenderer.invoke('omsi:getProcessStatus'),
+    onProcessStatus:   (cb)       => ipcRenderer.on('omsi:processStatus',   (_, d) => cb(d)),
+    offProcessStatus:  ()         => ipcRenderer.removeAllListeners('omsi:processStatus'),
+    scanModelFonts:       (vehiclesPath, omsiPath) => ipcRenderer.invoke('omsi:scanModelFonts',   vehiclesPath, omsiPath),
+    onScanFontsProgress:  (cb) => ipcRenderer.on('omsi:scanFonts:progress',  (_, d) => cb(d)),
+    offScanFontsProgress: ()   => ipcRenderer.removeAllListeners('omsi:scanFonts:progress'),
+    scanO3dTextures:      (vehiclesPath, omsiPath) => ipcRenderer.invoke('omsi:scanO3dTextures',  vehiclesPath, omsiPath),
+    onO3dProgress:        (cb) => ipcRenderer.on('omsi:scanO3d:progress',    (_, d) => cb(d)),
+    offO3dProgress:       ()   => ipcRenderer.removeAllListeners('omsi:scanO3d:progress'),
   },
   file: {
     readAsDataUrl: (filePath) => ipcRenderer.invoke('file:readAsDataUrl', filePath),

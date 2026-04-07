@@ -21,6 +21,14 @@ import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Tooltip from '@mui/material/Tooltip'
+import Alert from '@mui/material/Alert'
+import Badge from '@mui/material/Badge'
+import LinearProgress from '@mui/material/LinearProgress'
+import Accordion from '@mui/material/Accordion'
+import AccordionSummary from '@mui/material/AccordionSummary'
+import AccordionDetails from '@mui/material/AccordionDetails'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
 import IconButton from '@mui/material/IconButton'
 import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
@@ -47,6 +55,11 @@ import PersonRemoveOutlinedIcon from '@mui/icons-material/PersonRemoveOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined'
 import CloseIcon from '@mui/icons-material/Close'
+import BrushOutlinedIcon from '@mui/icons-material/BrushOutlined'
+import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined'
+import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined'
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore'
+import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 import SyncModal from '../components/SyncModal'
 import PushDialog from '../components/PushDialog'
 import { projectService } from '../services/projectService'
@@ -104,9 +117,293 @@ function StatusTag({ children, color }) {
   )
 }
 
+// ── Lightbox ───────────────────────────────────────────────────────────────
+function Lightbox({ screenshots, index, onClose, onPrev, onNext }) {
+  // Navigation clavier
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowLeft')  onPrev()
+      if (e.key === 'ArrowRight') onNext()
+      if (e.key === 'Escape')     onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onPrev, onNext, onClose])
+
+  const shot = screenshots[index]
+  if (!shot) return null
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      maxWidth={false}
+      PaperProps={{
+        sx: {
+          background: 'rgba(8,9,10,0.96)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.8)',
+          borderRadius: '8px',
+          maxWidth: '92vw',
+          maxHeight: '92vh',
+          overflow: 'hidden',
+          position: 'relative',
+        }
+      }}
+      BackdropProps={{ sx: { background: 'rgba(0,0,0,0.88)' } }}
+    >
+      <Box sx={{ position: 'relative', display: 'flex',
+        alignItems: 'center', justifyContent: 'center', p: 1 }}>
+
+        {/* Compteur */}
+        <Box sx={{
+          position: 'absolute', top: 10, left: 12, zIndex: 10,
+          fontSize: 11, color: 'rgba(255,255,255,0.45)',
+          background: 'rgba(0,0,0,0.45)',
+          px: 1, py: 0.25, borderRadius: '4px',
+          fontFamily: 'Inter, sans-serif', userSelect: 'none',
+        }}>
+          {index + 1} / {screenshots.length}
+        </Box>
+
+        {/* Fermer */}
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            position: 'absolute', top: 8, right: 8, zIndex: 10,
+            background: 'rgba(0,0,0,0.5)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            '&:hover': { background: 'rgba(0,0,0,0.8)' },
+          }}
+        >
+          <CloseIcon sx={{ fontSize: 16, color: '#fff' }} />
+        </IconButton>
+
+        {/* Précédent */}
+        {screenshots.length > 1 && (
+          <IconButton
+            onClick={onPrev}
+            sx={{
+              position: 'absolute', left: 8, zIndex: 10,
+              background: 'rgba(0,0,0,0.45)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              '&:hover': { background: 'rgba(0,0,0,0.75)' },
+            }}
+          >
+            <NavigateBeforeIcon sx={{ fontSize: 28, color: '#fff' }} />
+          </IconButton>
+        )}
+
+        {/* Image */}
+        <Box
+          component="img"
+          src={shot.url}
+          alt={`Screenshot ${index + 1}`}
+          sx={{
+            maxWidth: '88vw',
+            maxHeight: '86vh',
+            objectFit: 'contain',
+            display: 'block',
+            borderRadius: '4px',
+          }}
+        />
+
+        {/* Suivant */}
+        {screenshots.length > 1 && (
+          <IconButton
+            onClick={onNext}
+            sx={{
+              position: 'absolute', right: 8, zIndex: 10,
+              background: 'rgba(0,0,0,0.45)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              '&:hover': { background: 'rgba(0,0,0,0.75)' },
+            }}
+          >
+            <NavigateNextIcon sx={{ fontSize: 28, color: '#fff' }} />
+          </IconButton>
+        )}
+      </Box>
+    </Dialog>
+  )
+}
+
+// ── Section Screenshots ────────────────────────────────────────────────────
+function ScreenshotsSection({ screenshots = [], isOwnerOrAdmin, onAdd, onDelete }) {
+  const addInputRef = useRef(null)
+  const [uploading,  setUploading]  = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+  const [lbIndex,    setLbIndex]    = useState(null) // null = fermé
+
+  const hasShots = screenshots.length > 0
+
+  // Masqué si vide et pas propriétaire
+  if (!hasShots && !isOwnerOrAdmin) return null
+
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    setUploading(true)
+    try { await onAdd(files) }
+    finally {
+      setUploading(false)
+      if (addInputRef.current) addInputRef.current.value = ''
+    }
+  }
+
+  const handleDelete = async (id) => {
+    setDeletingId(id)
+    try { await onDelete(id) }
+    finally { setDeletingId(null) }
+  }
+
+  const goPrev = () => setLbIndex(i => (i - 1 + screenshots.length) % screenshots.length)
+  const goNext = () => setLbIndex(i => (i + 1) % screenshots.length)
+
+  return (
+    <>
+      <div className="w11-card" style={{ marginBottom: 0 }}>
+        {/* En-tête */}
+        <div className="w11-card-title" style={{ display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between', marginBottom: hasShots ? 10 : 0 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <CollectionsOutlinedIcon sx={{ fontSize: 14 }} />
+            Captures d'écran
+            {hasShots && (
+              <span style={{ fontSize: 10, color: 'var(--text-muted)',
+                background: 'rgba(255,255,255,0.06)', padding: '1px 7px', borderRadius: 10 }}>
+                {screenshots.length}
+              </span>
+            )}
+          </span>
+          {isOwnerOrAdmin && (
+            <>
+              <input
+                ref={addInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                disabled={uploading}
+                startIcon={uploading
+                  ? <CircularProgress size={12} />
+                  : <AddPhotoAlternateOutlinedIcon />}
+                onClick={() => addInputRef.current?.click()}
+                sx={{ fontSize: 11, textTransform: 'none', borderRadius: '6px',
+                  py: 0.25, minWidth: 0 }}
+              >
+                {uploading ? 'Envoi…' : 'Ajouter'}
+              </Button>
+            </>
+          )}
+        </div>
+
+        {/* Grille */}
+        {hasShots ? (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(138px, 1fr))',
+            gap: 7,
+          }}>
+            {screenshots.map((shot, idx) => (
+              <Box
+                key={shot.id}
+                sx={{
+                  position: 'relative',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  aspectRatio: '16 / 9',
+                  background: '#12151a',
+                  cursor: 'pointer',
+                  '&:hover .ss-hover': { opacity: 1 },
+                  '&:hover img': { transform: 'scale(1.05)' },
+                }}
+              >
+                {/* Miniature */}
+                <Box
+                  component="img"
+                  src={shot.url}
+                  alt={`Screenshot ${idx + 1}`}
+                  onClick={() => setLbIndex(idx)}
+                  sx={{
+                    width: '100%', height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                    transition: 'transform 0.2s ease',
+                  }}
+                />
+
+                {/* Overlay hover */}
+                <Box
+                  className="ss-hover"
+                  onClick={() => setLbIndex(idx)}
+                  sx={{
+                    position: 'absolute', inset: 0,
+                    background: 'rgba(0,0,0,0.38)',
+                    opacity: 0,
+                    transition: 'opacity 0.15s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    pointerEvents: 'auto',
+                  }}
+                >
+                  <VisibilityOutlinedIcon sx={{ fontSize: 20, color: 'rgba(255,255,255,0.85)' }} />
+                </Box>
+
+                {/* Bouton supprimer (owner uniquement) */}
+                {isOwnerOrAdmin && (
+                  <IconButton
+                    size="small"
+                    disabled={!!deletingId}
+                    onClick={(e) => { e.stopPropagation(); handleDelete(shot.id) }}
+                    sx={{
+                      position: 'absolute', top: 3, right: 3,
+                      p: '3px',
+                      background: 'rgba(0,0,0,0.55)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      opacity: deletingId === shot.id ? 1 : undefined,
+                      '&:hover': { background: 'rgba(180,30,20,0.80)' },
+                    }}
+                  >
+                    {deletingId === shot.id
+                      ? <CircularProgress size={11} sx={{ color: '#fff' }} />
+                      : <DeleteOutlinedIcon sx={{ fontSize: 12, color: '#fff' }} />
+                    }
+                  </IconButton>
+                )}
+              </Box>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', paddingTop: 2 }}>
+            Aucune capture d'écran. Cliquez sur "Ajouter" pour en uploader.
+          </div>
+        )}
+      </div>
+
+      {/* Lightbox */}
+      {lbIndex !== null && (
+        <Lightbox
+          screenshots={screenshots}
+          index={lbIndex}
+          onClose={() => setLbIndex(null)}
+          onPrev={goPrev}
+          onNext={goNext}
+        />
+      )}
+    </>
+  )
+}
+
 // ── Onglet Description ─────────────────────────────────────────────────────
 function TabDescription({ project, thumb, cinStatus, onUninstall, isUninstalling,
-                          latestCloudVersion, onInstallLatest, busFiles, knownZipNames, canDeploy }) {
+                          latestCloudVersion, onInstallLatest, busFiles, knownZipNames, canDeploy,
+                          screenshots, isOwnerOrAdmin, onAddScreenshots, onDeleteScreenshot }) {
   const installDate = cinStatus?.installDate
     ? new Date(cinStatus.installDate).toLocaleString('fr-FR', {
         day: '2-digit', month: '2-digit', year: 'numeric',
@@ -141,142 +438,653 @@ function TabDescription({ project, thumb, cinStatus, onUninstall, isUninstalling
   )
 
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-      {/* Colonne gauche */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {/* Déploiement */}
-        {canDeploy && <div className="w11-card" style={{ marginBottom: 0 }}>
-          <div className="w11-card-title">{headerIcon} Déploiement</div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 272px', gap: 10, alignItems: 'flex-start' }}>
 
-          {isExternalPackage ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                flexWrap: 'wrap', gap: 10 }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 13, color: '#fc3d39', fontWeight: 600 }}>
-                      ✗ Installé — Paquet externe
-                    </span>
-                    <StatusTag color="red">{cinStatus.versionName}</StatusTag>
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                    Installé le {installDate} · {cinStatus.files?.length || 0} fichier(s)
-                  </div>
-                </div>
-                {uninstallBtn}
-              </div>
-              <div style={{ padding: '8px 12px', borderRadius: 6,
-                background: 'rgba(252,61,57,0.06)', border: '1px solid rgba(252,61,57,0.2)' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                  <WarningAmberOutlinedIcon sx={{ fontSize: 13, color: '#fc3d39', flexShrink: 0, mt: 0.1 }} />
-                  <span style={{ fontSize: 12, color: '#fc3d39', lineHeight: 1.55 }}>
-                    Cette version est inconnue du système NEROSY. Soyez prudent, l'intégrité du paquet ne peut être vérifiée.
-                  </span>
-                </div>
-              </div>
-            </div>
+      {/* ── Colonne gauche ─────────────────────────────────── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-          ) : cinStatus ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                flexWrap: 'wrap', gap: 10 }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    {isOutdated ? (
-                      <span style={{ fontSize: 13, color: '#f0a030', fontWeight: 600 }}>
-                        ⚠ Mise à jour disponible
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: 13, color: '#6ccb5f', fontWeight: 600 }}>
-                        ✓ Installé · À jour
-                      </span>
-                    )}
-                    <StatusTag color={isOutdated ? 'orange' : 'green'}>{cinStatus.versionName}</StatusTag>
-                    {isOutdated && latestCloudVersion && (
-                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        → {latestCloudVersion.versionName} disponible
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                    Installé le {installDate} · {cinStatus.files?.length || 0} fichier(s)
-                  </div>
-                </div>
-                {uninstallBtn}
+        {/* Description + vignette */}
+        <div className="w11-card" style={{ marginBottom: 0 }}>
+          <div className="w11-card-title"><DescriptionOutlinedIcon sx={{ fontSize: 14 }} /> Description</div>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            {thumb && (
+              <div style={{ width: 110, height: 72, borderRadius: 6, overflow: 'hidden',
+                flexShrink: 0, background: '#1e2328' }}>
+                <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
-              {isOutdated && (
-                <Button variant="contained" size="small" startIcon={<SyncOutlinedIcon />} onClick={onInstallLatest}
-                  sx={{ alignSelf: 'flex-start' }}>
-                  Mettre à jour vers {latestCloudVersion.versionName}
-                </Button>
+            )}
+            <div style={{ flex: 1 }}>
+              {project.description ? (
+                <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+                  {project.description}
+                </div>
+              ) : (
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  Aucune description renseignée.
+                </div>
               )}
             </div>
+          </div>
+        </div>
 
-          ) : (
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic',
-              display: 'flex', alignItems: 'center', gap: 6 }}>
-              <CancelOutlinedIcon sx={{ fontSize: 14 }} /> Non installé localement
-            </div>
-          )}
-        </div>}
+        {/* Screenshots */}
+        <ScreenshotsSection
+          screenshots={screenshots}
+          isOwnerOrAdmin={isOwnerOrAdmin}
+          onAdd={onAddScreenshots}
+          onDelete={onDeleteScreenshot}
+        />
 
-        {/* Description */}
-        <div style={{ display: 'grid', gridTemplateColumns: thumb ? '190px 1fr' : '1fr', gap: 12 }}>
-          {thumb && (
-            <div style={{ borderRadius: 8, overflow: 'hidden', background: '#1e2328',
-              maxHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-          )}
+        {/* Changelog de la dernière version */}
+        {latestCloudVersion?.changelog && (
           <div className="w11-card" style={{ marginBottom: 0 }}>
-            <div className="w11-card-title"><DescriptionOutlinedIcon sx={{ fontSize: 14 }} /> Description</div>
-            {project.description ? (
-              <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
-                {project.description}
+            <div className="w11-card-title">
+              <CloudOutlinedIcon sx={{ fontSize: 14 }} /> Changelog
+              {latestCloudVersion.versionName && (
+                <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--text-muted)',
+                  background: 'rgba(255,255,255,0.06)', padding: '1px 7px', borderRadius: 10 }}>
+                  {latestCloudVersion.versionName}
+                </span>
+              )}
+            </div>
+            <div className="cin-markdown" style={{
+              fontSize: 13, color: '#b0b0b0', lineHeight: 1.7,
+              padding: '10px 12px',
+              background: 'rgba(0,0,0,0.2)', borderRadius: 5,
+              borderLeft: '2px solid rgba(66,165,245,0.25)',
+              overflowX: 'auto',
+            }}>
+              <ReactMarkdown>{latestCloudVersion.changelog}</ReactMarkdown>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Colonne droite : Projet Info ───────────────────── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="w11-card" style={{ marginBottom: 0 }}>
+          <div className="w11-card-title" style={{ marginBottom: 10 }}>
+            <ImageOutlinedIcon sx={{ fontSize: 14 }} /> Projet Info
+          </div>
+
+          {/* Déploiement compact */}
+          {canDeploy && (
+            <div style={{ marginBottom: busFiles.length > 0 ? 12 : 0 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase',
+                letterSpacing: '0.07em', marginBottom: 6,
+                display: 'flex', alignItems: 'center', gap: 4 }}>
+                {headerIcon} Déploiement
               </div>
-            ) : (
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                Aucune description renseignée.
+
+              {isExternalPackage ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, color: '#fc3d39', fontWeight: 600 }}>✗ Paquet externe</span>
+                    <StatusTag color="red">{cinStatus.versionName}</StatusTag>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                    {installDate} · {cinStatus.files?.length || 0} fichier(s)
+                  </div>
+                  {uninstallBtn}
+                  <div style={{ marginTop: 3, padding: '5px 8px', borderRadius: 5,
+                    background: 'rgba(252,61,57,0.06)', border: '1px solid rgba(252,61,57,0.18)',
+                    display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+                    <WarningAmberOutlinedIcon sx={{ fontSize: 12, color: '#fc3d39', flexShrink: 0, mt: 0.1 }} />
+                    <span style={{ fontSize: 11, color: '#fc3d39', lineHeight: 1.5 }}>
+                      Intégrité non vérifiable par NEROSY.
+                    </span>
+                  </div>
+                </div>
+
+              ) : cinStatus ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    {isOutdated ? (
+                      <span style={{ fontSize: 12, color: '#f0a030', fontWeight: 600 }}>⚠ Mise à jour dispo</span>
+                    ) : (
+                      <span style={{ fontSize: 12, color: '#6ccb5f', fontWeight: 600 }}>✓ Installé · À jour</span>
+                    )}
+                    <StatusTag color={isOutdated ? 'orange' : 'green'}>{cinStatus.versionName}</StatusTag>
+                  </div>
+                  {isOutdated && latestCloudVersion && (
+                    <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                      → {latestCloudVersion.versionName} disponible
+                    </div>
+                  )}
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                    {installDate} · {cinStatus.files?.length || 0} fichier(s)
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {uninstallBtn}
+                    {isOutdated && (
+                      <Button variant="contained" size="small" startIcon={<SyncOutlinedIcon />}
+                        onClick={onInstallLatest} sx={{ fontSize: 11 }}>
+                        Mettre à jour
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+              ) : (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)',
+                  display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <CancelOutlinedIcon sx={{ fontSize: 13 }} /> Non installé
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Séparateur */}
+          {canDeploy && busFiles.length > 0 && (
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: 10 }} />
+          )}
+
+          {/* Bus détectés — dense */}
+          {busFiles.length > 0 && (
+            <div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase',
+                letterSpacing: '0.07em', marginBottom: 6,
+                display: 'flex', alignItems: 'center', gap: 4 }}>
+                <DirectionsBusOutlinedIcon sx={{ fontSize: 12 }} />
+                Bus détectés
+                <span style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 6px',
+                  borderRadius: 8, fontSize: 10 }}>
+                  {busFiles.length}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {busFiles.map((bus, i) => (
+                  <div key={`bus-${i}`} style={{
+                    padding: '6px 8px', borderRadius: 5,
+                    background: 'rgba(255,255,255,0.025)',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                  }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {bus.model || '—'}
+                    </div>
+                    {bus.manufacturer && (
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+                        {bus.manufacturer}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 8, marginTop: 2, alignItems: 'center' }}>
+                      {bus.size != null && (
+                        <span style={{ fontSize: 10, color: '#42a5f5', fontWeight: 500 }}>
+                          {formatBytes(bus.size)}
+                        </span>
+                      )}
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)', overflow: 'hidden',
+                        textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        title={bus.filename}>
+                        {bus.filename}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!canDeploy && busFiles.length === 0 && (
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+              Aucune information disponible.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Bouton "Copier le nom" avec feedback visuel ────────────────────────────
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    }).catch(() => {})
+  }
+  return (
+    <Button
+      size="small"
+      variant={copied ? 'contained' : 'outlined'}
+      onClick={handleCopy}
+      startIcon={
+        copied
+          ? <CheckCircleOutlinedIcon style={{ fontSize: 13 }} />
+          : <ContentCopyOutlinedIcon style={{ fontSize: 13 }} />
+      }
+      sx={{
+        borderRadius: '6px', textTransform: 'none', fontSize: 11, flexShrink: 0,
+        minWidth: 120,
+        transition: 'all 0.2s ease',
+        ...(copied ? {
+          background: 'rgba(108,203,95,0.15)',
+          borderColor: 'rgba(108,203,95,0.4)',
+          color: '#6ccb5f',
+          '&:hover': { background: 'rgba(108,203,95,0.2)' },
+        } : {
+          borderColor: 'rgba(255,255,255,0.14)',
+          color: 'var(--text-muted)',
+          '&:hover': { borderColor: 'rgba(255,255,255,0.3)', color: 'var(--text-secondary)' },
+        }),
+      }}
+    >
+      {copied ? 'Copié !' : 'Copier le nom'}
+    </Button>
+  )
+}
+
+// ── Modale de progression O3D ──────────────────────────────────────────────
+function O3dProgressModal({ open, progress }) {
+  const phase       = progress?.phase       ?? 'collecting'
+  const current     = progress?.current     ?? 0
+  const total       = progress?.total       ?? 0
+  const currentFile = progress?.currentFile ?? ''
+  const pct         = total > 0 ? Math.round((current / total) * 100) : 0
+
+  return (
+    <Dialog
+      open={open}
+      disableEscapeKeyDown
+      onClose={() => {}}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '14px',
+          background: '#0c0f14',
+          border: '1px solid rgba(255,255,255,0.09)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+        }
+      }}
+    >
+      <DialogTitle sx={{ fontSize: 15, fontWeight: 700, pb: 0.5 }}>
+        Analyse des modèles 3D
+      </DialogTitle>
+      <DialogContent sx={{ pt: '12px !important' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
+
+          {/* Pourcentage centré */}
+          <div style={{
+            textAlign: 'center',
+            fontSize: 40, fontWeight: 800, letterSpacing: '-2px',
+            color: '#42a5f5', fontFamily: 'Inter, sans-serif',
+            lineHeight: 1,
+          }}>
+            {total > 0 ? `${pct} %` : '—'}
+          </div>
+
+          {/* Barre de progression */}
+          <LinearProgress
+            variant={total > 0 ? 'determinate' : 'indeterminate'}
+            value={pct}
+            sx={{
+              height: 7, borderRadius: 4,
+              backgroundColor: 'rgba(255,255,255,0.07)',
+              '& .MuiLinearProgress-bar': { borderRadius: 4 },
+            }}
+          />
+
+          {/* Fichier courant */}
+          <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', minHeight: 18 }}>
+            {phase === 'collecting'
+              ? 'Collecte des fichiers binaires .o3d…'
+              : (
+                <>
+                  {current} / {total} —{' '}
+                  <code style={{ fontFamily: 'monospace', color: 'var(--text-secondary)', fontSize: 11 }}>
+                    {currentFile}
+                  </code>
+                </>
+              )
+            }
+          </div>
+
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ── Onglet Contrôle & Alertes ──────────────────────────────────────────────
+/**
+ * scanProgress     : null = terminé | { phase, current, total, currentFile } = en cours
+ * fontTotal        : null = pas encore scanné | 0 = aucun .cfg | N = scannés
+ * o3dResults       : [{o3dName, o3dFile, textures:[{name,found}], hasMissing}]
+ * o3dScanned       : le scan O3D a déjà tourné au moins une fois
+ * o3dTotalMissing  : nombre total de textures manquantes
+ * onScanO3d        : callback pour lancer le scan
+ * canScan          : vehicles + omsiPath configurés
+ */
+function TabAvertissements({ fontWarnings, scanProgress, fontTotal,
+                              o3dResults, o3dScanned, o3dTotalMissing,
+                              onScanO3d, canScan }) {
+  const isScanning = scanProgress !== null
+  const isDone     = !isScanning && fontTotal !== null
+
+  const total   = scanProgress?.total ?? fontTotal ?? 0
+  const current = scanProgress?.current ?? 0
+  const pct     = total > 0 ? Math.round((current / total) * 100) : 0
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {/* ── Carte principale ──────────────────────────────────────────── */}
+      <div className="w11-card" style={{ marginBottom: 0 }}>
+
+        {/* En-tête */}
+        <div className="w11-card-title" style={{ marginBottom: 10 }}>
+          <FontDownloadOutlinedIcon sx={{ fontSize: 14 }} />
+          Analyse des Polices d'écriture (Fonts)
+          {isDone && total > 0 && (
+            <span style={{
+              marginLeft: 'auto', fontSize: 10,
+              color: 'var(--text-muted)',
+              background: 'rgba(255,255,255,0.06)',
+              padding: '1px 8px', borderRadius: 10,
+            }}>
+              {total} fichier{total > 1 ? 's' : ''} .cfg analysé{total > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+
+        {/* ── En cours de scan ────────────────────────────────────────── */}
+        {isScanning && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                {scanProgress.phase === 'collecting'
+                  ? 'Collecte des fichiers de configuration…'
+                  : (
+                    <>
+                      Scan en cours :{' '}
+                      <code style={{ fontFamily: 'monospace', color: 'var(--text-primary)', fontSize: 11 }}>
+                        {scanProgress.currentFile}
+                      </code>
+                      …
+                    </>
+                  )
+                }
+              </span>
+              {total > 0 && (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0, ml: 1 }}>
+                  {current} / {total}
+                </span>
+              )}
+            </div>
+            <LinearProgress
+              variant={total > 0 ? 'determinate' : 'indeterminate'}
+              value={pct}
+              sx={{
+                height: 5, borderRadius: 3,
+                backgroundColor: 'rgba(255,255,255,0.07)',
+                '& .MuiLinearProgress-bar': { borderRadius: 3 },
+              }}
+            />
+            {total > 0 && (
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'right' }}>
+                {pct}%
               </div>
             )}
           </div>
-        </div>
+        )}
+
+        {/* ── Aucun .cfg trouvé ────────────────────────────────────────── */}
+        {isDone && total === 0 && (
+          <Alert severity="info" variant="outlined" sx={{ borderRadius: '7px', fontSize: 13 }}>
+            Aucune configuration de modèle détectée pour ce projet.
+            Assurez-vous que le dossier <strong>Vehicles</strong> est correctement configuré.
+          </Alert>
+        )}
+
+        {/* ── Tout OK ──────────────────────────────────────────────────── */}
+        {isDone && total > 0 && fontWarnings.length === 0 && (
+          <Alert severity="success" variant="outlined" sx={{ borderRadius: '7px', fontSize: 13 }}>
+            Toutes les polices requises sont présentes dans votre dossier OMSI 2.
+          </Alert>
+        )}
+
+        {/* ── Polices manquantes ───────────────────────────────────────── */}
+        {isDone && fontWarnings.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Alert
+              severity="warning"
+              variant="outlined"
+              sx={{ borderRadius: '7px', fontSize: 13, lineHeight: 1.55 }}
+            >
+              {fontWarnings.length} police{fontWarnings.length > 1 ? 's' : ''} requise{fontWarnings.length > 1 ? 's' : ''}{' '}
+              pour l'affichage (girouettes, tableaux de bord){' '}
+              {fontWarnings.length > 1 ? 'sont manquantes' : 'est manquante'} dans votre dossier{' '}
+              <strong>Fonts</strong> d'OMSI 2.
+            </Alert>
+
+            {/* Chips des polices manquantes */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
+                textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+                Fichiers manquants
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {fontWarnings.map((w, i) => (
+                  <Tooltip key={`fw-${i}`} title={`Référencé dans : ${w.cfgFile}`} placement="top">
+                    <Chip
+                      icon={<WarningAmberOutlinedIcon style={{ fontSize: 13 }} />}
+                      label={w.fontName}
+                      size="small"
+                      sx={{
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        color: '#f0a030',
+                        borderColor: 'rgba(240,160,48,0.35)',
+                        background: 'rgba(240,160,48,0.07)',
+                        '& .MuiChip-icon': { color: '#f0a030' },
+                      }}
+                      variant="outlined"
+                    />
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+
+            {/* Note de sécurité */}
+            <Alert
+              severity="info"
+              variant="outlined"
+              icon={<CheckCircleOutlinedIcon fontSize="inherit" />}
+              sx={{ borderRadius: '7px', fontSize: 12, lineHeight: 1.6 }}
+            >
+              <strong>Note de sécurité :</strong> Cinnamon ne supprimera jamais ces fichiers
+              lors d'une désinstallation. Les polices sont partagées entre plusieurs bus
+              et doivent être gérées manuellement.
+            </Alert>
+          </div>
+        )}
+
       </div>
 
-      {/* Panneau droit — Bus détectés */}
-      {busFiles.length > 0 && (
-        <div style={{ width: 250, flexShrink: 0 }}>
-          <div className="w11-card" style={{ marginBottom: 0 }}>
-            <div className="w11-card-title">
-              <DirectionsBusOutlinedIcon sx={{ fontSize: 14 }} /> Bus détectés
-              <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--text-muted)',
-                background: 'rgba(255,255,255,0.06)', padding: '1px 7px', borderRadius: 10 }}>
-                {busFiles.length}
-              </span>
-            </div>
-            {busFiles.map((bus, i) => (
-              <div key={`bus-${i}`} style={{
-                padding: '7px 0',
-                borderBottom: i < busFiles.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none'
-              }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {bus.model || '—'}
-                </div>
-                {bus.manufacturer && (
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
-                    {bus.manufacturer}
-                  </div>
-                )}
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace',
-                  marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                  title={bus.filename}>
-                  {bus.filename}
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* ── Bloc Modèles 3D ──────────────────────────────────────────────── */}
+      <div className="w11-card" style={{ marginBottom: 0 }}>
+
+        {/* En-tête */}
+        <div className="w11-card-title" style={{ marginBottom: 10 }}>
+          <DescriptionOutlinedIcon sx={{ fontSize: 14 }} />
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: 11 }}>
+            Analyse des Modèles 3D (Meshes &amp; Textures)
+          </span>
+          {o3dScanned && o3dTotalMissing > 0 && (
+            <Tooltip title={`${o3dTotalMissing} texture(s) manquante(s)`} placement="top">
+              <WarningAmberOutlinedIcon sx={{ fontSize: 15, color: '#f0a030', ml: 'auto' }} />
+            </Tooltip>
+          )}
+          {o3dScanned && o3dTotalMissing === 0 && (
+            <CheckCircleOutlinedIcon sx={{ fontSize: 15, color: '#6ccb5f', ml: 'auto' }} />
+          )}
         </div>
-      )}
+
+        {/* État initial — bouton de lancement */}
+        {!o3dScanned && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, lineHeight: 1.6 }}>
+              Scanne les fichiers <code style={{ fontFamily: 'monospace' }}>.o3d</code> du projet
+              et vérifie que chaque texture référencée est présente dans les dossiers
+              <code style={{ fontFamily: 'monospace' }}> Texture/</code>.
+            </div>
+            <Tooltip
+              title={!canScan ? 'Configurez le chemin OMSI 2 dans les Paramètres pour activer ce scan.' : ''}
+              placement="right"
+            >
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled={!canScan}
+                  startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 15 }} />}
+                  onClick={onScanO3d}
+                  sx={{
+                    borderRadius: '7px', textTransform: 'none', fontSize: 13,
+                    borderColor: 'rgba(255,255,255,0.18)',
+                    '&:hover': { borderColor: '#42a5f5', color: '#42a5f5' },
+                  }}
+                >
+                  Analyser les dépendances binaires
+                </Button>
+              </span>
+            </Tooltip>
+          </div>
+        )}
+
+        {/* Aucun .o3d trouvé */}
+        {o3dScanned && o3dResults.length === 0 && (
+          <Alert severity="info" variant="outlined" sx={{ borderRadius: '7px', fontSize: 13 }}>
+            Aucun fichier <code>.o3d</code> trouvé dans ce projet.
+          </Alert>
+        )}
+
+        {/* Résultats — regroupés par texture manquante */}
+        {o3dScanned && o3dResults.length > 0 && (() => {
+          // Inversion de l'index : texture manquante → liste des .o3d qui l'utilisent
+          const missingMap = {}
+          for (const item of o3dResults) {
+            for (const tex of item.textures) {
+              if (tex.found) continue
+              if (!missingMap[tex.name]) missingMap[tex.name] = new Set()
+              missingMap[tex.name].add(item.o3dName)
+            }
+          }
+          const missingByTexture = Object.entries(missingMap)
+            .map(([textureName, usedBySet]) => ({ textureName, usedBy: [...usedBySet].sort() }))
+            .sort((a, b) => a.textureName.localeCompare(b.textureName))
+          const affectedModels = new Set(missingByTexture.flatMap(m => m.usedBy)).size
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+              {/* ── Synthèse globale ────────────────────────────────────── */}
+              {missingByTexture.length === 0 ? (
+                /* Grand message succès */
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  gap: 10, padding: '28px 16px', textAlign: 'center',
+                }}>
+                  <CheckCircleOutlinedIcon sx={{ fontSize: 44, color: '#6ccb5f' }} />
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#6ccb5f', lineHeight: 1.3 }}>
+                    Félicitations !
+                  </div>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 360 }}>
+                    Toutes les textures natives des modèles 3D sont présentes dans votre installation OMSI 2.
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Bandeau de synthèse */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 14px', borderRadius: 8,
+                    background: 'rgba(252,61,57,0.06)',
+                    border: '1px solid rgba(252,61,57,0.22)',
+                  }}>
+                    <CancelOutlinedIcon sx={{ fontSize: 16, color: '#fc3d39', flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>
+                      <strong style={{ color: '#fc3d39' }}>{missingByTexture.length}</strong>{' '}
+                      texture{missingByTexture.length > 1 ? 's manquantes' : ' manquante'} détectée{missingByTexture.length > 1 ? 's' : ''}{' '}
+                      dans{' '}
+                      <strong style={{ color: '#fc3d39' }}>{affectedModels}</strong>{' '}
+                      modèle{affectedModels > 1 ? 's' : ''} 3D.
+                    </span>
+                  </div>
+
+                  {/* ── Cartes par texture manquante ────────────────────── */}
+                  {missingByTexture.map(({ textureName, usedBy }) => (
+                    <div
+                      key={textureName}
+                      style={{
+                        background: 'rgba(252,61,57,0.035)',
+                        border: '1px solid rgba(252,61,57,0.18)',
+                        borderRadius: 9,
+                        padding: '10px 14px 12px',
+                      }}
+                    >
+                      {/* En-tête carte : nom texture + bouton copier */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                        <CancelOutlinedIcon sx={{ fontSize: 14, color: '#fc3d39', flexShrink: 0 }} />
+                        <span style={{
+                          fontFamily: 'monospace', fontSize: 13, fontWeight: 700,
+                          color: '#fc3d39', flex: 1,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                          {textureName}
+                        </span>
+                        <CopyButton text={textureName} />
+                      </div>
+
+                      {/* Liste des .o3d concernés */}
+                      <div style={{ paddingLeft: 22 }}>
+                        <div style={{
+                          fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
+                          letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: 6,
+                        }}>
+                          Utilisée par les objets :
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {usedBy.map((o3dName, i) => (
+                            <Chip
+                              key={`ub-${i}`}
+                              label={o3dName}
+                              size="small"
+                              sx={{
+                                fontFamily: 'monospace', fontSize: 11,
+                                color: 'var(--text-secondary)',
+                                borderColor: 'rgba(255,255,255,0.12)',
+                                background: 'rgba(255,255,255,0.04)',
+                              }}
+                              variant="outlined"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+
+              {/* Bouton relancer */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  size="small" variant="text" onClick={onScanO3d}
+                  sx={{ fontSize: 11, textTransform: 'none', color: 'var(--text-muted)',
+                    '&:hover': { color: '#42a5f5' } }}
+                >
+                  Relancer l'analyse
+                </Button>
+              </div>
+
+            </div>
+          )
+        })()}
+      </div>
+
     </div>
   )
 }
@@ -1120,6 +1928,206 @@ function TabTeam({ project, user }) {
   )
 }
 
+// ── Modale Apparence (bannière / logo) ─────────────────────────────────────
+function AppearanceModal({ open, onClose, project, onUpdate }) {
+  const bannerInputRef = useRef(null)
+  const logoInputRef   = useRef(null)
+  const [bannerLoading, setBannerLoading] = useState(false)
+  const [logoLoading,   setLogoLoading]   = useState(false)
+  const [errorMsg,      setErrorMsg]      = useState(null)
+
+  const bannerUrl = project?.banner_url
+  const logoUrl   = project?.logo_url
+
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBannerLoading(true); setErrorMsg(null)
+    try {
+      const data = await projectService.uploadBanner(project.id, file)
+      onUpdate(data)
+    } catch { setErrorMsg('Erreur lors de l\'upload de la bannière.') }
+    finally { setBannerLoading(false); if (bannerInputRef.current) bannerInputRef.current.value = '' }
+  }
+
+  const handleBannerDelete = async () => {
+    setBannerLoading(true); setErrorMsg(null)
+    try { const data = await projectService.deleteBanner(project.id); onUpdate(data) }
+    catch { setErrorMsg('Erreur lors de la suppression de la bannière.') }
+    finally { setBannerLoading(false) }
+  }
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoLoading(true); setErrorMsg(null)
+    try {
+      const data = await projectService.uploadLogo(project.id, file)
+      onUpdate(data)
+    } catch { setErrorMsg('Erreur lors de l\'upload du logo.') }
+    finally { setLogoLoading(false); if (logoInputRef.current) logoInputRef.current.value = '' }
+  }
+
+  const handleLogoDelete = async () => {
+    setLogoLoading(true); setErrorMsg(null)
+    try { const data = await projectService.deleteLogo(project.id); onUpdate(data) }
+    catch { setErrorMsg('Erreur lors de la suppression du logo.') }
+    finally { setLogoLoading(false) }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
+      PaperProps={{ sx: { borderRadius: '8px', background: '#1a1d21' } }}>
+      <DialogTitle sx={{ pb: 1.5, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <BrushOutlinedIcon sx={{ fontSize: 17, color: 'var(--text-muted)' }} />
+            <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>
+              Éditer l'apparence
+            </span>
+          </div>
+          <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
+            <CloseIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+        </div>
+      </DialogTitle>
+
+      <DialogContent sx={{ pt: 2.5, pb: 1 }}>
+        {errorMsg && (
+          <div style={{ marginBottom: 14, padding: '7px 12px', borderRadius: 6,
+            background: 'rgba(252,61,57,0.08)', border: '1px solid rgba(252,61,57,0.22)',
+            fontSize: 12, color: '#fc3d39', fontFamily: 'Inter, sans-serif' }}>
+            {errorMsg}
+          </div>
+        )}
+
+        {/* ── Bannière ─────────────────────────────────────────── */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 10,
+            fontFamily: 'Inter, sans-serif' }}>
+            Bannière
+            <span style={{ marginLeft: 8, fontWeight: 400, letterSpacing: 0,
+              textTransform: 'none', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
+              Format recommandé : 1920 × 400 px
+            </span>
+          </div>
+
+          {/* Aperçu bannière */}
+          <Box sx={{
+            position: 'relative',
+            width: '100%',
+            height: bannerUrl ? 130 : 60,
+            borderRadius: '8px',
+            overflow: 'hidden',
+            mb: 1.5,
+            background: bannerUrl ? '#0d0d0d'
+              : 'linear-gradient(135deg, rgba(13,71,161,0.15) 0%, rgba(26,35,126,0.20) 100%)',
+            border: bannerUrl ? 'none' : '1px dashed rgba(255,255,255,0.10)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {bannerUrl ? (
+              <>
+                <Box component="img" src={bannerUrl}
+                  sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
+                    objectFit: 'cover', objectPosition: 'center top' }} />
+                <Box sx={{ position: 'absolute', inset: 0,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 60%)',
+                  pointerEvents: 'none' }} />
+              </>
+            ) : (
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)',
+                fontFamily: 'Inter, sans-serif' }}>
+                Aucune bannière définie
+              </span>
+            )}
+          </Box>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input ref={bannerInputRef} type="file" accept="image/*"
+              style={{ display: 'none' }} onChange={handleBannerUpload} />
+            <Button variant="outlined" size="small" disabled={bannerLoading}
+              startIcon={bannerLoading ? <CircularProgress size={12} /> : <CloudUploadOutlinedIcon />}
+              onClick={() => bannerInputRef.current?.click()}
+              sx={{ borderRadius: '6px', fontSize: 12, textTransform: 'none' }}>
+              {bannerUrl ? 'Remplacer la bannière' : 'Uploader une bannière'}
+            </Button>
+            {bannerUrl && (
+              <Button variant="outlined" size="small" disabled={bannerLoading}
+                startIcon={bannerLoading ? <CircularProgress size={12} /> : <DeleteOutlinedIcon />}
+                onClick={handleBannerDelete}
+                sx={{ borderRadius: '6px', fontSize: 12, textTransform: 'none',
+                  color: '#fc3d39', borderColor: 'rgba(252,61,57,0.3)',
+                  '&:hover': { borderColor: '#fc3d39', background: 'rgba(252,61,57,0.06)' } }}>
+                Supprimer
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* ── Logo ─────────────────────────────────────────────── */}
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 10,
+            fontFamily: 'Inter, sans-serif' }}>
+            Logo du projet
+            <span style={{ marginLeft: 8, fontWeight: 400, letterSpacing: 0,
+              textTransform: 'none', fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
+              PNG transparent recommandé · max-height 120 px
+            </span>
+          </div>
+
+          {/* Aperçu logo */}
+          <Box sx={{
+            width: '100%', height: logoUrl ? 'auto' : 60,
+            minHeight: logoUrl ? 70 : 60,
+            borderRadius: '8px', mb: 1.5,
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            p: logoUrl ? 2 : 0,
+          }}>
+            {logoUrl ? (
+              <Box component="img" src={logoUrl}
+                sx={{ maxHeight: 80, maxWidth: '100%', objectFit: 'contain',
+                  filter: 'drop-shadow(0px 2px 6px rgba(0,0,0,0.4))' }} />
+            ) : (
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)',
+                fontFamily: 'Inter, sans-serif' }}>
+                Aucun logo défini
+              </span>
+            )}
+          </Box>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input ref={logoInputRef} type="file" accept="image/*"
+              style={{ display: 'none' }} onChange={handleLogoUpload} />
+            <Button variant="outlined" size="small" disabled={logoLoading}
+              startIcon={logoLoading ? <CircularProgress size={12} /> : <CloudUploadOutlinedIcon />}
+              onClick={() => logoInputRef.current?.click()}
+              sx={{ borderRadius: '6px', fontSize: 12, textTransform: 'none' }}>
+              {logoUrl ? 'Remplacer le logo' : 'Uploader un logo'}
+            </Button>
+            {logoUrl && (
+              <Button variant="outlined" size="small" disabled={logoLoading}
+                startIcon={logoLoading ? <CircularProgress size={12} /> : <DeleteOutlinedIcon />}
+                onClick={handleLogoDelete}
+                sx={{ borderRadius: '6px', fontSize: 12, textTransform: 'none',
+                  color: '#fc3d39', borderColor: 'rgba(252,61,57,0.3)',
+                  '&:hover': { borderColor: '#fc3d39', background: 'rgba(252,61,57,0.06)' } }}>
+                Supprimer
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} size="small">Fermer</Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
 // ── Page principale ────────────────────────────────────────────────────────
 export default function ProjectDetailPage({ project, onNavigate, user }) {
   const [settings,       setSettings]       = useState({})
@@ -1135,7 +2143,16 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
   const [allSqlZipNames,      setAllSqlZipNames]      = useState(null)
   const [busFiles,            setBusFiles]            = useState([])
   const [fullProject,         setFullProject]         = useState(project)
+  const [fontWarnings,        setFontWarnings]        = useState([])
+  const [fontTotal,           setFontTotal]           = useState(null)   // null = pas encore scanné
+  const [scanProgress,        setScanProgress]        = useState(null)   // null | {phase,current,total,currentFile}
+  const [o3dResults,          setO3dResults]          = useState([])
+  const [o3dScanned,          setO3dScanned]          = useState(false)
+  const [o3dTotalMissing,     setO3dTotalMissing]     = useState(0)
+  const [o3dProgress,         setO3dProgress]         = useState(null)   // null | {phase,current,total,currentFile}
+  const [o3dModalOpen,        setO3dModalOpen]        = useState(false)
 
+  const [appearanceOpen,  setAppearanceOpen]  = useState(false)
   const [pushDialogOpen, setPushDialogOpen] = useState(false)
   const [pushOpen,     setPushOpen]     = useState(false)
   const [pushStep,     setPushStep]     = useState(null)
@@ -1158,6 +2175,28 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
     window.api.settings.get().then(s => {
       setSettings(s)
       window.api.cinnamon.readStatus(project, s).then(setCinStatus)
+      // Scan des polices manquantes dans les Model.cfg du projet
+      if (project.vehicles && s?.omsiPath) {
+        // Abonnement aux événements de progression (écoute active pendant le scan)
+        window.api.omsi.offScanFontsProgress()
+        window.api.omsi.onScanFontsProgress(setScanProgress)
+        setScanProgress({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
+
+        window.api.omsi.scanModelFonts(project.vehicles, s.omsiPath)
+          .then(res => {
+            setFontWarnings(res?.missing || [])
+            setFontTotal(res?.total ?? 0)
+            setScanProgress(null)
+            window.api.omsi.offScanFontsProgress()
+          })
+          .catch(() => {
+            setFontTotal(0)
+            setScanProgress(null)
+            window.api.omsi.offScanFontsProgress()
+          })
+      } else {
+        setFontTotal(0)
+      }
     })
     if (project.thumbnailPath) {
       window.api.file.readAsDataUrl(project.thumbnailPath).then(setThumb)
@@ -1167,6 +2206,49 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
       window.api.projects.parseBusFiles(project.vehicles).then(setBusFiles).catch(() => {})
     }
   }, [project])
+
+  const handleAddScreenshots = useCallback(async (files) => {
+    const data = await projectService.addScreenshots(fullProject.id, files)
+    // Le backend peut retourner { screenshots } ou le projet complet
+    if (Array.isArray(data?.screenshots)) {
+      setFullProject(prev => ({ ...prev, screenshots: data.screenshots }))
+    } else {
+      const p = data?.project || data
+      if (p?.id) setFullProject(prev => ({ ...prev, ...p }))
+    }
+  }, [fullProject?.id])
+
+  const handleDeleteScreenshot = useCallback(async (screenshotId) => {
+    const data = await projectService.deleteScreenshot(fullProject.id, screenshotId)
+    if (Array.isArray(data?.screenshots)) {
+      setFullProject(prev => ({ ...prev, screenshots: data.screenshots }))
+    } else {
+      const p = data?.project || data
+      if (p?.id) setFullProject(prev => ({ ...prev, ...p }))
+      else setFullProject(prev => ({
+        ...prev,
+        screenshots: (prev.screenshots || []).filter(s => String(s.id) !== String(screenshotId))
+      }))
+    }
+  }, [fullProject?.id])
+
+  const handleScanO3d = useCallback(async () => {
+    if (!project.vehicles || !settings.omsiPath) return
+    window.api.omsi.offO3dProgress()
+    window.api.omsi.onO3dProgress(setO3dProgress)
+    setO3dModalOpen(true)
+    setO3dProgress({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
+    try {
+      const res = await window.api.omsi.scanO3dTextures(project.vehicles, settings.omsiPath)
+      setO3dResults(res?.results || [])
+      setO3dTotalMissing(res?.totalMissing || 0)
+      setO3dScanned(true)
+    } finally {
+      setO3dProgress(null)
+      setO3dModalOpen(false)
+      window.api.omsi.offO3dProgress()
+    }
+  }, [project, settings])
 
   const refreshCinStatus = useCallback(() => {
     window.api.cinnamon.readStatus(project, settings).then(setCinStatus)
@@ -1304,7 +2386,13 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
   }
 
   // Tab index → string mapping
-  const TAB_IDS = ['description', userCanPull ? 'contenu' : null, 'versions', isOwnerOrAdmin ? 'team' : null].filter(Boolean)
+  const TAB_IDS = [
+    'description',
+    userCanPull ? 'contenu' : null,
+    'versions',
+    'alertes',
+    isOwnerOrAdmin ? 'team' : null,
+  ].filter(Boolean)
 
   return (
     <div className="fade-in">
@@ -1318,10 +2406,23 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
         result={pushResult} onClose={closePush} mode="push" />
       <SyncModal open={pullOpen} step={pullStep} progress={pullProgress}
         result={pullResult} onClose={closePull} mode="pull" />
+      <O3dProgressModal open={o3dModalOpen} progress={o3dProgress} />
+
+      {appearanceOpen && (
+        <AppearanceModal
+          open={appearanceOpen}
+          onClose={() => setAppearanceOpen(false)}
+          project={fullProject}
+          onUpdate={(data) => {
+            const p = data?.project || data
+            if (p?.id) setFullProject(prev => ({ ...prev, ...p }))
+          }}
+        />
+      )}
 
       {/* Barre de titre */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 18, gap: 12 }}>
+        marginBottom: 10, gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Button variant="text" size="small" startIcon={<ArrowBackOutlinedIcon />}
             onClick={() => onNavigate('projects')}
@@ -1359,41 +2460,148 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
         })()}
       </div>
 
-      {/* Hero compact */}
-      <div className="w11-card" style={{ display: 'flex', gap: 14, alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ width: 64, height: 64, borderRadius: 8, overflow: 'hidden',
-          background: '#1e2328', flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {thumb
-            ? <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <DirectionsBusOutlinedIcon sx={{ fontSize: 28, color: 'var(--text-muted)', opacity: 0.3 }} />
-          }
+      {!isConfigured && (
+        <div style={{ marginBottom: 8, padding: '5px 10px', borderRadius: 5,
+          background: 'rgba(240,160,48,0.07)', border: '1px solid rgba(240,160,48,0.2)',
+          fontSize: 11, color: '#f0a030' }}>
+          ⚠ Serveur non configuré — rendez-vous dans les Paramètres
         </div>
-        <div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#ffffff' }}>{project.name}</div>
-          {project.description && (
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, maxWidth: 500,
-              overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-              {project.description}
-            </div>
-          )}
-          {!isConfigured && (
-            <div style={{ fontSize: 11, color: '#f0a030', marginTop: 3 }}>
-              ⚠ Serveur non configuré — rendez-vous dans les Paramètres
-            </div>
-          )}
-        </div>
-      </div>
+      )}
+
+      {/* ── Hero Banner ─────────────────────────────────────────────────── */}
+      {(() => {
+        const bannerUrl = fullProject?.banner_url
+        const logoUrl   = fullProject?.logo_url
+        const hasBanner = !!bannerUrl
+
+        if (!hasBanner && !logoUrl && !isOwnerOrAdmin) return null
+
+        return (
+          <Box sx={{
+            position: 'relative',
+            width: '100%',
+            // Ratio 4.8:1 calqué sur 1920×400 — height fixe adapté à la colonne de contenu
+            height: hasBanner ? 400 : (isOwnerOrAdmin ? 64 : 0),
+            borderRadius: '8px',
+            overflow: 'hidden',
+            mb: 1.5,
+            flexShrink: 0,
+            background: hasBanner
+              ? '#0d0d0d'
+              : 'linear-gradient(135deg, rgba(13,71,161,0.20) 0%, rgba(26,35,126,0.25) 100%)',
+            border: !hasBanner && isOwnerOrAdmin
+              ? '1px dashed rgba(255,255,255,0.10)'
+              : 'none',
+          }}>
+
+            {/* Image de fond — object-fit: cover pour simuler 1920×400 */}
+            {hasBanner && (
+              <Box
+                component="img"
+                src={bannerUrl}
+                sx={{
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center top',
+                  display: 'block',
+                }}
+              />
+            )}
+
+            {/* Overlay dégradé — du bas vers le haut */}
+            {hasBanner && (
+              <Box sx={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0) 100%)',
+                pointerEvents: 'none',
+              }} />
+            )}
+
+            {/* Logo — coin inférieur gauche */}
+            {logoUrl && (
+              <Box
+                component="img"
+                src={logoUrl}
+                sx={{
+                  position: 'absolute',
+                  bottom: 16,
+                  left: 20,
+                  maxHeight: '120px',
+                  maxWidth: '220px',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0px 4px 10px rgba(0,0,0,0.55))',
+                  borderRadius: '4px',
+                }}
+              />
+            )}
+
+            {/* Placeholder texte si pas de bannière et admin */}
+            {!hasBanner && isOwnerOrAdmin && (
+              <Box sx={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                height: '100%', gap: 1,
+                color: 'rgba(255,255,255,0.22)',
+                fontSize: 12,
+                fontFamily: 'Inter, sans-serif',
+                userSelect: 'none',
+              }}>
+                <BrushOutlinedIcon sx={{ fontSize: 14 }} />
+                Aucune bannière — cliquez sur l'icône pour en ajouter une
+              </Box>
+            )}
+
+            {/* Bouton Éditer l'apparence — coin supérieur droit */}
+            {isOwnerOrAdmin && (
+              <Tooltip title="Éditer l'apparence">
+                <IconButton
+                  size="small"
+                  onClick={() => setAppearanceOpen(true)}
+                  sx={{
+                    position: 'absolute', top: 10, right: 10,
+                    background: 'rgba(0,0,0,0.50)',
+                    backdropFilter: 'blur(6px)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: '8px',
+                    p: '6px',
+                    '&:hover': {
+                      background: 'rgba(0,0,0,0.75)',
+                      border: '1px solid rgba(255,255,255,0.22)',
+                    },
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <BrushOutlinedIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.88)' }} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        )
+      })()}
 
       {/* Tabs */}
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v)}
-        sx={{ borderBottom: '1px solid rgba(255,255,255,0.07)', mb: 1.5, minHeight: 40 }}
+        sx={{ borderBottom: '1px solid rgba(255,255,255,0.07)', mb: 1, minHeight: 36 }}
       >
         <Tab label="Description" icon={<ImageOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />
         {userCanPull && <Tab label="Contenu" icon={<FolderOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
         <Tab label="Dépôts" icon={<CloudOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />
+        <Tab
+          iconPosition="start"
+          icon={<WarningAmberOutlinedIcon sx={{ fontSize: 15 }} />}
+          label={
+            <Badge
+              badgeContent={fontWarnings.length || null}
+              color="error"
+              invisible={fontWarnings.length === 0}
+              sx={{ '& .MuiBadge-badge': { fontSize: 9, minWidth: 16, height: 16, right: -8, top: -2 } }}
+            >
+              Contrôle &amp; Alertes
+            </Badge>
+          }
+        />
         {isOwnerOrAdmin && <Tab label="Équipe" icon={<GroupsOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
       </Tabs>
 
@@ -1410,6 +2618,10 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
           busFiles={busFiles}
           knownZipNames={userCanPush ? allSqlZipNames : publishedZipNames}
           canDeploy={userCanPull || isOwnerOrAdmin}
+          screenshots={fullProject?.screenshots || []}
+          isOwnerOrAdmin={isOwnerOrAdmin}
+          onAddScreenshots={handleAddScreenshots}
+          onDeleteScreenshot={handleDeleteScreenshot}
         />
       )}
       {TAB_IDS[activeTab] === 'contenu' && userCanPull && (
@@ -1426,6 +2638,18 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
           userCanPull={userCanPull}
           userCanPush={userCanPush}
           user={user}
+        />
+      )}
+      {TAB_IDS[activeTab] === 'alertes' && (
+        <TabAvertissements
+          fontWarnings={fontWarnings}
+          scanProgress={scanProgress}
+          fontTotal={fontTotal}
+          o3dResults={o3dResults}
+          o3dScanned={o3dScanned}
+          o3dTotalMissing={o3dTotalMissing}
+          onScanO3d={handleScanO3d}
+          canScan={!!(project.vehicles && settings.omsiPath)}
         />
       )}
       {TAB_IDS[activeTab] === 'team' && isOwnerOrAdmin && (
