@@ -60,9 +60,23 @@ import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined'
 import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined'
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import InputLabel from '@mui/material/InputLabel'
+import FormControl from '@mui/material/FormControl'
+import Divider from '@mui/material/Divider'
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined'
+import BugReportOutlinedIcon from '@mui/icons-material/BugReportOutlined'
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
+import SendOutlinedIcon from '@mui/icons-material/SendOutlined'
+import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined'
+import ArrowBackIosNewOutlinedIcon from '@mui/icons-material/ArrowBackIosNewOutlined'
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
 import SyncModal from '../components/SyncModal'
 import PushDialog from '../components/PushDialog'
 import { projectService } from '../services/projectService'
+
+const PROJECT_PATHS_KEY = 'projectPaths'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function formatBytes(b) {
@@ -678,13 +692,15 @@ function CopyButton({ text }) {
 
 // ── Modale de progression — Diagnostic complet ─────────────────────────────
 function DiagProgressModal({ open, progress }) {
-  const PHASE_ORDER  = ['collecting', 'scanning_meshes', 'scanning_cfg', 'scanning_ctc', 'scanning_bus']
+  const PHASE_ORDER  = ['collecting', 'scanning_meshes', 'scanning_cfg', 'scanning_ctc', 'scanning_bus', 'scanning_fonts', 'scanning_sounds']
   const PHASE_LABELS = {
     collecting:      'Collecte des fichiers…',
     scanning_meshes: 'Analyse binaire des modèles 3D (.o3d)…',
     scanning_cfg:    'Lecture des configurations model*.cfg…',
     scanning_ctc:    'Lecture des fichiers CTC…',
     scanning_bus:    'Lecture des fichiers .bus / .org…',
+    scanning_fonts:  'Analyse des polices (fonts)…',
+    scanning_sounds: 'Analyse des fichiers audio…',
   }
 
   const phase       = progress?.phase       ?? 'collecting'
@@ -830,9 +846,9 @@ function OrphanRow({ name, relativePath, size, onDelete }) {
 
 // ── Onglet Contrôle & Alertes ──────────────────────────────────────────────
 function TabAvertissements({
-  fontWarnings, scanProgress, fontTotal,
+  fontWarnings, allFonts, scanProgress, fontTotal,
   diagResult, diagScanned,
-  onScanDiag, onDeleteFile, onDeleteAll,
+  onScanDiag, onDeleteFile, onDeleteAll, onImportFont,
   canScan,
 }) {
   const isScanning = scanProgress !== null
@@ -859,11 +875,16 @@ function TabAvertissements({
     '& .MuiAccordionSummary-content': { my: '8px', alignItems: 'center', gap: 1 },
   }
 
-  const orphanMeshes    = diagResult?.orphanMeshes    || []
-  const orphanTextures  = diagResult?.orphanTextures  || []
-  const missingTextures = diagResult?.missingTextures || []
-  const hasOrphans      = orphanMeshes.length > 0 || orphanTextures.length > 0
-  const totalOrphanSize = [...orphanMeshes, ...orphanTextures].reduce((a, f) => a + (f.size || 0), 0)
+  const orphanMeshes      = diagResult?.orphanMeshes    || []
+  const orphanTextures    = diagResult?.orphanTextures  || []
+  const missingTextures   = diagResult?.missingTextures || []
+  const missingInProject  = diagResult?.fontResults?.missingInProject  || []
+  const missingEverywhere = diagResult?.fontResults?.missingEverywhere || []
+  const missingSounds     = diagResult?.soundResults?.missingSounds || []
+  const orphanSounds      = diagResult?.soundResults?.orphanSounds  || []
+  const hasOrphans        = orphanMeshes.length > 0 || orphanTextures.length > 0 || orphanSounds.length > 0
+  const totalOrphanSize   = [...orphanMeshes, ...orphanTextures, ...orphanSounds].reduce((a, f) => a + (f.size || 0), 0)
+  const [importingFont,   setImportingFont]  = useState(null)  // fontName en cours d'import
 
   function fmt(b) {
     if (!b) return '—'
@@ -1008,19 +1029,121 @@ function TabAvertissements({
 
       </div>
 
-      {/* ── BLOC ANALYSE MODÈLES & TEXTURES ──────────────────────────────── */}
+      {/* ── BLOC BIBLIOTHÈQUE DES POLICES ────────────────────────────────── */}
+      {isDone && allFonts.length > 0 && (
+        <div className="w11-card" style={{ marginBottom: 0 }}>
+
+          {/* En-tête */}
+          <div className="w11-card-title" style={{ marginBottom: 10 }}>
+            <FontDownloadOutlinedIcon sx={{ fontSize: 14 }} />
+            Bibliothèque des polices du projet
+            <span style={{
+              marginLeft: 'auto', fontSize: 10,
+              color: 'var(--text-muted)',
+              background: 'rgba(255,255,255,0.06)',
+              padding: '1px 8px', borderRadius: 10,
+            }}>
+              {allFonts.length} police{allFonts.length > 1 ? 's' : ''} unique{allFonts.length > 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <Table size="small" sx={{ tableLayout: 'fixed' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: '42%', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.07em', color: 'var(--text-muted)', borderColor: 'rgba(255,255,255,0.07)',
+                  py: 0.75, px: 1.5 }}>
+                  Nom de la police
+                </TableCell>
+                <TableCell sx={{ width: '40%', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.07em', color: 'var(--text-muted)', borderColor: 'rgba(255,255,255,0.07)',
+                  py: 0.75, px: 1.5 }}>
+                  Fichier source
+                </TableCell>
+                <TableCell sx={{ width: '18%', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+                  letterSpacing: '0.07em', color: 'var(--text-muted)', borderColor: 'rgba(255,255,255,0.07)',
+                  py: 0.75, px: 1.5 }}>
+                  Statut .oft
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {allFonts.map((f, i) => (
+                  <TableRow key={`af-${i}`} sx={{
+                    '&:hover': { background: 'rgba(255,255,255,0.025)' },
+                    '& td': { borderColor: 'rgba(255,255,255,0.05)' },
+                  }}>
+                    {/* Nom de la police (tel qu'extrait du .cfg) */}
+                    <TableCell sx={{ py: 0.75, px: 1.5 }}>
+                      <span style={{
+                        fontFamily: "'Cascadia Code','Consolas',monospace",
+                        fontSize: 11,
+                        color: f.present ? 'var(--text-primary)' : '#fc3d39',
+                      }}>
+                        {f.fontName}
+                      </span>
+                    </TableCell>
+                    {/* Fichier source */}
+                    <TableCell sx={{ py: 0.75, px: 1.5 }}>
+                      <Tooltip title={f.cfgFile} placement="top">
+                        <span style={{
+                          fontFamily: "'Cascadia Code','Consolas',monospace",
+                          fontSize: 10,
+                          color: 'var(--text-muted)',
+                          display: 'block',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '100%',
+                        }}>
+                          {f.cfgFile}
+                        </span>
+                      </Tooltip>
+                    </TableCell>
+                    {/* Statut : .oft trouvé via [newfont] dans Fonts/ */}
+                    <TableCell sx={{ py: 0.75, px: 1.5 }}>
+                      {f.present
+                        ? <Chip size="small" label=".oft trouvé" sx={{
+                            fontSize: 10, height: 18,
+                            background: 'rgba(108,203,95,0.10)',
+                            color: '#6ccb5f',
+                            border: '1px solid rgba(108,203,95,0.28)',
+                          }} />
+                        : <Tooltip title="Aucun fichier .oft dans Fonts/ ne déclare ce nom sous [newfont]" placement="left">
+                            <Chip
+                              icon={<WarningAmberOutlinedIcon style={{ fontSize: 11 }} />}
+                              size="small"
+                              label=".oft manquant"
+                              sx={{
+                                fontSize: 10, height: 18,
+                                background: 'rgba(252,61,57,0.10)',
+                                color: '#fc3d39',
+                                border: '1px solid rgba(252,61,57,0.30)',
+                                '& .MuiChip-icon': { color: '#fc3d39' },
+                              }} />
+                          </Tooltip>
+                      }
+                    </TableCell>
+                  </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {/* ── BLOC ANALYSE DES SOURCES ─────────────────────────────────────── */}
       <div className="w11-card" style={{ marginBottom: 0 }}>
 
         <div className="w11-card-title" style={{ marginBottom: 10 }}>
           <DescriptionOutlinedIcon sx={{ fontSize: 14 }} />
           <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: 11 }}>
-            📦 Analyse des Modèles &amp; Textures
+            📦 Analyse des Sources
           </span>
-          {diagScanned && missingTextures.length === 0 && !hasOrphans && (
+          {diagScanned && missingTextures.length === 0 && !hasOrphans && missingInProject.length === 0 && missingEverywhere.length === 0 && missingSounds.length === 0 && (
             <CheckCircleOutlinedIcon sx={{ fontSize: 15, color: '#6ccb5f', ml: 'auto' }} />
           )}
-          {diagScanned && (missingTextures.length > 0 || hasOrphans) && (
-            <Tooltip title={`${missingTextures.length} manquante(s) · ${orphanMeshes.length + orphanTextures.length} orphelin(s)`}>
+          {diagScanned && (missingTextures.length > 0 || hasOrphans || missingInProject.length > 0 || missingEverywhere.length > 0 || missingSounds.length > 0) && (
+            <Tooltip title={`${missingTextures.length} texture(s) manquante(s) · ${orphanMeshes.length + orphanTextures.length + orphanSounds.length} orphelin(s) · ${missingInProject.length + missingEverywhere.length} police(s) · ${missingSounds.length} son(s)`}>
               <WarningAmberOutlinedIcon sx={{ fontSize: 15, color: '#f0a030', ml: 'auto' }} />
             </Tooltip>
           )}
@@ -1030,13 +1153,12 @@ function TabAvertissements({
         {!diagScanned && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.7 }}>
-              Analyse les binaires <code style={{ fontFamily: 'monospace' }}>.o3d</code>,
-              les configurations <code style={{ fontFamily: 'monospace' }}>model*.cfg</code>,
-              les <code style={{ fontFamily: 'monospace' }}>.ctc</code> et{' '}
-              <code style={{ fontFamily: 'monospace' }}>.bus/.org</code> pour détecter
-              les textures manquantes et les fichiers orphelins (racine de{' '}
-              <code style={{ fontFamily: 'monospace' }}>Texture/</code> uniquement,
-              sous-dossiers exclus).
+              Analyse les <strong>3 piliers</strong> du projet sur le même plan :{' '}
+              binaires <code style={{ fontFamily: 'monospace' }}>.o3d</code>,
+              textures <code style={{ fontFamily: 'monospace' }}>.bmp/.tga</code>,
+              et polices <code style={{ fontFamily: 'monospace' }}>.oft</code> (via <code style={{ fontFamily: 'monospace' }}>model.cfg</code>).{' '}
+              Détecte les fichiers orphelins, les références manquantes,
+              et vérifie la cohérence des polices à deux niveaux : projet et OMSI global.
             </div>
             <Tooltip
               title={!canScan ? 'Configurez le dossier Vehicles dans les paramètres du projet.' : ''}
@@ -1048,7 +1170,7 @@ function TabAvertissements({
                   size="small"
                   disabled={!canScan}
                   startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 15 }} />}
-                  onClick={onScanDiag}
+                  onClick={() => onScanDiag()}
                   sx={{
                     borderRadius: '7px', textTransform: 'none', fontSize: 13,
                     borderColor: 'rgba(255,255,255,0.18)',
@@ -1066,41 +1188,58 @@ function TabAvertissements({
         {diagScanned && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-            {/* Résumé en chips */}
+            {/* ── Résumé unifié : 3 piliers ─────────────────────────────── */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-              <Chip size="small"
+              {/* Pilier Textures */}
+              <Chip size="small" icon={<ImageOutlinedIcon style={{ fontSize: 12 }} />}
                 label={`${missingTextures.length} texture${missingTextures.length !== 1 ? 's' : ''} manquante${missingTextures.length !== 1 ? 's' : ''}`}
-                sx={{
-                  fontSize: 11,
+                sx={{ fontSize: 11,
                   background: missingTextures.length > 0 ? 'rgba(252,61,57,0.10)' : 'rgba(108,203,95,0.10)',
                   color:      missingTextures.length > 0 ? '#fc3d39' : '#6ccb5f',
                   border:     `1px solid ${missingTextures.length > 0 ? 'rgba(252,61,57,0.30)' : 'rgba(108,203,95,0.30)'}`,
+                  '& .MuiChip-icon': { color: missingTextures.length > 0 ? '#fc3d39' : '#6ccb5f' },
                 }} />
-              <Chip size="small"
+              {/* Pilier Modèles */}
+              <Chip size="small" icon={<DescriptionOutlinedIcon style={{ fontSize: 12 }} />}
                 label={`${orphanMeshes.length} mesh${orphanMeshes.length !== 1 ? 'es' : ''} orphelin${orphanMeshes.length !== 1 ? 's' : ''}`}
-                sx={{
-                  fontSize: 11,
+                sx={{ fontSize: 11,
                   background: orphanMeshes.length > 0 ? 'rgba(240,160,48,0.10)' : 'rgba(108,203,95,0.10)',
                   color:      orphanMeshes.length > 0 ? '#f0a030' : '#6ccb5f',
                   border:     `1px solid ${orphanMeshes.length > 0 ? 'rgba(240,160,48,0.30)' : 'rgba(108,203,95,0.30)'}`,
+                  '& .MuiChip-icon': { color: orphanMeshes.length > 0 ? '#f0a030' : '#6ccb5f' },
                 }} />
-              <Chip size="small"
+              <Chip size="small" icon={<ImageOutlinedIcon style={{ fontSize: 12 }} />}
                 label={`${orphanTextures.length} texture${orphanTextures.length !== 1 ? 's' : ''} orpheline${orphanTextures.length !== 1 ? 's' : ''}`}
-                sx={{
-                  fontSize: 11,
+                sx={{ fontSize: 11,
                   background: orphanTextures.length > 0 ? 'rgba(240,160,48,0.10)' : 'rgba(108,203,95,0.10)',
                   color:      orphanTextures.length > 0 ? '#f0a030' : '#6ccb5f',
                   border:     `1px solid ${orphanTextures.length > 0 ? 'rgba(240,160,48,0.30)' : 'rgba(108,203,95,0.30)'}`,
+                  '& .MuiChip-icon': { color: orphanTextures.length > 0 ? '#f0a030' : '#6ccb5f' },
+                }} />
+              {/* Pilier Polices */}
+              <Chip size="small" icon={<FontDownloadOutlinedIcon style={{ fontSize: 12 }} />}
+                label={`${missingInProject.length + missingEverywhere.length} police${(missingInProject.length + missingEverywhere.length) !== 1 ? 's' : ''} manquante${(missingInProject.length + missingEverywhere.length) !== 1 ? 's' : ''}`}
+                sx={{ fontSize: 11,
+                  background: (missingInProject.length + missingEverywhere.length) > 0 ? 'rgba(240,160,48,0.10)' : 'rgba(108,203,95,0.10)',
+                  color:      (missingInProject.length + missingEverywhere.length) > 0 ? '#f0a030' : '#6ccb5f',
+                  border:     `1px solid ${(missingInProject.length + missingEverywhere.length) > 0 ? 'rgba(240,160,48,0.30)' : 'rgba(108,203,95,0.30)'}`,
+                  '& .MuiChip-icon': { color: (missingInProject.length + missingEverywhere.length) > 0 ? '#f0a030' : '#6ccb5f' },
+                }} />
+              {/* Pilier Sons */}
+              <Chip size="small" icon={<MusicNoteOutlinedIcon style={{ fontSize: 12 }} />}
+                label={`${missingSounds.length} son${missingSounds.length !== 1 ? 's' : ''} manquant${missingSounds.length !== 1 ? 's' : ''}${orphanSounds.length > 0 ? ` · ${orphanSounds.length} orphelin${orphanSounds.length !== 1 ? 's' : ''}` : ''}`}
+                sx={{ fontSize: 11,
+                  background: missingSounds.length > 0 ? 'rgba(252,61,57,0.10)' : orphanSounds.length > 0 ? 'rgba(240,160,48,0.10)' : 'rgba(108,203,95,0.10)',
+                  color:      missingSounds.length > 0 ? '#fc3d39'              : orphanSounds.length > 0 ? '#f0a030'              : '#6ccb5f',
+                  border:     `1px solid ${missingSounds.length > 0 ? 'rgba(252,61,57,0.30)' : orphanSounds.length > 0 ? 'rgba(240,160,48,0.30)' : 'rgba(108,203,95,0.30)'}`,
+                  '& .MuiChip-icon': { color: missingSounds.length > 0 ? '#fc3d39' : orphanSounds.length > 0 ? '#f0a030' : '#6ccb5f' },
                 }} />
               {hasOrphans && totalOrphanSize > 0 && (
                 <Chip size="small"
                   label={`Gain potentiel : ${fmt(totalOrphanSize)}`}
-                  sx={{
-                    fontSize: 11, fontWeight: 700,
-                    background: 'rgba(66,165,245,0.10)',
-                    color:      '#42a5f5',
-                    border:     '1px solid rgba(66,165,245,0.28)',
-                  }} />
+                  sx={{ fontSize: 11, fontWeight: 700,
+                    background: 'rgba(66,165,245,0.10)', color: '#42a5f5',
+                    border: '1px solid rgba(66,165,245,0.28)' }} />
               )}
             </div>
 
@@ -1228,9 +1367,183 @@ function TabAvertissements({
               </AccordionDetails>
             </Accordion>
 
+            {/* ── Accordion Polices manquantes dans le projet (Cas A) ───── */}
+            <Accordion defaultExpanded={missingInProject.length > 0} sx={ACCORD_SX}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={ACCORD_SUM_SX}>
+                <FontDownloadOutlinedIcon sx={{ fontSize: 14, color: missingInProject.length > 0 ? '#f0a030' : '#6ccb5f' }} />
+                <span style={{ fontSize: 13, fontWeight: 600, flex: 1,
+                  color: missingInProject.length > 0 ? '#f0a030' : 'var(--text-secondary)' }}>
+                  🔤 Polices absentes du projet ({missingInProject.length})
+                </span>
+              </AccordionSummary>
+              <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
+                {missingInProject.length === 0 ? (
+                  <Alert severity="success" variant="outlined" sx={{ borderRadius: '7px', fontSize: 12 }}>
+                    Toutes les polices utilisées sont packagées avec le projet.
+                  </Alert>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.6 }}>
+                      Présentes dans OMSI 2 mais <strong>non packagées avec le projet</strong>.
+                      Les utilisateurs sans ces polices ne verront pas les girouettes correctement.
+                    </div>
+                    {missingInProject.map((f, i) => (
+                      <div key={`mip-${i}`} style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '7px 10px', borderRadius: 7, marginBottom: 4,
+                        background: 'rgba(240,160,48,0.05)',
+                        border: '1px solid rgba(240,160,48,0.18)',
+                      }}>
+                        <WarningAmberOutlinedIcon sx={{ fontSize: 13, color: '#f0a030', flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontFamily: "'Cascadia Code','Consolas',monospace",
+                            fontSize: 12, color: '#f0a030', fontWeight: 600 }}>
+                            {f.fontName}
+                          </span>
+                          <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--text-muted)',
+                            fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            ← {f.cfgFile}
+                          </span>
+                        </div>
+                        <Button size="small" variant="outlined"
+                          disabled={importingFont === f.fontName}
+                          startIcon={importingFont === f.fontName
+                            ? <CircularProgress size={10} />
+                            : <FontDownloadOutlinedIcon sx={{ fontSize: 12 }} />}
+                          onClick={async () => {
+                            setImportingFont(f.fontName)
+                            await onImportFont(f.fontName, f.oftPath)
+                            setImportingFont(null)
+                          }}
+                          sx={{ fontSize: 11, textTransform: 'none', borderRadius: '6px', flexShrink: 0,
+                            borderColor: 'rgba(240,160,48,0.40)', color: '#f0a030',
+                            '&:hover': { borderColor: '#f0a030', background: 'rgba(240,160,48,0.08)' } }}>
+                          {importingFont === f.fontName ? 'Importation…' : 'Importer'}
+                        </Button>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </AccordionDetails>
+            </Accordion>
+
+            {/* ── Accordion Polices introuvables partout (Cas B) ───────────── */}
+            {missingEverywhere.length > 0 && (
+              <Accordion defaultExpanded sx={ACCORD_SX}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={ACCORD_SUM_SX}>
+                  <CancelOutlinedIcon sx={{ fontSize: 14, color: '#fc3d39' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#fc3d39', flex: 1 }}>
+                    🚫 Polices totalement introuvables ({missingEverywhere.length})
+                  </span>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
+                  <Alert severity="error" variant="outlined" sx={{ borderRadius: '7px', fontSize: 12, mb: 1 }}>
+                    Absentes du projet <strong>et</strong> d'OMSI 2. Installation OMSI corrompue ou polices jamais installées.
+                  </Alert>
+                  {missingEverywhere.map((f, i) => (
+                    <div key={`mev-${i}`} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '7px 10px', borderRadius: 7, marginBottom: 4,
+                      background: 'rgba(252,61,57,0.05)',
+                      border: '1px solid rgba(252,61,57,0.18)',
+                    }}>
+                      <CancelOutlinedIcon sx={{ fontSize: 13, color: '#fc3d39', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontFamily: "'Cascadia Code','Consolas',monospace",
+                          fontSize: 12, color: '#fc3d39', fontWeight: 600 }}>
+                          {f.fontName}
+                        </span>
+                        <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                          ← {f.cfgFile}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </AccordionDetails>
+              </Accordion>
+            )}
+
+            {/* ── Accordion Sons manquants ──────────────────────────────── */}
+            {missingSounds.length > 0 && (
+              <Accordion defaultExpanded sx={ACCORD_SX}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={ACCORD_SUM_SX}>
+                  <CancelOutlinedIcon sx={{ fontSize: 14, color: '#fc3d39' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#fc3d39' }}>
+                    Sons manquants ({missingSounds.length})
+                  </span>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.6 }}>
+                    Référencés dans les fichiers <code style={{ fontFamily: 'monospace' }}>sound.cfg</code> mais absents du dossier physique.
+                  </div>
+                  {missingSounds.map((s, i) => (
+                    <div key={`ms-${i}`} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '7px 10px', borderRadius: 7, marginBottom: 4,
+                      background: 'rgba(252,61,57,0.05)',
+                      border: '1px solid rgba(252,61,57,0.18)',
+                    }}>
+                      <CancelOutlinedIcon sx={{ fontSize: 13, color: '#fc3d39', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontFamily: "'Cascadia Code','Consolas',monospace",
+                          fontSize: 12, color: '#fc3d39', fontWeight: 600 }}>
+                          {s.file}
+                        </span>
+                        <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                          ← {s.cfgFile}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </AccordionDetails>
+              </Accordion>
+            )}
+
+            {/* ── Accordion Sons orphelins ──────────────────────────────── */}
+            {orphanSounds.length > 0 && (
+              <Accordion defaultExpanded sx={ACCORD_SX}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={ACCORD_SUM_SX}>
+                  <WarningAmberOutlinedIcon sx={{ fontSize: 14, color: '#f0a030' }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#f0a030' }}>
+                    Sons orphelins ({orphanSounds.length}) — {fmt(orphanSounds.reduce((a, s) => a + s.size, 0))}
+                  </span>
+                </AccordionSummary>
+                <AccordionDetails sx={{ pt: 0, px: 1.5, pb: 1.5 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.6 }}>
+                    Présents dans le dossier Sound/ mais jamais référencés dans aucun fichier .cfg. Peuvent être supprimés pour réduire le poids du push.
+                  </div>
+                  {orphanSounds.map((s, i) => (
+                    <div key={`os-${i}`} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '7px 10px', borderRadius: 7, marginBottom: 4,
+                      background: 'rgba(240,160,48,0.05)',
+                      border: '1px solid rgba(240,160,48,0.18)',
+                    }}>
+                      <MusicNoteOutlinedIcon sx={{ fontSize: 13, color: '#f0a030', flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontFamily: "'Cascadia Code','Consolas',monospace",
+                          fontSize: 12, color: '#f0a030', fontWeight: 600 }}>
+                          {s.name}
+                        </span>
+                        <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--text-muted)' }}>
+                          {fmt(s.size)}
+                        </span>
+                      </div>
+                      <Tooltip title="Supprimer ce fichier">
+                        <IconButton size="small" onClick={() => onDeleteFile(s.absPath)}
+                          sx={{ color: 'rgba(252,61,57,0.6)', '&:hover': { color: '#fc3d39' }, p: '3px' }}>
+                          <DeleteOutlinedIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                  ))}
+                </AccordionDetails>
+              </Accordion>
+            )}
+
             {/* Actions globales */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
-              <Button size="small" variant="text" onClick={onScanDiag}
+              <Button size="small" variant="text" onClick={() => onScanDiag()}
                 sx={{ fontSize: 11, textTransform: 'none', color: 'var(--text-muted)',
                   '&:hover': { color: '#42a5f5' } }}>
                 Relancer l'analyse
@@ -1332,6 +1645,7 @@ function TabAvertissements({
               onDeleteAll([
                 ...orphanMeshes.map(m => m.absPath),
                 ...orphanTextures.map(t => t.absPath),
+                ...orphanSounds.map(s => s.absPath),
               ])
             }}
             sx={{ textTransform: 'none', fontWeight: 700 }}>
@@ -1817,7 +2131,7 @@ function TabVersions({ project, settings, onInstall, isOperating, cinStatus, ref
 }
 
 // ── Onglet Équipe ──────────────────────────────────────────────────────────
-function TabTeam({ project, user }) {
+function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
   const [members,       setMembers]       = useState([])
   const [loading,       setLoading]       = useState(false)
   const [error,         setError]         = useState(null)
@@ -1829,7 +2143,16 @@ function TabTeam({ project, user }) {
   const [updatingId,    setUpdatingId]    = useState(null)
   const [removingId,    setRemovingId]    = useState(null)
   const [dropdownOpen,  setDropdownOpen]  = useState(false)
+  const [savingFeatures, setSavingFeatures] = useState(false)
+  const [backlogEnabled,  setBacklogEnabled]  = useState(!!(project.backlog_enabled))
+  const [ticketingEnabled, setTicketingEnabled] = useState(!!(project.ticketing_enabled))
   const searchRef = useRef(null)
+
+  // Sync des switches depuis la prop dès que fullProject est chargé depuis l'API
+  useEffect(() => {
+    setBacklogEnabled(!!(project.backlog_enabled))
+    setTicketingEnabled(!!(project.ticketing_enabled))
+  }, [project.backlog_enabled, project.ticketing_enabled])
 
   const ownerEmail = project.owner?.email || ''
 
@@ -1899,10 +2222,13 @@ function TabTeam({ project, user }) {
     const uid = String(userId)
     setUpdatingId(uid)
     const previous = members.find(m => resolveUid(m) === uid)
-    setMembers(prev => prev.map(m => resolveUid(m) === uid ? { ...m, [field]: value } : m))
     try {
       console.log(`PATCH /projects/${project.id}/members/${userId} —`, { [field]: value })
-      await projectService.updateMember(project.id, userId, { [field]: value })
+      const res = await projectService.updateMember(project.id, userId, { [field]: value })
+      console.log('Nouveau statut membre:', res.data)
+      if (res.data) {
+        setMembers(prev => prev.map(m => resolveUid(m) === uid ? { ...m, ...res.data } : m))
+      }
     } catch (e) {
       if (previous) {
         setMembers(prev => prev.map(m => resolveUid(m) === uid ? previous : m))
@@ -1924,8 +2250,63 @@ function TabTeam({ project, user }) {
     } finally { setRemovingId(null) }
   }
 
+  const handleToggleFeature = async (field, value) => {
+    setSavingFeatures(true)
+    try {
+      const updated = await projectService.updateFeatures(project.id, { [field]: value })
+      // Confirmation 200 reçue — on met à jour l'état visuel et le parent
+      const confirmed = updated?.[field] ?? value
+      if (field === 'backlog_enabled')   setBacklogEnabled(!!(confirmed))
+      if (field === 'ticketing_enabled') setTicketingEnabled(!!(confirmed))
+      if (onProjectUpdate) onProjectUpdate({ [field]: confirmed })
+    } catch (e) {
+      console.error('[Cinnamon] Erreur mise à jour fonctionnalités:', e.message)
+    } finally { setSavingFeatures(false) }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {/* Paramètres du projet (owner only) */}
+      {isAdmin && (
+        <div className="w11-card" style={{ marginBottom: 0 }}>
+          <div className="w11-card-title"><TuneOutlinedIcon sx={{ fontSize: 14 }} /> Paramètres du projet</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Activer Backlogs</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Permet de gérer les demandes et suggestions d'évolution</div>
+              </div>
+              {projectLoading
+                ? <CircularProgress size={16} sx={{ flexShrink: 0 }} />
+                : <Switch
+                    checked={backlogEnabled}
+                    onChange={(e) => handleToggleFeature('backlog_enabled', e.target.checked)}
+                    disabled={savingFeatures}
+                    size="small"
+                  />
+              }
+            </div>
+            <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Activer Ticketing</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Permet de soumettre et suivre des tickets de bug ou support</div>
+              </div>
+              {projectLoading
+                ? <CircularProgress size={16} sx={{ flexShrink: 0 }} />
+                : <Switch
+                    checked={ticketingEnabled}
+                    onChange={(e) => handleToggleFeature('ticketing_enabled', e.target.checked)}
+                    disabled={savingFeatures}
+                    size="small"
+                  />
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Propriétaire */}
       <div className="w11-card" style={{ marginBottom: 0 }}>
         <div className="w11-card-title"><PersonOutlinedIcon sx={{ fontSize: 14 }} /> Propriétaire</div>
@@ -2001,6 +2382,16 @@ function TabTeam({ project, user }) {
                 <TableCell sx={{ width: 80, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', textAlign: 'center' }}>
                   Push
                 </TableCell>
+                {backlogEnabled && (
+                  <TableCell sx={{ width: 90, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', textAlign: 'center' }}>
+                    Backlogs
+                  </TableCell>
+                )}
+                {ticketingEnabled && (
+                  <TableCell sx={{ width: 90, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', textAlign: 'center' }}>
+                    Ticketing
+                  </TableCell>
+                )}
                 {isAdmin && <TableCell sx={{ width: 44 }} />}
               </TableRow>
             </TableHead>
@@ -2064,6 +2455,38 @@ function TabTeam({ project, user }) {
                         )
                       }
                     </TableCell>
+
+                    {backlogEnabled && (
+                      <TableCell sx={{ width: 90, textAlign: 'center' }}>
+                        {isUpdating
+                          ? <CircularProgress size={14} />
+                          : (
+                            <Switch
+                              checked={isOwner ? true : !!m.backlog_access}
+                              disabled={switchDisabled}
+                              size="small"
+                              onChange={e => handlePermission(uid, 'backlog_access', e.target.checked)}
+                            />
+                          )
+                        }
+                      </TableCell>
+                    )}
+
+                    {ticketingEnabled && (
+                      <TableCell sx={{ width: 90, textAlign: 'center' }}>
+                        {isUpdating
+                          ? <CircularProgress size={14} />
+                          : (
+                            <Switch
+                              checked={isOwner ? true : !!m.ticketing_access}
+                              disabled={switchDisabled}
+                              size="small"
+                              onChange={e => handlePermission(uid, 'ticketing_access', e.target.checked)}
+                            />
+                          )
+                        }
+                      </TableCell>
+                    )}
 
                     {isAdmin && (
                       <TableCell sx={{ width: 44, textAlign: 'center' }}>
@@ -2383,6 +2806,749 @@ function AppearanceModal({ open, onClose, project, onUpdate }) {
   )
 }
 
+// ── Helpers Backlog/Ticket ─────────────────────────────────────────────────
+
+const BACKLOG_STATUSES = [
+  { value: 'nouveau',    label: 'Nouveau',    color: 'default' },
+  { value: 'a_l_etude',  label: 'À l\'étude', color: 'info'    },
+  { value: 'approuve',   label: 'Approuvé',   color: 'success' },
+  { value: 'rejete',     label: 'Rejeté',     color: 'error'   },
+]
+
+const TICKET_STATUSES = [
+  { value: 'nouveau',           label: 'Nouveau',           color: 'default' },
+  { value: 'confirme',          label: 'Confirmé',          color: 'info'    },
+  { value: 'en_cours',          label: 'En cours',          color: 'warning' },
+  { value: 'termine',           label: 'Terminé',           color: 'success' },
+  { value: 'rejete',            label: 'Rejeté',            color: 'error'   },
+  { value: 'reprod_impossible', label: 'Reprod impossible', color: 'default' },
+]
+
+function formatApiError(e) {
+  if (e?.response?.status === 404) return 'Route API manquante, vérifiez le montage du serveur.'
+  return e?.response?.data?.message || e?.message || 'Erreur inattendue.'
+}
+
+const TICKET_PRIORITIES = [
+  { value: 'bas',      label: 'Bas',      color: '#9aa0a6' },
+  { value: 'normal',   label: 'Normal',   color: '#42a5f5' },
+  { value: 'urgent',   label: 'Urgent',   color: '#f0a030' },
+  { value: 'critique', label: 'Critique', color: '#fc3d39' },
+]
+
+function BacklogStatusChip({ status }) {
+  const s = BACKLOG_STATUSES.find(x => x.value === status) || BACKLOG_STATUSES[0]
+  return <Chip label={s.label} color={s.color} size="small" sx={{ fontSize: 10, height: 20 }} />
+}
+
+function TicketStatusChip({ status }) {
+  const s = TICKET_STATUSES.find(x => x.value === status) || TICKET_STATUSES[0]
+  return <Chip label={s.label} color={s.color} size="small" sx={{ fontSize: 10, height: 20 }} />
+}
+
+function PriorityChip({ priority }) {
+  const p = TICKET_PRIORITIES.find(x => x.value === priority) || TICKET_PRIORITIES[1]
+  return (
+    <Chip
+      label={p.label}
+      size="small"
+      sx={{
+        fontSize: 10, height: 20,
+        background: p.color + '22',
+        color: p.color,
+        border: `1px solid ${p.color}55`,
+        fontWeight: 700,
+      }}
+    />
+  )
+}
+
+// ── Composant générique de liste Backlog/Ticket ─────────────────────────────
+function ItemDetailView({ item, isOwner, projectId, onBack, onRefresh, type }) {
+  const [newComment,     setNewComment]     = useState('')
+  const [sendingComment, setSendingComment] = useState(false)
+  const [uploadingImg,   setUploadingImg]   = useState(false)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [localItem,      setLocalItem]      = useState(item)
+  const [inlineError,    setInlineError]    = useState(null)
+  const imgInputRef = useRef(null)
+
+  const handleSendComment = async () => {
+    if (!newComment.trim()) return
+    setSendingComment(true)
+    try {
+      if (type === 'backlog') {
+        await projectService.addBacklogComment(projectId, localItem.id, newComment.trim())
+      } else {
+        await projectService.addTicketComment(projectId, localItem.id, newComment.trim())
+      }
+      setNewComment('')
+      await onRefresh(localItem.id, (updated) => setLocalItem(updated))
+    } catch (e) {
+      setInlineError(formatApiError(e))
+    } finally { setSendingComment(false) }
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingImg(true)
+    try {
+      if (type === 'backlog') {
+        await projectService.uploadBacklogImage(projectId, localItem.id, file)
+      } else {
+        await projectService.uploadTicketImage(projectId, localItem.id, file)
+      }
+      await onRefresh(localItem.id, (updated) => setLocalItem(updated))
+    } catch (e) {
+      setInlineError(formatApiError(e))
+    } finally {
+      setUploadingImg(false)
+      if (imgInputRef.current) imgInputRef.current.value = ''
+    }
+  }
+
+  const handleStatusChange = async (newStatus) => {
+    if (!isOwner) return
+    setUpdatingStatus(true)
+    try {
+      if (type === 'backlog') {
+        await projectService.updateBacklog(projectId, localItem.id, { status: newStatus })
+      } else {
+        await projectService.updateTicket(projectId, localItem.id, { status: newStatus })
+      }
+      setLocalItem(prev => ({ ...prev, status: newStatus }))
+    } catch (e) {
+      console.error('[Cinnamon] Erreur statut:', e.message)
+    } finally { setUpdatingStatus(false) }
+  }
+
+  const handlePriorityChange = async (newPriority) => {
+    if (!isOwner) return
+    try {
+      await projectService.updateTicket(projectId, localItem.id, { priority: newPriority })
+      setLocalItem(prev => ({ ...prev, priority: newPriority }))
+    } catch (e) {
+      console.error('[Cinnamon] Erreur priorité:', e.message)
+    }
+  }
+
+  const comments  = localItem.comments  || []
+  const images    = localItem.images    || []
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Barre retour */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <IconButton size="small" onClick={onBack}>
+          <ArrowBackIosNewOutlinedIcon sx={{ fontSize: 14 }} />
+        </IconButton>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Retour à la liste</span>
+      </div>
+
+      {/* En-tête */}
+      <div className="w11-card" style={{ marginBottom: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 4 }}>
+              #{localItem.id}
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
+              {localItem.subject || localItem.title || '—'}
+            </div>
+            {localItem.description && (
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                {localItem.description}
+              </div>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end', flexShrink: 0 }}>
+            {/* Statut */}
+            {isOwner ? (
+              <FormControl size="small" sx={{ minWidth: 160 }} disabled={updatingStatus}>
+                <InputLabel sx={{ fontSize: 11 }}>Statut</InputLabel>
+                <Select
+                  value={localItem.status || 'nouveau'}
+                  label="Statut"
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  sx={{ fontSize: 12 }}
+                >
+                  {(type === 'ticket' ? TICKET_STATUSES : BACKLOG_STATUSES).map(s => (
+                    <MenuItem key={s.value} value={s.value} sx={{ fontSize: 12 }}>
+                      {s.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              type === 'ticket'
+                ? <TicketStatusChip status={localItem.status} />
+                : <BacklogStatusChip status={localItem.status} />
+            )}
+
+            {/* Priorité (tickets uniquement) */}
+            {type === 'ticket' && (
+              isOwner ? (
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel sx={{ fontSize: 11 }}>Priorité</InputLabel>
+                  <Select
+                    value={localItem.priority || 'normal'}
+                    label="Priorité"
+                    onChange={(e) => handlePriorityChange(e.target.value)}
+                    sx={{ fontSize: 12 }}
+                  >
+                    {TICKET_PRIORITIES.map(p => (
+                      <MenuItem key={p.value} value={p.value} sx={{ fontSize: 12 }}>
+                        {p.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              ) : (
+                <PriorityChip priority={localItem.priority} />
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Images */}
+      <div className="w11-card" style={{ marginBottom: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div className="w11-card-title" style={{ marginBottom: 0 }}>
+            <ImageOutlinedIcon sx={{ fontSize: 14 }} /> Images jointes
+          </div>
+          <div>
+            <input
+              ref={imgInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleImageUpload}
+            />
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={uploadingImg ? <CircularProgress size={12} /> : <AttachFileOutlinedIcon />}
+              onClick={() => imgInputRef.current?.click()}
+              disabled={uploadingImg}
+              sx={{ fontSize: 11 }}
+            >
+              Joindre
+            </Button>
+          </div>
+        </div>
+        {images.length === 0 ? (
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Aucune image jointe.</div>
+        ) : (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {images.map((img, i) => (
+              <Box
+                key={i}
+                component="img"
+                src={typeof img === 'string' ? img : img.url}
+                alt={`Image ${i + 1}`}
+                sx={{ height: 80, borderRadius: '6px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {inlineError && (
+        <Alert severity="error" sx={{ fontSize: 12 }} onClose={() => setInlineError(null)}>{inlineError}</Alert>
+      )}
+
+      {/* Commentaires */}
+      <div className="w11-card" style={{ marginBottom: 0 }}>
+        <div className="w11-card-title">
+          <PersonOutlinedIcon sx={{ fontSize: 14 }} /> Commentaires
+          {comments.length > 0 && (
+            <span style={{ marginLeft: 7, fontSize: 10, color: 'var(--text-muted)',
+              background: 'rgba(255,255,255,0.06)', padding: '1px 7px', borderRadius: 10 }}>
+              {comments.length}
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+          {comments.length === 0 && (
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Aucun commentaire.</div>
+          )}
+          {comments.map((c, i) => (
+            <div key={i} style={{
+              padding: '8px 12px', borderRadius: 6,
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.07)',
+            }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 4, alignItems: 'center' }}>
+                <div style={{
+                  fontSize: 10, fontWeight: 700, color: '#42a5f5',
+                }}>
+                  {[c.author_firstname, c.author_lastname].filter(Boolean).join(' ') || 'Utilisateur'}
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                  {c.created_at ? new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(c.created_at)) : ''}
+                </div>
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>{c.content}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+          <TextField
+            multiline
+            minRows={2}
+            maxRows={5}
+            size="small"
+            fullWidth
+            placeholder="Ajouter un commentaire…"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            sx={{ fontSize: 13 }}
+          />
+          <IconButton
+            onClick={handleSendComment}
+            disabled={!newComment.trim() || sendingComment}
+            color="primary"
+            sx={{ flexShrink: 0 }}
+          >
+            {sendingComment ? <CircularProgress size={16} /> : <SendOutlinedIcon sx={{ fontSize: 18 }} />}
+          </IconButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Formulaire de création ─────────────────────────────────────────────────
+function CreateItemForm({ type, projectId, onCreated, onCancel }) {
+  const [subject,     setSubject]     = useState('')
+  const [description, setDescription] = useState('')
+  const [priority,    setPriority]    = useState('normal')
+  const [saving,      setSaving]      = useState(false)
+  const [error,       setError]       = useState(null)
+
+  const handleSubmit = async () => {
+    if (!subject.trim()) { setError('Le sujet est requis.'); return }
+    setSaving(true); setError(null)
+    try {
+      if (type === 'backlog') {
+        await projectService.createBacklog(projectId, { subject: subject.trim(), description: description.trim(), status: 'nouveau' })
+      } else {
+        await projectService.createTicket(projectId, { subject: subject.trim(), description: description.trim(), status: 'nouveau', priority })
+      }
+      onCreated()
+    } catch (e) {
+      setError(e?.response?.data?.message || e?.message || 'Erreur lors de la création.')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="w11-card" style={{ marginBottom: 0 }}>
+      <div className="w11-card-title">
+        <AddOutlinedIcon sx={{ fontSize: 14 }} /> {type === 'backlog' ? 'Nouveau backlog' : 'Nouveau ticket'}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <TextField
+          label="Sujet"
+          size="small"
+          fullWidth
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          required
+        />
+        <TextField
+          label="Description"
+          size="small"
+          fullWidth
+          multiline
+          minRows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+        {type === 'ticket' && (
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Priorité</InputLabel>
+            <Select value={priority} label="Priorité" onChange={(e) => setPriority(e.target.value)}>
+              {TICKET_PRIORITIES.map(p => (
+                <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+        {error && (
+          <Alert severity="error" sx={{ py: 0, fontSize: 12 }}>{error}</Alert>
+        )}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <Button size="small" onClick={onCancel} disabled={saving}>Annuler</Button>
+          <Button size="small" variant="contained" onClick={handleSubmit} disabled={saving || !subject.trim()}>
+            {saving ? <CircularProgress size={14} /> : 'Créer'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Tab Backlogs ───────────────────────────────────────────────────────────
+function TabBacklogs({ project, user }) {
+  const [items,          setItems]          = useState([])
+  const [loading,        setLoading]        = useState(false)
+  const [error,          setError]          = useState(null)
+  const [selectedId,     setSelectedId]     = useState(null)
+  const [showCreate,     setShowCreate]     = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+  const [deleting,       setDeleting]       = useState(false)
+
+  const isOwner = user && project && (
+    Number(user.id) === Number(project.owner_id) ||
+    user.role === 'super_admin'
+  )
+
+  const loadItems = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const data = await projectService.getBacklogs(project.id)
+      setItems(Array.isArray(data) ? data : (data?.backlogs || []))
+    } catch (e) {
+      setError(formatApiError(e))
+    } finally { setLoading(false) }
+  }, [project.id])
+
+  useEffect(() => { loadItems() }, [loadItems])
+
+  const handleRefreshItem = async (itemId, onDone) => {
+    try {
+      const data = await projectService.getBacklogs(project.id)
+      const list = Array.isArray(data) ? data : (data?.backlogs || [])
+      setItems(list)
+      const updated = list.find(x => x.id === itemId)
+      if (updated && onDone) onDone(updated)
+    } catch {}
+  }
+
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return
+    setDeleting(true)
+    try {
+      await projectService.deleteBacklog(project.id, deleteConfirmId)
+      setItems(prev => prev.filter(x => x.id !== deleteConfirmId))
+      setDeleteConfirmId(null)
+    } catch (e) {
+      setError(formatApiError(e))
+      setDeleteConfirmId(null)
+    } finally { setDeleting(false) }
+  }
+
+  const selected = selectedId != null ? items.find(x => x.id === selectedId) : null
+
+  if (selected) {
+    return (
+      <ItemDetailView
+        item={selected}
+        isOwner={isOwner}
+        projectId={project.id}
+        type="backlog"
+        onBack={() => setSelectedId(null)}
+        onRefresh={handleRefreshItem}
+      />
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Dialog confirmation suppression */}
+      <Dialog open={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700 }}>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13 }}>
+            Supprimer ce backlog ? Cette action est irréversible.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button size="small" onClick={() => setDeleteConfirmId(null)} disabled={deleting}>Annuler</Button>
+          <Button size="small" variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
+            {deleting ? <CircularProgress size={14} /> : 'Supprimer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Barre d'outils */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
+          {items.length} backlog{items.length !== 1 ? 's' : ''}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <IconButton size="small" onClick={loadItems} disabled={loading}>
+            <RefreshOutlinedIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+          <Button size="small" variant="contained" startIcon={<AddOutlinedIcon />} onClick={() => setShowCreate(v => !v)}>
+            Nouveau
+          </Button>
+        </div>
+      </div>
+
+      {/* Formulaire création */}
+      {showCreate && (
+        <CreateItemForm
+          type="backlog"
+          projectId={project.id}
+          onCreated={() => { setShowCreate(false); loadItems() }}
+          onCancel={() => setShowCreate(false)}
+        />
+      )}
+
+      {loading && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0', gap: 8 }}>
+          <CircularProgress size={18} />
+          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Chargement…</span>
+        </div>
+      )}
+
+      {!loading && error && (
+        <Alert severity="error" sx={{ fontSize: 12 }}>{error}</Alert>
+      )}
+
+      {!loading && !error && items.length === 0 && !showCreate && (
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic', padding: '12px 0' }}>
+          Aucun backlog pour le moment.
+        </div>
+      )}
+
+      {!loading && items.map((item, idx) => (
+        <div
+          key={item.id}
+          className="w11-card"
+          onClick={() => setSelectedId(item.id)}
+          style={{ marginBottom: 0, cursor: 'pointer' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                  #{item.id || (idx + 1)}
+                </span>
+                <BacklogStatusChip status={item.status} />
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
+                {item.subject || item.title || '(Sans titre)'}
+              </div>
+              {(item.author_firstname || item.author_lastname) && (
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>
+                  par {[item.author_firstname, item.author_lastname].filter(Boolean).join(' ')}
+                </div>
+              )}
+              {item.description && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {item.description}
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
+              {(item.comments?.length > 0) && (
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>💬 {item.comments.length}</span>
+              )}
+              {isOwner && (
+                <Tooltip title="Supprimer">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(item.id) }}
+                    sx={{ color: '#fc3d39', p: '4px', '&:hover': { background: 'rgba(252,61,57,0.1)' } }}
+                  >
+                    <DeleteOutlinedIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Tab Ticketing ──────────────────────────────────────────────────────────
+function TabTicketing({ project, user }) {
+  const [items,           setItems]           = useState([])
+  const [loading,         setLoading]         = useState(false)
+  const [error,           setError]           = useState(null)
+  const [selectedId,      setSelectedId]      = useState(null)
+  const [showCreate,      setShowCreate]      = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+  const [deleting,        setDeleting]        = useState(false)
+
+  const isOwner = user && project && (
+    Number(user.id) === Number(project.owner_id) ||
+    user.role === 'super_admin'
+  )
+
+  const loadItems = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const data = await projectService.getTickets(project.id)
+      setItems(Array.isArray(data) ? data : (data?.tickets || []))
+    } catch (e) {
+      setError(formatApiError(e))
+    } finally { setLoading(false) }
+  }, [project.id])
+
+  useEffect(() => { loadItems() }, [loadItems])
+
+  const handleRefreshItem = async (itemId, onDone) => {
+    try {
+      const data = await projectService.getTickets(project.id)
+      const list = Array.isArray(data) ? data : (data?.tickets || [])
+      setItems(list)
+      const updated = list.find(x => x.id === itemId)
+      if (updated && onDone) onDone(updated)
+    } catch {}
+  }
+
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return
+    setDeleting(true)
+    try {
+      await projectService.deleteTicket(project.id, deleteConfirmId)
+      setItems(prev => prev.filter(x => x.id !== deleteConfirmId))
+      setDeleteConfirmId(null)
+    } catch (e) {
+      setError(formatApiError(e))
+      setDeleteConfirmId(null)
+    } finally { setDeleting(false) }
+  }
+
+  const selected = selectedId != null ? items.find(x => x.id === selectedId) : null
+
+  if (selected) {
+    return (
+      <ItemDetailView
+        item={selected}
+        isOwner={isOwner}
+        projectId={project.id}
+        type="ticket"
+        onBack={() => setSelectedId(null)}
+        onRefresh={handleRefreshItem}
+      />
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Dialog confirmation suppression */}
+      <Dialog open={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700 }}>Confirmer la suppression</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13 }}>
+            Supprimer ce ticket ? Cette action est irréversible.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button size="small" onClick={() => setDeleteConfirmId(null)} disabled={deleting}>Annuler</Button>
+          <Button size="small" variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
+            {deleting ? <CircularProgress size={14} /> : 'Supprimer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Barre d'outils */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
+          {items.length} ticket{items.length !== 1 ? 's' : ''}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <IconButton size="small" onClick={loadItems} disabled={loading}>
+            <RefreshOutlinedIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+          <Button size="small" variant="contained" startIcon={<AddOutlinedIcon />} onClick={() => setShowCreate(v => !v)}>
+            Nouveau
+          </Button>
+        </div>
+      </div>
+
+      {/* Formulaire création */}
+      {showCreate && (
+        <CreateItemForm
+          type="ticket"
+          projectId={project.id}
+          onCreated={() => { setShowCreate(false); loadItems() }}
+          onCancel={() => setShowCreate(false)}
+        />
+      )}
+
+      {loading && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0', gap: 8 }}>
+          <CircularProgress size={18} />
+          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Chargement…</span>
+        </div>
+      )}
+
+      {!loading && error && (
+        <Alert severity="error" sx={{ fontSize: 12 }}>{error}</Alert>
+      )}
+
+      {!loading && !error && items.length === 0 && !showCreate && (
+        <div style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic', padding: '12px 0' }}>
+          Aucun ticket pour le moment.
+        </div>
+      )}
+
+      {!loading && items.map((item, idx) => (
+        <div
+          key={item.id}
+          className="w11-card"
+          onClick={() => setSelectedId(item.id)}
+          style={{ marginBottom: 0, cursor: 'pointer' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                  #{item.id || (idx + 1)}
+                </span>
+                <TicketStatusChip status={item.status} />
+                <PriorityChip priority={item.priority} />
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
+                {item.subject || item.title || '(Sans titre)'}
+              </div>
+              {(item.author_firstname || item.author_lastname) && (
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>
+                  par {[item.author_firstname, item.author_lastname].filter(Boolean).join(' ')}
+                </div>
+              )}
+              {item.description && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {item.description}
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
+              {(item.comments?.length > 0) && (
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>💬 {item.comments.length}</span>
+              )}
+              {isOwner && (
+                <Tooltip title="Supprimer">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(item.id) }}
+                    sx={{ color: '#fc3d39', p: '4px', '&:hover': { background: 'rgba(252,61,57,0.1)' } }}
+                  >
+                    <DeleteOutlinedIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Page principale ────────────────────────────────────────────────────────
 export default function ProjectDetailPage({ project, onNavigate, user }) {
   const [settings,       setSettings]       = useState({})
@@ -2398,12 +3564,15 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
   const [allSqlZipNames,      setAllSqlZipNames]      = useState(null)
   const [busFiles,            setBusFiles]            = useState([])
   const [fullProject,         setFullProject]         = useState(project)
+  const [projectLoading,      setProjectLoading]      = useState(true)
   const [fontWarnings,        setFontWarnings]        = useState([])
+  const [allFonts,            setAllFonts]            = useState([])     // toutes les polices trouvées
   const [fontTotal,           setFontTotal]           = useState(null)   // null = pas encore scanné
   const [scanProgress,        setScanProgress]        = useState(null)   // null | {phase,current,total,currentFile}
-  const [diagResult,    setDiagResult]    = useState(null)   // { missingTextures, orphanMeshes, orphanTextures }
+  const [localFonts,    setLocalFonts]    = useState(project.fonts || [])  // copie mutable de project.fonts
+  const [diagResult,    setDiagResult]    = useState(null)
   const [diagScanned,   setDiagScanned]   = useState(false)
-  const [diagProgress,  setDiagProgress]  = useState(null)   // null | {phase,current,total,currentFile}
+  const [diagProgress,  setDiagProgress]  = useState(null)
   const [diagModalOpen, setDiagModalOpen] = useState(false)
 
   const [appearanceOpen,  setAppearanceOpen]  = useState(false)
@@ -2418,6 +3587,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
   const [pullResult,   setPullResult]   = useState(null)
 
   useEffect(() => {
+    setProjectLoading(true)
     projectService.getById(project.id)
       .then(data => {
         const p = data?.project || data
@@ -2425,6 +3595,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
         if (p?.id) setFullProject(prev => ({ ...prev, ...p }))
       })
       .catch(() => {})
+      .finally(() => setProjectLoading(false))
 
     window.api.settings.get().then(s => {
       setSettings(s)
@@ -2439,6 +3610,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
         window.api.omsi.scanModelFonts(project.vehicles, s.omsiPath)
           .then(res => {
             setFontWarnings(res?.missing || [])
+            setAllFonts(res?.all || [])
             setFontTotal(res?.total ?? 0)
             setScanProgress(null)
             window.api.omsi.offScanFontsProgress()
@@ -2486,14 +3658,22 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
     }
   }, [fullProject?.id])
 
-  const handleFullDiag = useCallback(async () => {
+  // overrideFonts : permet de passer une liste à jour sans attendre le re-render de localFonts.
+  // On vérifie que c'est bien un tableau (pas un SyntheticEvent passé par onClick).
+  const handleFullDiag = useCallback(async (overrideFonts) => {
     if (!project.vehicles) return
+    const fontsToUse = Array.isArray(overrideFonts) ? overrideFonts : localFonts
     window.api.omsi.offDiagProgress()
     window.api.omsi.onDiagProgress(setDiagProgress)
     setDiagModalOpen(true)
     setDiagProgress({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
     try {
-      const res = await window.api.omsi.fullDiagnostic(project.vehicles)
+      const res = await window.api.omsi.fullDiagnostic(
+        project.vehicles,
+        settings?.omsiPath || null,
+        fontsToUse,
+        project.sounds || null
+      )
       setDiagResult(res || null)
       setDiagScanned(true)
     } finally {
@@ -2501,7 +3681,23 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
       setDiagModalOpen(false)
       window.api.omsi.offDiagProgress()
     }
-  }, [project])
+  }, [project, settings, localFonts])
+
+  // Ajoute le chemin .oft OMSI directement à project.fonts (pas de copie de fichier)
+  const handleImportFont = useCallback(async (fontName, oftPath) => {
+    if (!oftPath) return
+    const updated = [...new Set([...localFonts, oftPath])]
+    // Persiste dans le store sous la même clé que ProjectsPage (projectPaths[project.id].fonts)
+    const allPaths = (await window.api.store.get(PROJECT_PATHS_KEY)) || {}
+    const existing = allPaths[project.id] || {}
+    await window.api.store.set(PROJECT_PATHS_KEY, {
+      ...allPaths,
+      [project.id]: { ...existing, fonts: updated }
+    })
+    setLocalFonts(updated)
+    // Relance le diagnostic avec la liste à jour (contourne la closure périmée)
+    handleFullDiag(updated)
+  }, [project.id, localFonts, handleFullDiag])
 
   const handleDeleteFile = useCallback(async (absPath) => {
     const res = await window.api.file.delete(absPath)
@@ -2512,6 +3708,10 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
           ...prev,
           orphanMeshes:   (prev.orphanMeshes   || []).filter(f => f.absPath !== absPath),
           orphanTextures: (prev.orphanTextures  || []).filter(f => f.absPath !== absPath),
+          soundResults: prev.soundResults ? {
+            ...prev.soundResults,
+            orphanSounds: (prev.soundResults.orphanSounds || []).filter(s => s.absPath !== absPath),
+          } : prev.soundResults,
         }
       })
     }
@@ -2527,6 +3727,10 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
           ...prev,
           orphanMeshes:   (prev.orphanMeshes   || []).filter(f => !deletedSet.has(f.absPath)),
           orphanTextures: (prev.orphanTextures  || []).filter(f => !deletedSet.has(f.absPath)),
+          soundResults: prev.soundResults ? {
+            ...prev.soundResults,
+            orphanSounds: (prev.soundResults.orphanSounds || []).filter(s => !deletedSet.has(s.absPath)),
+          } : prev.soundResults,
         }
       })
     }
@@ -2580,10 +3784,16 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
   const currentMember = fullProject?.members?.find(
     m => Number(m.user_id ?? m.id) === Number(user?.id)
   )
-  const memberCanPush = !!(currentMember?.can_push ?? fullProject?.can_push)
-  const memberCanPull = !!(currentMember?.can_pull ?? fullProject?.can_pull)
-  const userCanPush = isOwnerOrAdmin || memberCanPush
-  const userCanPull = isOwnerOrAdmin || memberCanPull
+  const memberCanPush     = !!(currentMember?.can_push     ?? fullProject?.can_push)
+  const memberCanPull     = !!(currentMember?.can_pull     ?? fullProject?.can_pull)
+  const memberCanBacklogs = !!(currentMember?.backlog_access ?? fullProject?.backlog_access)
+  const memberCanTicketing = !!(currentMember?.ticketing_access ?? fullProject?.ticketing_access)
+  const userCanPush     = isOwnerOrAdmin || memberCanPush
+  const userCanPull     = isOwnerOrAdmin || memberCanPull
+  const userCanBacklogs = isOwnerOrAdmin || memberCanBacklogs
+  const userCanTicketing = isOwnerOrAdmin || memberCanTicketing
+  const projectBacklogEnabled   = !!(fullProject?.backlog_enabled)
+  const projectTicketingEnabled = !!(fullProject?.ticketing_enabled)
 
   console.log('[Cinnamon] Droits calculés pour l\'UI:', {
     userId: user?.id, ownerId: fullProject?.owner_id,
@@ -2673,6 +3883,8 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
     userCanPull ? 'contenu' : null,
     'versions',
     'alertes',
+    (projectBacklogEnabled && userCanBacklogs) ? 'backlogs' : null,
+    (projectTicketingEnabled && userCanTicketing) ? 'ticketing' : null,
     isOwnerOrAdmin ? 'team' : null,
   ].filter(Boolean)
 
@@ -2875,15 +4087,17 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
           icon={<WarningAmberOutlinedIcon sx={{ fontSize: 15 }} />}
           label={
             <Badge
-              badgeContent={fontWarnings.length || null}
+              badgeContent={(fontWarnings.length + (diagResult?.fontResults?.missingInProject?.length || 0) + (diagResult?.fontResults?.missingEverywhere?.length || 0)) || null}
               color="error"
-              invisible={fontWarnings.length === 0}
+              invisible={fontWarnings.length === 0 && !diagResult?.fontResults?.missingInProject?.length && !diagResult?.fontResults?.missingEverywhere?.length}
               sx={{ '& .MuiBadge-badge': { fontSize: 9, minWidth: 16, height: 16, right: -8, top: -2 } }}
             >
               Contrôle &amp; Alertes
             </Badge>
           }
         />
+        {projectBacklogEnabled && userCanBacklogs && <Tab label="Backlogs" icon={<AssignmentOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
+        {projectTicketingEnabled && userCanTicketing && <Tab label="Ticketing" icon={<BugReportOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
         {isOwnerOrAdmin && <Tab label="Équipe" icon={<GroupsOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
       </Tabs>
 
@@ -2925,6 +4139,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
       {TAB_IDS[activeTab] === 'alertes' && (
         <TabAvertissements
           fontWarnings={fontWarnings}
+          allFonts={allFonts}
           scanProgress={scanProgress}
           fontTotal={fontTotal}
           diagResult={diagResult}
@@ -2932,11 +4147,23 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
           onScanDiag={handleFullDiag}
           onDeleteFile={handleDeleteFile}
           onDeleteAll={handleDeleteAll}
+          onImportFont={handleImportFont}
           canScan={!!project.vehicles}
         />
       )}
+      {TAB_IDS[activeTab] === 'backlogs' && projectBacklogEnabled && userCanBacklogs && (
+        <TabBacklogs project={fullProject} user={user} />
+      )}
+      {TAB_IDS[activeTab] === 'ticketing' && projectTicketingEnabled && userCanTicketing && (
+        <TabTicketing project={fullProject} user={user} />
+      )}
       {TAB_IDS[activeTab] === 'team' && isOwnerOrAdmin && (
-        <TabTeam project={fullProject} user={user} />
+        <TabTeam
+          project={fullProject}
+          projectLoading={projectLoading}
+          user={user}
+          onProjectUpdate={(updates) => setFullProject(prev => ({ ...prev, ...updates }))}
+        />
       )}
     </div>
   )

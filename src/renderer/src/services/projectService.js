@@ -43,7 +43,7 @@ export const projectService = {
 
   async updateMember(projectId, userId, data) {
     const response = await api.patch(`/projects/${projectId}/members/${userId}`, data)
-    return response.data
+    return response
   },
 
   async removeMember(projectId, userId) {
@@ -130,5 +130,79 @@ export const projectService = {
   async deleteScreenshot(projectId, screenshotId) {
     const response = await api.delete(`/projects/${projectId}/screenshots/${screenshotId}`)
     return response.data
-  }
+  },
+
+  // ── Fonctionnalités projet ─────────────────────────────────────────────────
+  async updateFeatures(projectId, data) {
+    const response = await api.patch(`/projects/${projectId}`, data)
+    return response.data
+  },
+
+  // ── Backlogs ───────────────────────────────────────────────────────────────
+  async getBacklogs(projectId) {
+    const response = await api.get(`/projects/${projectId}/backlogs`)
+    return response.data
+  },
+
+  async createBacklog(projectId, data) {
+    const response = await api.post(`/projects/${projectId}/backlogs`, data)
+    return response.data
+  },
+
+  async updateBacklog(projectId, backlogId, data) {
+    const response = await api.patch(`/projects/${projectId}/backlogs/${backlogId}`, data)
+    return response.data
+  },
+
+  async deleteBacklog(projectId, backlogId) {
+    await api.delete(`/projects/${projectId}/backlogs/${backlogId}`)
+  },
+
+  async addBacklogComment(projectId, backlogId, content) {
+    const response = await api.post(`/projects/${projectId}/backlogs/${backlogId}/comments`, { content })
+    return response.data
+  },
+
+  async uploadBacklogImage(projectId, backlogId, file) {
+    const form = new FormData()
+    form.append('image', file)
+    const response = await api.post(`/projects/${projectId}/backlogs/${backlogId}/images`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
+
+  // ── Tickets ────────────────────────────────────────────────────────────────
+  async getTickets(projectId) {
+    const response = await api.get(`/projects/${projectId}/tickets`)
+    return response.data
+  },
+
+  async createTicket(projectId, data) {
+    const response = await api.post(`/projects/${projectId}/tickets`, data)
+    return response.data
+  },
+
+  async updateTicket(projectId, ticketId, data) {
+    const response = await api.patch(`/projects/${projectId}/tickets/${ticketId}`, data)
+    return response.data
+  },
+
+  async deleteTicket(projectId, ticketId) {
+    await api.delete(`/projects/${projectId}/tickets/${ticketId}`)
+  },
+
+  async addTicketComment(projectId, ticketId, content) {
+    const response = await api.post(`/projects/${projectId}/tickets/${ticketId}/comments`, { content })
+    return response.data
+  },
+
+  async uploadTicketImage(projectId, ticketId, file) {
+    const form = new FormData()
+    form.append('image', file)
+    const response = await api.post(`/projects/${projectId}/tickets/${ticketId}/images`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  },
 }

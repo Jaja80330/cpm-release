@@ -56,7 +56,7 @@ contextBridge.exposeInMainWorld('api', {
     scanO3dTextures:      (vehiclesPath, omsiPath) => ipcRenderer.invoke('omsi:scanO3dTextures',  vehiclesPath, omsiPath),
     onO3dProgress:        (cb) => ipcRenderer.on('omsi:scanO3d:progress',    (_, d) => cb(d)),
     offO3dProgress:       ()   => ipcRenderer.removeAllListeners('omsi:scanO3d:progress'),
-    fullDiagnostic:       (vehiclesPath) => ipcRenderer.invoke('omsi:fullDiagnostic', vehiclesPath),
+    fullDiagnostic:       (vehiclesPath, omsiPath, projectFontPaths, soundsPath) => ipcRenderer.invoke('omsi:fullDiagnostic', vehiclesPath, omsiPath, projectFontPaths, soundsPath),
     onDiagProgress:       (cb) => ipcRenderer.on('omsi:diagnostic:progress', (_, d) => cb(d)),
     offDiagProgress:      ()   => ipcRenderer.removeAllListeners('omsi:diagnostic:progress'),
   },

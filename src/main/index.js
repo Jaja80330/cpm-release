@@ -1043,15 +1043,15 @@ app.whenReady().then(() => {
   // après le tag) et vérifie leur présence dans {omsiPath}/Fonts/.
   ipcMain.handle('omsi:scanModelFonts', async (event, vehiclesPath, omsiPath) => {
     const push = (data) => {
-      try { event.sender.send('omsi:scanFonts:progress', data) } catch { /* fenêtre fermée */ }
+      try { event.sender.send('omsi:scanFonts:progress', JSON.parse(JSON.stringify(data))) } catch { /* fenêtre fermée */ }
     }
 
-    if (!vehiclesPath || !omsiPath) return { success: false, missing: [], total: 0 }
+    if (!vehiclesPath || !omsiPath) return { success: false, missing: [], all: [], total: 0 }
     try {
       const modelDir = path.join(vehiclesPath, 'Model')
-      if (!existsSync(modelDir)) return { success: true, missing: [], total: 0 }
+      if (!existsSync(modelDir)) return { success: true, missing: [], all: [], total: 0 }
 
-      // Phase 1 : collecte récursive de tous les .cfg
+      // ── Phase 1 : collecte récursive de tous les .cfg dans Model/ ───────────
       push({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
       const cfgFiles = []
       async function walkCfg(dir) {
@@ -1065,16 +1065,38 @@ app.whenReady().then(() => {
       }
       await walkCfg(modelDir)
 
-      // Phase 2 : analyse fichier par fichier avec progression
-      const total    = cfgFiles.length
-      const fontsDir = path.join(omsiPath, 'Fonts')
-      const missing  = []
-      const seen     = new Set()
+      // ── Phase 2 : index des noms de polices depuis les .oft de Fonts/ ───────
+      // Chaque .oft contient un tag [newfont] suivi du nom de la police sur la
+      // ligne suivante. On construit un Set<string> des noms disponibles.
+      const fontsDir     = path.join(omsiPath, 'Fonts')
+      const knownFonts   = new Set()   // noms de polices déclarés dans les .oft
+      try {
+        const oftEntries = await readdir(fontsDir, { withFileTypes: true })
+        for (const e of oftEntries) {
+          if (!e.name.toLowerCase().endsWith('.oft')) continue
+          try {
+            const buf  = await readFile(path.join(fontsDir, e.name))
+            const txt  = iconv.decode(buf, 'win1252')
+            const lns  = txt.split(/\r?\n/)
+            for (let j = 0; j < lns.length; j++) {
+              if (lns[j].trim().toLowerCase() !== '[newfont]') continue
+              const name = (lns[j + 1] ?? '').trim()
+              if (name) knownFonts.add(name.toLowerCase())
+              break
+            }
+          } catch { /* .oft illisible, on ignore */ }
+        }
+      } catch { /* dossier Fonts/ inaccessible */ }
+
+      // ── Phase 3 : analyse des .cfg — extraction du nom à i+2 ────────────────
+      const total   = cfgFiles.length
+      const missing = []
+      const all     = []
+      const seen    = new Set()
 
       for (let idx = 0; idx < cfgFiles.length; idx++) {
         const cfgPath    = cfgFiles[idx]
-        const currentFile = path.basename(cfgPath)
-        push({ phase: 'scanning', current: idx + 1, total, currentFile })
+        push({ phase: 'scanning', current: idx + 1, total, currentFile: path.basename(cfgPath) })
 
         let content
         try {
@@ -1082,28 +1104,36 @@ app.whenReady().then(() => {
           content = iconv.decode(buffer, 'win1252')
         } catch { continue }
 
-        const lines = content.split(/\r?\n/)
+        const relCfg = path.relative(vehiclesPath, cfgPath).replace(/\\/g, '/')
+        const lines  = content.split(/\r?\n/)
+
         for (let i = 0; i < lines.length; i++) {
-          if (lines[i].trim().toLowerCase() !== '[texttexture]') continue
-          // 3ème ligne après le tag [texttexture]
-          const fontLine = (lines[i + 3] ?? '').trim()
-          if (!fontLine.toLowerCase().endsWith('.oft')) continue
-          const fontName = path.basename(fontLine)
-          const key      = fontName.toLowerCase()
+          const tag = lines[i].trim().toLowerCase()
+          if (tag !== '[texttexture]' && tag !== '[texttexture_enh]') continue
+
+          // Structure : [texttexture(_enh)] / variable_name / FONT_NAME
+          const fontName = (lines[i + 2] ?? '').trim()
+          if (!fontName) continue
+
+          const key = fontName.toLowerCase()
           if (seen.has(key)) continue
           seen.add(key)
-          if (!existsSync(path.join(fontsDir, fontName))) {
-            missing.push({
-              fontName,
-              cfgFile: path.relative(vehiclesPath, cfgPath).replace(/\\/g, '/'),
-            })
-          }
+
+          const present = knownFonts.has(key)
+          all.push({ fontName, cfgFile: relCfg, present })
+          if (!present) missing.push({ fontName, cfgFile: relCfg })
         }
       }
 
-      return { success: true, missing, total }
+      const scanResult = {
+        success: true,
+        total:   Number(total),
+        missing: missing.map(f => ({ fontName: String(f.fontName), cfgFile: String(f.cfgFile) })),
+        all:     all.map(f => ({ fontName: String(f.fontName), cfgFile: String(f.cfgFile), present: Boolean(f.present) })),
+      }
+      return JSON.parse(JSON.stringify(scanResult))
     } catch (err) {
-      return { success: false, error: err.message, missing: [], total: 0 }
+      return { success: false, error: String(err?.message || err), missing: [], all: [], total: 0 }
     }
   })
 
@@ -1180,9 +1210,9 @@ app.whenReady().then(() => {
         }
       }
 
-      return { success: true, results, total, totalMissing }
+      return JSON.parse(JSON.stringify({ success: true, results, total, totalMissing }))
     } catch (err) {
-      return { success: false, error: err.message, results: [], totalMissing: 0 }
+      return { success: false, error: String(err?.message || err), results: [], totalMissing: 0 }
     }
   })
 
@@ -1278,9 +1308,9 @@ app.whenReady().then(() => {
   // ── Diagnostic complet : orphelins + textures manquantes ────────────────────
   // Scanne Model/ (binaires .o3d + .cfg), Texture/ racine, .ctc, .bus, .org.
   // Retourne missingTextures, orphanMeshes, orphanTextures avec tailles.
-  ipcMain.handle('omsi:fullDiagnostic', async (event, vehiclesPath) => {
+  ipcMain.handle('omsi:fullDiagnostic', async (event, vehiclesPath, omsiPath, projectFontPaths, soundsPath) => {
     const push = (data) => {
-      try { event.sender.send('omsi:diagnostic:progress', data) } catch { /* fenêtre fermée */ }
+      try { event.sender.send('omsi:diagnostic:progress', JSON.parse(JSON.stringify(data))) } catch { /* fenêtre fermée */ }
     }
 
     if (!vehiclesPath) return { success: false, error: 'Chemin Vehicles non configuré.' }
@@ -1482,16 +1512,221 @@ app.whenReady().then(() => {
         .map(([textureName, set]) => ({ textureName, usedBy: [...set].sort() }))
         .sort((a, b) => a.textureName.localeCompare(b.textureName))
 
-      return {
-        success: true,
-        missingTextures,
-        orphanMeshes,
-        orphanTextures,
-        totalMeshesScanned: meshFiles.length,
-        totalCfgScanned:    cfgFiles.length,
+      // ── Phase scanning_fonts : model.cfg → [texttexture*] → nom police ──
+      push({ phase: 'scanning_fonts', current: 0, total: cfgFiles.length, currentFile: '' })
+
+      // Helper : lit un .oft et retourne { fontName, textures: string[] }
+      // On strip explicitement \r et les espaces de fin/début pour éviter les faux positifs
+      // liés aux fins de ligne Windows dans les fichiers encodés en Windows-1252.
+      function cleanLine(s) { return (s ?? '').replace(/\r/g, '').trim() }
+      async function readOft(oftPath) {
+        try {
+          const buf  = await readFile(oftPath)
+          const txt  = iconv.decode(buf, 'win1252')
+          const lns  = txt.split('\n')
+          let fontName = null
+          const textures = []
+          for (let j = 0; j < lns.length; j++) {
+            if (cleanLine(lns[j]).toLowerCase() !== '[newfont]') continue
+            fontName = cleanLine(lns[j + 1]) || null
+            // Textures listées dans le .oft (lignes .bmp / .tga après le nom)
+            for (let k = j + 2; k < lns.length; k++) {
+              const l = cleanLine(lns[k]).toLowerCase()
+              if (l.startsWith('[')) break        // prochain tag → on sort
+              if (l.endsWith('.bmp') || l.endsWith('.tga')) textures.push(cleanLine(lns[k]))
+            }
+            break
+          }
+          return fontName ? { fontName, textures } : null
+        } catch { return null }
       }
+
+      // Niveau 1 : polices déclarées dans les .oft du projet
+      const projectFontNames = new Set()
+      for (const oftPath of (projectFontPaths || [])) {
+        const info = await readOft(oftPath)
+        if (info) projectFontNames.add(info.fontName.toLowerCase())
+      }
+
+      // Niveau 2 : polices disponibles dans {omsiPath}/Fonts/ + map fontName → { oftPath, textures }
+      const omsifontsDir    = omsiPath ? path.join(omsiPath, 'Fonts') : null
+      const omsiFont2oft    = new Map()  // fontName.lower → { oftPath, textures }
+      if (omsifontsDir && existsSync(omsifontsDir)) {
+        let oftEntries = []
+        try { oftEntries = await readdir(omsifontsDir, { withFileTypes: true }) } catch {}
+        for (const e of oftEntries) {
+          if (!e.name.toLowerCase().endsWith('.oft')) continue
+          const info = await readOft(path.join(omsifontsDir, e.name))
+          if (info) omsiFont2oft.set(info.fontName.toLowerCase(), {
+            oftPath:  path.join(omsifontsDir, e.name),
+            textures: info.textures,
+          })
+        }
+      }
+
+      // Extraction des noms de polices utilisés dans les .cfg
+      const fontSeenSet       = new Set()
+      const missingInProject  = []  // Cas A : présente dans OMSI mais pas dans le projet
+      const missingEverywhere = []  // Cas B : introuvable dans OMSI ni dans le projet
+
+      for (let i = 0; i < cfgFiles.length; i++) {
+        push({ phase: 'scanning_fonts', current: i + 1, total: cfgFiles.length, currentFile: path.basename(cfgFiles[i]) })
+        let content
+        try {
+          const buf = await readFile(cfgFiles[i])
+          content = iconv.decode(buf, 'win1252')
+        } catch { continue }
+        const lines  = content.split('\n')
+        const relCfg = path.relative(vehiclesPath, cfgFiles[i]).replace(/\\/g, '/')
+        for (let j = 0; j < lines.length; j++) {
+          const tag = cleanLine(lines[j]).toLowerCase()
+          if (tag !== '[texttexture]' && tag !== '[texttexture_enh]') continue
+          const fontName = cleanLine(lines[j + 2])
+          if (!fontName) continue
+          const key = fontName.toLowerCase()
+          if (fontSeenSet.has(key)) continue
+          fontSeenSet.add(key)
+
+          // Debug spécifique pour diagnostiquer les faux négatifs de type 's400nf'
+          if (key.includes('s400nf') || key.includes('lcd')) {
+            debugLog(`[fontMatch] cfg="${fontName}" key="${key}" inProject=${projectFontNames.has(key)} inOmsi=${omsiFont2oft.has(key)}`)
+          }
+
+          if (projectFontNames.has(key)) continue   // Niveau 1 OK
+          const omsiInfo = omsiFont2oft.get(key)
+          if (omsiInfo) {
+            missingInProject.push({ fontName, cfgFile: relCfg, oftPath: omsiInfo.oftPath, textures: omsiInfo.textures })
+          } else {
+            missingEverywhere.push({ fontName, cfgFile: relCfg })
+          }
+        }
+      }
+
+      // ── Phase scanning_sounds : .bus → sound cfg → .wav ──────────────────
+      push({ phase: 'scanning_sounds', current: 0, total: busFiles.length, currentFile: '' })
+
+      const AUDIO_EXTS = new Set(['.wav', '.ogg', '.mp3'])
+
+      // Collecte tous les fichiers audio physiquement présents sous vehiclesPath
+      // (et soundsPath si distinct et configuré)
+      const physicalAudioMap = new Map() // absPath.lower → { name, absPath, size }
+      async function collectAudio(dir) {
+        const files = await walk(dir, n => AUDIO_EXTS.has(path.extname(n).toLowerCase()))
+        for (const fp of files) {
+          let sz = 0
+          try { sz = (await stat(fp)).size } catch {}
+          physicalAudioMap.set(fp.toLowerCase(), { name: path.basename(fp), absPath: fp, size: sz })
+        }
+      }
+      if (existsSync(vehiclesPath)) await collectAudio(vehiclesPath)
+      if (soundsPath && soundsPath !== vehiclesPath && existsSync(soundsPath)) await collectAudio(soundsPath)
+
+      // Parsage des .bus pour trouver les sound cfgs ([sound] / [sound_ai])
+      const soundCfgPaths = new Set()
+      for (let i = 0; i < busFiles.length; i++) {
+        push({ phase: 'scanning_sounds', current: i + 1, total: busFiles.length, currentFile: path.basename(busFiles[i]) })
+        try {
+          const buf     = await readFile(busFiles[i])
+          const content = iconv.decode(buf, 'win1252')
+          const lines   = content.split('\n')
+          const busDir  = path.dirname(busFiles[i])
+          for (let j = 0; j < lines.length - 1; j++) {
+            const tag = cleanLine(lines[j]).toLowerCase()
+            if (tag !== '[sound]' && tag !== '[sound_ai]') continue
+            const rel = cleanLine(lines[j + 1])
+            if (!rel || rel.startsWith('[')) continue
+            if (!rel.toLowerCase().endsWith('.cfg')) continue
+            soundCfgPaths.add(path.resolve(busDir, rel.replace(/\\/g, path.sep)))
+          }
+        } catch { /* bus illisible */ }
+      }
+
+      // Parsage des sound cfgs pour extraire les références audio
+      const referencedAudio = new Map() // absPath.lower → { name, absPath, cfgFile }
+      const soundCfgArr = [...soundCfgPaths]
+      push({ phase: 'scanning_sounds', current: 0, total: soundCfgArr.length, currentFile: '' })
+      for (let i = 0; i < soundCfgArr.length; i++) {
+        const cfgPath = soundCfgArr[i]
+        push({ phase: 'scanning_sounds', current: i + 1, total: soundCfgArr.length, currentFile: path.basename(cfgPath) })
+        try {
+          const buf     = await readFile(cfgPath)
+          const content = iconv.decode(buf, 'win1252')
+          const cfgDir  = path.dirname(cfgPath)
+          const relCfg  = path.relative(vehiclesPath, cfgPath).replace(/\\/g, '/')
+          const lines   = content.split('\n')
+          for (let j = 0; j < lines.length - 1; j++) {
+            const tag = cleanLine(lines[j]).toLowerCase()
+            if (tag !== '[sound]' && tag !== '[loopsound]') continue
+            const wavRel = cleanLine(lines[j + 1])
+            if (!wavRel || wavRel.startsWith('[')) continue
+            if (!AUDIO_EXTS.has(path.extname(wavRel).toLowerCase())) continue
+            const wavAbs = path.resolve(cfgDir, wavRel.replace(/\\/g, path.sep))
+            const key    = wavAbs.toLowerCase()
+            if (!referencedAudio.has(key))
+              referencedAudio.set(key, { name: path.basename(wavRel), absPath: wavAbs, cfgFile: relCfg })
+          }
+        } catch { /* cfg illisible */ }
+      }
+
+      // Manquants : référencés mais absents du disque
+      const missingSounds = []
+      for (const [key, info] of referencedAudio) {
+        if (!physicalAudioMap.has(key))
+          missingSounds.push({ file: String(info.name), absPath: String(info.absPath), cfgFile: String(info.cfgFile) })
+      }
+      missingSounds.sort((a, b) => a.file.localeCompare(b.file))
+
+      // Orphelins : présents sur le disque mais jamais référencés
+      const orphanSounds = []
+      for (const [key, info] of physicalAudioMap) {
+        if (!referencedAudio.has(key))
+          orphanSounds.push({ name: String(info.name), absPath: String(info.absPath), size: Number(info.size) })
+      }
+      orphanSounds.sort((a, b) => b.size - a.size)
+
+      // Sérialisation explicite : on reconstruit chaque objet avec des primitives pures
+      // pour éviter toute référence non-clonable (Map, Set, Dirent, Stats, closures…)
+      const safeResult = {
+        success:            true,
+        totalMeshesScanned: Number(meshFiles.length),
+        totalCfgScanned:    Number(cfgFiles.length),
+        missingTextures: missingTextures.map(t => ({
+          textureName: String(t.textureName),
+          usedBy:      (t.usedBy || []).map(String),
+        })),
+        orphanMeshes: orphanMeshes.map(f => ({
+          name:         String(f.name),
+          relativePath: String(f.relativePath),
+          absPath:      String(f.absPath),
+          size:         Number(f.size),
+        })),
+        orphanTextures: orphanTextures.map(f => ({
+          name:    String(f.name),
+          absPath: String(f.absPath),
+          size:    Number(f.size),
+        })),
+        fontResults: {
+          missingInProject: missingInProject.map(f => ({
+            fontName: String(f.fontName),
+            cfgFile:  String(f.cfgFile),
+            oftPath:  String(f.oftPath),
+            textures: (f.textures || []).map(String),
+          })),
+          missingEverywhere: missingEverywhere.map(f => ({
+            fontName: String(f.fontName),
+            cfgFile:  String(f.cfgFile),
+          })),
+        },
+        soundResults: {
+          missingSounds:  missingSounds,
+          orphanSounds:   orphanSounds,
+          totalScanned:   Number(referencedAudio.size),
+          cfgsFound:      Number(soundCfgPaths.size),
+        },
+      }
+      return JSON.parse(JSON.stringify(safeResult))
     } catch (err) {
-      return { success: false, error: err.message }
+      return { success: false, error: String(err?.message || err) }
     }
   })
 
