@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@mui/material/Button'
 import LinearProgress from '@mui/material/LinearProgress'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -11,15 +12,6 @@ import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined'
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 
-const PUSH_STEPS = [
-  { num: 1, label: 'Archivage',    Icon: FolderZipOutlinedIcon  },
-  { num: 2, label: 'Transfert',    Icon: CloudUploadOutlinedIcon }
-]
-const PULL_STEPS = [
-  { num: 1, label: 'Connexion',      Icon: CloudUploadOutlinedIcon   },
-  { num: 2, label: 'Téléchargement', Icon: CloudDownloadOutlinedIcon },
-  { num: 3, label: 'Déploiement',    Icon: FolderOpenOutlinedIcon    }
-]
 
 const formatBytes = (b) => {
   if (!b && b !== 0) return '—'
@@ -29,6 +21,7 @@ const formatBytes = (b) => {
 }
 
 export default function SyncModal({ open, step, progress, result, onClose, mode = 'push' }) {
+  const { t } = useTranslation()
   const logEndRef = useRef(null)
   useEffect(() => { logEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [result?.logs?.length])
 
@@ -36,7 +29,16 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
 
   const done    = result !== null
   const success = result?.success
-  const STEPS   = mode === 'pull' ? PULL_STEPS : PUSH_STEPS
+  const PUSH_STEPS_T = [
+    { num: 1, label: t('sync.stepArchive'), Icon: FolderZipOutlinedIcon  },
+    { num: 2, label: t('sync.stepTransfer'), Icon: CloudUploadOutlinedIcon }
+  ]
+  const PULL_STEPS_T = [
+    { num: 1, label: t('sync.stepConnect'),   Icon: CloudUploadOutlinedIcon   },
+    { num: 2, label: t('sync.stepDownload'),  Icon: CloudDownloadOutlinedIcon },
+    { num: 3, label: t('sync.stepDeploy'),    Icon: FolderOpenOutlinedIcon    }
+  ]
+  const STEPS   = mode === 'pull' ? PULL_STEPS_T : PUSH_STEPS_T
   const currentStepNum = step?.stepNum ?? 0
   const progressValue = progress ? progress.percent : 0
 
@@ -48,8 +50,8 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
       zIndex: 2000, padding: 24
     }}>
       <Box sx={{
-        background: '#1a1f25',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border-base)',
         borderRadius: 2,
         width: '100%', maxWidth: 500,
         boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
@@ -59,20 +61,20 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
         {/* Header */}
         <Box sx={{
           p: '16px 20px 12px',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          borderBottom: '1px solid var(--border-subtle)',
           display: 'flex', alignItems: 'center', gap: 1.5
         }}>
           {!done && <CircularProgress size={18} thickness={4} />}
           {done && success && <CheckCircleOutlinedIcon sx={{ color: '#6ccb5f', fontSize: 20 }} />}
           {done && !success && <CancelOutlinedIcon sx={{ color: '#fc3d39', fontSize: 20 }} />}
           <Box>
-            <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>
-              {mode === 'pull' ? 'Cinnamon Pull' : 'Cinnamon Sync'}
+            <Typography sx={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+              {mode === 'pull' ? t('sync.pullTitle') : t('sync.pushTitle')}
             </Typography>
             <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.2 }}>
-              {!done && (mode === 'pull' ? 'Récupération en cours...' : 'Synchronisation en cours...')}
-              {done && success && (mode === 'pull' ? `Déploiement réussi — ${result?.deployedCount ?? 0} fichier(s)` : 'Transfert réussi')}
-              {done && !success && 'Une erreur est survenue'}
+              {!done && (mode === 'pull' ? t('sync.pulling') : t('sync.pushing'))}
+              {done && success && (mode === 'pull' ? t('sync.successPull', { count: result?.deployedCount ?? 0 }) : t('sync.successPush'))}
+              {done && !success && t('sync.error')}
             </Typography>
           </Box>
         </Box>
@@ -91,7 +93,7 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
                     <Box sx={{
                       width: 26, height: 26, borderRadius: '50%',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: isDone ? 'rgba(108,203,95,0.12)' : isActive ? 'rgba(66,165,245,0.12)' : 'rgba(255,255,255,0.05)',
+                      background: isDone ? 'rgba(108,203,95,0.12)' : isActive ? 'rgba(66,165,245,0.12)' : 'var(--surface-subtle)',
                       border: `1.5px solid ${color}`,
                       transition: 'all 0.25s',
                     }}>
@@ -107,7 +109,7 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
                   {i < STEPS.length - 1 && (
                     <Box sx={{
                       flex: 1, height: '1px', mx: 1,
-                      background: currentStepNum > 1 || done ? '#6ccb5f' : 'rgba(255,255,255,0.1)',
+                      background: currentStepNum > 1 || done ? '#6ccb5f' : 'var(--border-base)',
                       transition: 'background 0.3s'
                     }} />
                   )}
@@ -120,7 +122,7 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
           {!done && (
             <Box>
               <Typography sx={{ fontSize: 12, fontWeight: 600, color: 'text.primary', mb: 1 }}>
-                {step ? `Étape ${step.stepNum}/${step.stepTotal} — ${step.stepLabel}` : 'Initialisation...'}
+                {step ? t('sync.stepLabel', { current: step.stepNum, total: step.stepTotal, label: step.stepLabel }) : t('common.loading')}
               </Typography>
               <LinearProgress
                 variant={progressValue > 0 ? 'determinate' : 'indeterminate'}
@@ -137,8 +139,8 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
                 </Typography>
                 <Typography component="span" sx={{ fontSize: 11, flexShrink: 0, fontWeight: 600 }}>
                   {progress
-                    ? step?.stepNum === 1
-                      ? `${progress.current} / ${progress.total} fichiers`
+                    ? (step?.stepNum === 1 || (mode === 'pull' && step?.stepNum === 3))
+                      ? t('sync.filesProgress', { current: progress.current, total: progress.total })
                       : `${formatBytes(progress.current)} / ${formatBytes(progress.total)}`
                     : ''
                   }
@@ -159,7 +161,7 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
               {success ? (
                 <>
                   <Typography sx={{ fontWeight: 600, color: '#6ccb5f', fontSize: 13, mb: 0.4 }}>
-                    Archive envoyée avec succès
+                    {t('sync.archiveSuccess')}
                   </Typography>
                   <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>
                     {result.zipName}
@@ -169,7 +171,7 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
               ) : (
                 <>
                   <Typography sx={{ fontWeight: 600, color: '#fc3d39', fontSize: 13, mb: 0.4 }}>
-                    Échec de la synchronisation
+                    {t('sync.archiveFail')}
                   </Typography>
                   <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{result.error}</Typography>
                 </>
@@ -198,7 +200,7 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
         {/* Footer */}
         <Box sx={{
           p: '10px 20px',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
+          borderTop: '1px solid var(--border-subtle)',
           display: 'flex', justifyContent: 'flex-end'
         }}>
           <Button
@@ -207,7 +209,7 @@ export default function SyncModal({ open, step, progress, result, onClose, mode 
             onClick={onClose}
             size="small"
           >
-            {!done ? 'En cours...' : 'Fermer'}
+            {!done ? t('sync.pending') : t('common.close')}
           </Button>
         </Box>
       </Box>

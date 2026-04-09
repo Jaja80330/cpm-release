@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { ThemeProvider, CssBaseline } from '@mui/material'
-import { muiDarkTheme } from './theme'
+import { getTheme } from './theme'
+import i18n from './i18n'
 import CircularProgress from '@mui/material/CircularProgress'
 import Box from '@mui/material/Box'
 import TitleBar from './components/TitleBar'
@@ -42,8 +43,18 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true)
 
   // Thème : 'system' | 'dark' | 'light'
-  const [themePref,  setThemePref]  = useState('system')
-  const [systemDark, setSystemDark] = useState(false)
+  // Lecture synchrone depuis localStorage pour éviter le flash au démarrage
+  const [themePref,  setThemePref]  = useState(
+    () => localStorage.getItem('cinnamon-theme') || 'system'
+  )
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches
+  )
+
+  // Langue : 'fr' | 'en' | 'de'
+  const [lang, setLang] = useState(
+    () => localStorage.getItem('cinnamon-lang') || 'fr'
+  )
 
   // ── Initialisation ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -53,7 +64,14 @@ export default function App() {
         window.api.store.get(TOKEN_KEY),
         window.api.store.get(PROFILE_KEY)
       ])
-      setThemePref(s?.theme || 'system')
+      const loadedTheme = s?.theme || 'system'
+      setThemePref(loadedTheme)
+      localStorage.setItem('cinnamon-theme', loadedTheme)
+
+      const loadedLang = s?.lang || 'fr'
+      setLang(loadedLang)
+      localStorage.setItem('cinnamon-lang', loadedLang)
+      i18n.changeLanguage(loadedLang)
 
       if (savedToken) {
         setAuthToken(savedToken)
@@ -85,7 +103,8 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
-  }, [isDark])
+    localStorage.setItem('cinnamon-theme', themePref)
+  }, [isDark, themePref])
 
   // ── Auth ────────────────────────────────────────────────────────────────
   const handleLoginSuccess = async (newToken, data, staySignedIn) => {
@@ -129,23 +148,25 @@ export default function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'home':           return <HomePage onNavigate={navigate} />
+      case 'home':           return <HomePage onNavigate={navigate} isDark={isDark} />
       case 'projects':       return <ProjectsPage onNavigate={navigate} user={user} />
-      case 'project-detail': return <ProjectDetailPage project={activeProject} onNavigate={navigate} user={user} />
-      case 'settings':       return <SettingsPage onThemeChange={setThemePref} onLogout={handleLogout} user={user} onUserChange={setUser} />
+      case 'project-detail': return <ProjectDetailPage project={activeProject} onNavigate={navigate} user={user} isDark={isDark} />
+      case 'settings':       return <SettingsPage onThemeChange={setThemePref} onLangChange={async (l) => { setLang(l); localStorage.setItem('cinnamon-lang', l); i18n.changeLanguage(l); const s = await window.api.settings.get(); await window.api.settings.save({ ...s, lang: l }) }} onLogout={handleLogout} user={user} onUserChange={setUser} />
       case 'users':          return <UsersPage currentUser={user} />
-      case 'tools':          return <ToolsPage user={user} />
+      case 'tools':          return <ToolsPage user={user} isDark={isDark} />
       default:               return <HomePage onNavigate={navigate} />
     }
   }
 
   // ── Rendu ───────────────────────────────────────────────────────────────
+  const theme = getTheme(isDark)
+
   if (authLoading) {
     return (
-      <ThemeProvider theme={muiDarkTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box sx={{ height: '100vh', width: '100vw', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', background: '#0b0e11' }}>
+          justifyContent: 'center', background: isDark ? '#0b0e11' : '#f0f2f5' }}>
           <CircularProgress size={32} />
         </Box>
       </ThemeProvider>
@@ -154,10 +175,10 @@ export default function App() {
 
   if (!token) {
     return (
-      <ThemeProvider theme={muiDarkTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <TitleBar />
-        <LoginView onLoginSuccess={handleLoginSuccess} />
+        <LoginView onLoginSuccess={handleLoginSuccess} isDark={isDark} />
       </ThemeProvider>
     )
   }
@@ -169,7 +190,7 @@ export default function App() {
       if (token) await window.api.store.set(PROFILE_KEY, updated)
     }
     return (
-      <ThemeProvider theme={muiDarkTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <div className="app-container">
           <TitleBar />
@@ -182,7 +203,7 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider theme={muiDarkTheme}>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <div className="app-container">
         <TitleBar />

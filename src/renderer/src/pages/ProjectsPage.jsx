@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -64,18 +65,20 @@ function VersionChip({ versionName }) {
 }
 
 function StatusChip({ cinStatus, versionName }) {
+  const { t } = useTranslation()
   const localVersion = cinStatus?.versionName
   if (!localVersion) {
-    return <Chip label="Non installé" size="small" sx={{ fontSize: 10, height: 18 }} />
+    return <Chip label={t('projects.notInstalled')} size="small" sx={{ fontSize: 10, height: 18 }} />
   }
   const upToDate = normalizeVersion(localVersion) === normalizeVersion(versionName)
   return upToDate
-    ? <Chip label="À jour" size="small" color="success" sx={{ fontSize: 10, height: 18 }} />
+    ? <Chip label={t('projects.upToDate')} size="small" color="success" sx={{ fontSize: 10, height: 18 }} />
     : <Chip label="Update" size="small" color="warning" sx={{ fontSize: 10, height: 18 }} />
 }
 
 // ── Carte projet (16:9) ────────────────────────────────────────────────────
 function ProjectCard({ project, hasLocalPaths, onEdit, onDelete, onPush, onClick, canCreate, canPush, canPull, versionName, cinStatus }) {
+  const { t } = useTranslation()
   const thumb = project.thumbnail_url || project.thumbnailUrl
   return (
     <div className="project-card" onClick={() => onClick(project)}>
@@ -94,7 +97,7 @@ function ProjectCard({ project, hasLocalPaths, onEdit, onDelete, onPush, onClick
             <IconButton
               size="small"
               onClick={() => onPush(project)}
-              title="Push vers le Cloud"
+              title={t('projects.pushToCloud')}
               sx={{
                 background: 'rgba(20,25,30,0.85)', border: '1px solid rgba(255,255,255,0.15)',
                 color: '#42a5f5', p: '4px', backdropFilter: 'blur(4px)',
@@ -108,7 +111,7 @@ function ProjectCard({ project, hasLocalPaths, onEdit, onDelete, onPush, onClick
             <IconButton
               size="small"
               onClick={() => onEdit(project)}
-              title="Modifier"
+              title={t('common.edit')}
               sx={{
                 background: 'rgba(20,25,30,0.85)', border: '1px solid rgba(255,255,255,0.15)',
                 color: 'var(--text-secondary)', p: '4px', backdropFilter: 'blur(4px)',
@@ -122,7 +125,7 @@ function ProjectCard({ project, hasLocalPaths, onEdit, onDelete, onPush, onClick
             <IconButton
               size="small"
               onClick={() => onDelete(project.id)}
-              title="Supprimer"
+              title={t('common.delete')}
               sx={{
                 background: 'rgba(20,25,30,0.85)', border: '1px solid rgba(255,255,255,0.15)',
                 color: '#fc3d39', p: '4px', backdropFilter: 'blur(4px)',
@@ -154,6 +157,7 @@ function ProjectCard({ project, hasLocalPaths, onEdit, onDelete, onPush, onClick
 
 // ── Dialog Push (depuis la liste) ──────────────────────────────────────────
 function PushDialogInline({ project, onPushed, onClose }) {
+  const { t } = useTranslation()
   const [localPaths,  setLocalPaths]  = useState(null)
   const [pathsLoaded, setPathsLoaded] = useState(false)
   const [upload,      setUpload]      = useState(null)
@@ -244,7 +248,7 @@ function PushDialogInline({ project, onPushed, onClose }) {
         <Box sx={{ p: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>
-            Push vers le Cloud — {project.name}
+            {t('projects.pushToCloud')} — {project.name}
           </Typography>
           <IconButton size="small" onClick={onClose} disabled={busy} sx={{ color: 'text.secondary' }}>
             <CloseIcon sx={{ fontSize: 16 }} />
@@ -255,7 +259,7 @@ function PushDialogInline({ project, onPushed, onClose }) {
         <Box sx={{ p: '14px 18px', display: 'flex', flexDirection: 'column', gap: 0.75 }}>
           <Typography sx={{ fontSize: 11, fontWeight: 600, color: 'text.secondary',
             textTransform: 'uppercase', letterSpacing: '0.08em', mb: 0.5 }}>
-            Contenu de l'archive
+            {t('projects.archiveContent')}
           </Typography>
           {[
             { label: 'Vehicles', path: localPaths?.vehiclesPath },
@@ -273,13 +277,13 @@ function PushDialogInline({ project, onPushed, onClose }) {
           {localPaths?.fonts?.length > 0 && (
             <div style={{ display: 'flex', gap: 8, fontSize: 12 }}>
               <span style={{ color: 'var(--text-muted)', width: 70, flexShrink: 0 }}>Fonts</span>
-              <span style={{ color: 'var(--text-primary)' }}>{localPaths.fonts.length} police(s)</span>
+              <span style={{ color: 'var(--text-primary)' }}>{t('projects.fontsCount', { count: localPaths.fonts.length })}</span>
             </div>
           )}
 
           {!hasPaths && pathsLoaded && (
             <Typography sx={{ color: '#fc3d39', fontSize: 12, mt: 0.5 }}>
-              Aucun chemin local configuré. Modifiez le projet pour les ajouter.
+              {t('projects.noLocalPathsWarning')}
             </Typography>
           )}
           {error && (
@@ -308,7 +312,7 @@ function PushDialogInline({ project, onPushed, onClose }) {
         {/* Footer */}
         <Box sx={{ p: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.07)',
           display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          <Button variant="outlined" size="small" onClick={onClose} disabled={busy}>Annuler</Button>
+          <Button variant="outlined" size="small" onClick={onClose} disabled={busy}>{t('common.cancel')}</Button>
           <Button
             variant="contained"
             size="small"
@@ -316,7 +320,7 @@ function PushDialogInline({ project, onPushed, onClose }) {
             onClick={handlePush}
             disabled={busy || !hasPaths}
           >
-            {busy ? '…' : 'Lancer le Push'}
+            {busy ? '…' : t('push.launch')}
           </Button>
         </Box>
       </Box>
@@ -326,6 +330,7 @@ function PushDialogInline({ project, onPushed, onClose }) {
 
 // ── Dialog création / édition ──────────────────────────────────────────────
 function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, onClose }) {
+  const { t } = useTranslation()
   const isEdit = !!project?.id
   const existingThumb = project?.thumbnail_url || project?.thumbnailUrl || null
   const [form, setForm] = useState({
@@ -379,7 +384,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
     if (form.thumbnailUrl?.startsWith('data:')) {
       const approxBytes = (form.thumbnailUrl.length * 3) / 4
       if (approxBytes > MAX_THUMB_BYTES) {
-        setError('La miniature est trop volumineuse (> 5 Mo). Choisissez une image plus petite.')
+        setError(t('projects.thumbTooLarge'))
         return
       }
     }
@@ -445,7 +450,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
         <Box sx={{ p: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
           <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>
-            {isEdit ? 'Modifier le projet' : 'Nouveau projet'}
+            {isEdit ? t('projects.editTitle') : t('projects.newProject')}
           </Typography>
           <IconButton size="small" onClick={onClose} disabled={saving} sx={{ color: 'text.secondary' }}>
             <CloseIcon sx={{ fontSize: 16 }} />
@@ -456,10 +461,10 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
         <Box sx={{ p: '16px 18px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {/* Nom */}
           <TextField
-            label="Nom du projet *"
+            label={t('projects.nameLabel')}
             value={form.name}
             onChange={e => setKV('name', e.target.value)}
-            placeholder="Ex : Agora 2002"
+            placeholder={t('projects.namePlaceholder')}
             fullWidth size="small"
             autoFocus
             disabled={saving}
@@ -467,10 +472,10 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
 
           {/* Description */}
           <TextField
-            label="Description"
+            label={t('projects.description')}
             value={form.description}
             onChange={e => setKV('description', e.target.value)}
-            placeholder="Description, version, notes…"
+            placeholder={t('projects.descriptionPlaceholder')}
             multiline rows={3}
             fullWidth size="small"
             disabled={saving}
@@ -479,7 +484,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
           {/* Thumbnail */}
           <div>
             <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <ImageOutlinedIcon sx={{ fontSize: 13 }} /> Miniature du projet
+              <ImageOutlinedIcon sx={{ fontSize: 13 }} /> {t('projects.thumbnail')}
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <div style={{
@@ -496,7 +501,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <Button variant="outlined" size="small" startIcon={<ImageOutlinedIcon />} onClick={pickThumbnail} disabled={saving}>
-                    Parcourir…
+                    {t('common.browse')}
                   </Button>
                   {(form.thumbnailUrl || form.thumbnailPath) && (
                     <Button variant="text" size="small" onClick={clearThumbnail} disabled={saving}>
@@ -507,7 +512,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
                 <TextField
                   value={form.thumbnailPath ? '' : form.thumbnailUrl}
                   onChange={e => handleUrlInput(e.target.value)}
-                  placeholder="Ou saisissez une URL d'image…"
+                  placeholder={t('projects.imageUrl')}
                   disabled={saving || !!form.thumbnailPath}
                   size="small" fullWidth
                 />
@@ -520,9 +525,9 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
                 textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Chemins locaux (pour le Push)
+                {t('projects.localPaths')}
               </div>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Utilisés uniquement lors du Push</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{t('projects.localPathsHint')}</span>
             </div>
 
             {[
@@ -541,10 +546,10 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
                     background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4,
                     padding: '5px 10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                   }}>
-                    {form[key] || 'Non sélectionné'}
+                    {form[key] || t('projects.notSelected')}
                   </div>
                   <Button variant="outlined" size="small" startIcon={<FolderOutlinedIcon />} onClick={() => pickFolder(key)} disabled={saving}>
-                    Parcourir
+                    {t('common.browse')}
                   </Button>
                   {form[key] && (
                     <Button variant="text" size="small" onClick={() => setKV(key, null)} disabled={saving}>
@@ -559,10 +564,10 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <FontDownloadOutlinedIcon sx={{ fontSize: 12 }} /> Polices (.oft)
+                  <FontDownloadOutlinedIcon sx={{ fontSize: 12 }} /> {t('projects.fonts')}
                 </div>
                 <Button variant="outlined" size="small" startIcon={<AddOutlinedIcon />} onClick={pickFonts} disabled={saving}>
-                  Ajouter .oft
+                  {t('projects.addFont')}
                 </Button>
               </div>
               {form.fonts.length > 0 ? (
@@ -591,7 +596,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
                 <div style={{ padding: 10, textAlign: 'center', color: 'var(--text-muted)', fontSize: 12,
                   background: 'rgba(255,255,255,0.03)', borderRadius: 4,
                   border: '1px dashed rgba(255,255,255,0.1)' }}>
-                  Aucune police sélectionnée
+                  {t('projects.noFonts')}
                 </div>
               )}
             </div>
@@ -608,7 +613,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
         {/* Footer */}
         <Box sx={{ p: '12px 18px', borderTop: '1px solid rgba(255,255,255,0.07)',
           display: 'flex', justifyContent: 'flex-end', gap: 1, flexShrink: 0 }}>
-          <Button variant="outlined" size="small" onClick={onClose} disabled={saving}>Annuler</Button>
+          <Button variant="outlined" size="small" onClick={onClose} disabled={saving}>{t('common.cancel')}</Button>
           <Button
             variant="contained"
             size="small"
@@ -616,7 +621,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
             disabled={!form.name.trim() || saving}
             startIcon={saving ? <CircularProgress size={13} color="inherit" /> : undefined}
           >
-            {saving ? 'Enregistrement…' : 'Enregistrer'}
+            {saving ? t('common.saving') : t('common.save')}
           </Button>
         </Box>
       </Box>
@@ -626,6 +631,7 @@ function ProjectDialog({ project, localPaths: initPaths, onCreated, onEdited, on
 
 // ── Page principale ────────────────────────────────────────────────────────
 export default function ProjectsPage({ onNavigate, user }) {
+  const { t } = useTranslation()
   const [projects,       setProjects]       = useState([])
   const [localIds,       setLocalIds]       = useState(new Set())
   const [localPaths,     setLocalPaths]     = useState({})
@@ -661,11 +667,11 @@ export default function ProjectsPage({ onNavigate, user }) {
         setCinStatuses(Object.fromEntries(entries))
       }
     } catch (err) {
-      setLoadError(err?.response?.data?.message || err?.message || 'Impossible de charger les projets.')
+      setLoadError(err?.response?.data?.message || err?.message || t('projects.loading'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => { loadProjects() }, [loadProjects])
 
@@ -727,7 +733,7 @@ export default function ProjectsPage({ onNavigate, user }) {
         await window.api.store.set(LOCAL_IDS_KEY, [...next])
       }
     } catch (err) {
-      alert(err?.response?.data?.message || err?.message || 'Erreur lors de la suppression.')
+      alert(err?.response?.data?.message || err?.message || t('projects.deleteError'))
     } finally {
       setDeleteConfirm(null)
     }
@@ -740,13 +746,13 @@ export default function ProjectsPage({ onNavigate, user }) {
       {/* Header */}
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <div className="page-title">Projets</div>
+          <div className="page-title">{t('projects.title')}</div>
           <div className="page-subtitle">
-            {loading ? 'Chargement…' : `${projects.length} projet${projects.length !== 1 ? 's' : ''} sur le cloud`}
+            {loading ? t('common.loading') : t('projects.subtitle', { count: projects.length })}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Tooltip title="Rafraîchir">
+          <Tooltip title={t('common.refresh')}>
             <span>
               <IconButton size="small" onClick={loadProjects} disabled={loading}>
                 <RefreshOutlinedIcon sx={{ fontSize: 18 }} />
@@ -755,7 +761,7 @@ export default function ProjectsPage({ onNavigate, user }) {
           </Tooltip>
           {canCreate && (
             <Button variant="contained" size="small" startIcon={<AddOutlinedIcon />} onClick={() => setEditingProject({})}>
-              Créer un projet
+              {t('projects.new')}
             </Button>
           )}
         </div>
@@ -764,7 +770,7 @@ export default function ProjectsPage({ onNavigate, user }) {
       {loading && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60, gap: 14 }}>
           <CircularProgress size={28} />
-          <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>Chargement des projets…</span>
+          <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{t('projects.loading')}</span>
         </div>
       )}
 
@@ -774,7 +780,7 @@ export default function ProjectsPage({ onNavigate, user }) {
           ✗ {loadError}
           <button onClick={loadProjects} style={{ marginLeft: 12, background: 'none', border: 'none',
             color: '#fc3d39', cursor: 'pointer', textDecoration: 'underline', fontSize: 13 }}>
-            Réessayer
+            {t('common.retry')}
           </button>
         </div>
       )}
@@ -782,14 +788,14 @@ export default function ProjectsPage({ onNavigate, user }) {
       {!loading && !loadError && projects.length === 0 && (
         <div className="empty-state">
           <div className="empty-state-icon"><CloudOutlinedIcon sx={{ fontSize: 48, opacity: 0.25 }} /></div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>Aucun projet</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>{t('projects.noProjects')}</div>
           <div className="empty-state-text">
-            {canCreate ? 'Créez votre premier projet de bus OMSI 2' : 'Aucun projet disponible pour le moment.'}
+            {canCreate ? t('projects.createFirst') : t('projects.noProjects')}
           </div>
           {canCreate && (
             <Button variant="contained" size="small" startIcon={<AddOutlinedIcon />}
               onClick={() => setEditingProject({})} style={{ marginTop: 8 }}>
-              Créer un projet
+              {t('projects.new')}
             </Button>
           )}
         </div>
@@ -855,17 +861,17 @@ export default function ProjectsPage({ onNavigate, user }) {
 
       {/* Confirm suppression */}
       <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} maxWidth="xs">
-        <DialogTitle sx={{ fontSize: 14, fontWeight: 600 }}>Supprimer ce projet ?</DialogTitle>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 600 }}>{t('projects.deleteTitle')}</DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
-            Le projet sera supprimé du cloud et son fichier manifest local (.cin) sera effacé. Cette action est irréversible.
+            {t('projects.deleteBody')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="text" size="small" onClick={() => setDeleteConfirm(null)}>Annuler</Button>
+          <Button variant="text" size="small" onClick={() => setDeleteConfirm(null)}>{t('common.cancel')}</Button>
           <Button variant="contained" size="small" color="error"
             onClick={() => deleteProject(deleteConfirm)}>
-            Supprimer
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

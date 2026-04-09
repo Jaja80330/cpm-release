@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import CircularProgress from '@mui/material/CircularProgress'
 import Timeline from '@mui/lab/Timeline'
 import TimelineItem from '@mui/lab/TimelineItem'
@@ -13,10 +14,6 @@ import CableOutlinedIcon from '@mui/icons-material/CableOutlined'
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined'
 import DirectionsBusOutlinedIcon from '@mui/icons-material/DirectionsBusOutlined'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
-import CloudDownloadOutlinedIcon from '@mui/icons-material/CloudDownloadOutlined'
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
-import SyncOutlinedIcon from '@mui/icons-material/SyncOutlined'
-import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined'
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined'
 import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined'
 import PlayArrowIcon from '@mui/icons-material/PlayArrow'
@@ -38,53 +35,41 @@ function fmtBytes(b) {
 // Mock tendance syncs (à remplacer par vraies données)
 const SPARKLINE_DATA = [2, 4, 3, 7, 5, 9, 11, 8, 13, 10]
 
-// ── Formatage date relative ────────────────────────────────────────────────
-function fmtRelative(dateStr) {
-  if (!dateStr) return '—'
-  const d    = new Date(dateStr)
-  const diff = Date.now() - d.getTime()
-  const sec  = Math.floor(diff / 1000)
-  const min  = Math.floor(sec  / 60)
-  const hr   = Math.floor(min  / 60)
-  const days = Math.floor(hr   / 24)
-  if (sec  <  60) return 'À l\'instant'
-  if (min  <  60) return `Il y a ${min} min`
-  if (hr   <  24) return `Il y a ${hr}h`
-  if (days === 1)  return 'Hier'
-  if (days  <  7)  return `Il y a ${days} jours`
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit', month: 'short', year: 'numeric'
-  }).format(d)
-}
-
-// ── STATUS ─────────────────────────────────────────────────────────────────
-const STATUS = {
-  checking:     { dot: 'idle',    label: 'Vérification…' },
-  ok:           { dot: 'success', label: 'En ligne'      },
-  error:        { dot: 'error',   label: 'Hors ligne'    },
-  unconfigured: { dot: 'warning', label: 'Non configuré' },
+// Status dot colors (no labels — translated inline)
+const STATUS_DOT = {
+  checking:     'idle',
+  ok:           'success',
+  error:        'error',
+  unconfigured: 'warning',
 }
 
 // ── Composants ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ label, status }) {
-  const cfg = STATUS[status] ?? STATUS.checking
+  const { t } = useTranslation()
+  const STATUS_LABEL = {
+    checking:     t('home.statusChecking'),
+    ok:           t('home.statusOnline'),
+    error:        t('home.statusOffline'),
+    unconfigured: t('home.statusUnconfigured'),
+  }
+  const dot = STATUS_DOT[status] ?? 'idle'
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 5,
       padding: '3px 9px', borderRadius: 4,
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.06)',
+      background: 'var(--surface-subtle)',
+      border: '1px solid var(--border-subtle)',
       fontSize: 11, color: 'var(--text-muted)',
       userSelect: 'none',
     }}>
       {status === 'checking'
         ? <CircularProgress size={6} thickness={5} />
-        : <span className={`status-dot ${cfg.dot}`} style={{ width: 7, height: 7, flexShrink: 0 }} />
+        : <span className={`status-dot ${dot}`} style={{ width: 7, height: 7, flexShrink: 0 }} />
       }
       {label}
       {status !== 'checking' && (
-        <span style={{ fontSize: 10, opacity: 0.7 }}>— {cfg.label}</span>
+        <span style={{ fontSize: 10, opacity: 0.7 }}>— {STATUS_LABEL[status] ?? status}</span>
       )}
     </div>
   )
@@ -138,12 +123,14 @@ function KpiCard({ icon: Icon, iconColor = '#42a5f5', title, value, sub, extra }
 }
 
 function QuickCard({ project, onNavigate }) {
+  const { i18n } = useTranslation()
   const thumb   = project.thumbnail_url || project.thumbnailUrl
   const version = project.latest_version || project.latestVersion
   const size    = project.file_size      || project.fileSize
   const updated = project.updated_at    || project.created_at
+  const locale  = i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'
   const dateStr = updated
-    ? new Date(updated).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+    ? new Date(updated).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
     : '—'
 
   return (
@@ -168,7 +155,7 @@ function QuickCard({ project, onNavigate }) {
       {/* Thumbnail 16:9 */}
       <div style={{
         width: '100%', aspectRatio: '16/9',
-        background: '#1a1f25',
+        background: 'var(--bg-thumb)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         overflow: 'hidden',
       }}>
@@ -204,21 +191,19 @@ function QuickCard({ project, onNavigate }) {
 }
 
 // ── Launchpad ──────────────────────────────────────────────────────────────
-function Launchpad({ settings }) {
+function Launchpad({ settings, isDark }) {
+  const { t } = useTranslation()
   const omsiPath   = settings?.omsiPath || ''
   const configured = !!omsiPath
 
-  // null | 'omsi' | 'bbs' | 'editor'
   const [launching,    setLaunching]    = useState(null)
   const [omsiRunning,  setOmsiRunning]  = useState(false)
   const [snackOpen,    setSnackOpen]    = useState(false)
 
-  // Sync initial + abonnement au monitoring
   useEffect(() => {
     window.api.omsi.getProcessStatus().then(({ running }) => setOmsiRunning(running))
     window.api.omsi.onProcessStatus(({ running }) => {
       setOmsiRunning(running)
-      // Quand le processus se ferme, libérer le spinner
       if (!running) setLaunching(null)
     })
     return () => window.api.omsi.offProcessStatus()
@@ -230,9 +215,6 @@ function Launchpad({ settings }) {
     if (omsiRunning) { setSnackOpen(true); return }
     setLaunching(key)
     await fn()
-    // Le spinner sera levé dès que le monitoring détecte le process actif
-    // puis fermé. Si OMSI ne démarre pas du tout (erreur Steam), on libère
-    // après un délai de sécurité de 12 s.
     setTimeout(() => setLaunching(prev => prev === key ? null : prev), 12000)
   }
 
@@ -247,12 +229,12 @@ function Launchpad({ settings }) {
     '&:not(.Mui-disabled):hover': { transform: 'scale(1.04)' },
   }
 
-  // Indicateur de statut dans le header (point coloré)
   const statusDot = omsiRunning
-    ? { color: '#6ccb5f', label: 'En cours' }
-    : { color: 'rgba(255,255,255,0.18)', label: 'Inactif' }
+    ? { color: '#6ccb5f', label: t('home.active') }
+    : { color: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.18)', label: t('home.inactive') }
 
-  const notConfiguredTip = 'Veuillez configurer le chemin d\'OMSI 2 dans les paramètres'
+  const notConfiguredTip = t('home.configureOmsiFirst')
+  const alreadyRunningTip = t('home.omsiRunning')
 
   return (
     <>
@@ -263,12 +245,11 @@ function Launchpad({ settings }) {
         zIndex: 200,
         minWidth: 192,
       }}>
-        {/* Carte glassmorphism */}
         <div style={{
-          background: 'rgba(10,13,18,0.92)',
+          background: 'var(--glass-card-bg)',
           backdropFilter: 'blur(14px)',
           WebkitBackdropFilter: 'blur(14px)',
-          border: `1px solid ${omsiRunning ? 'rgba(108,203,95,0.22)' : 'rgba(255,255,255,0.09)'}`,
+          border: `1px solid ${omsiRunning ? 'rgba(108,203,95,0.22)' : 'var(--glass-card-border)'}`,
           borderRadius: 12,
           padding: '10px 12px 12px',
           display: 'flex',
@@ -285,10 +266,10 @@ function Launchpad({ settings }) {
             <span style={{
               fontSize: 9, fontWeight: 700,
               textTransform: 'uppercase', letterSpacing: '0.1em',
-              color: 'rgba(255,255,255,0.25)',
+              color: 'var(--text-muted)',
               fontFamily: 'Inter, sans-serif',
             }}>
-              Launchpad
+              {t('home.launchpad')}
             </span>
             <Tooltip title={statusDot.label} placement="left">
               <span style={{
@@ -301,9 +282,9 @@ function Launchpad({ settings }) {
             </Tooltip>
           </div>
 
-          {/* LANCER OMSI 2 — bouton principal */}
+          {/* LANCER OMSI 2 */}
           <Tooltip
-            title={!configured ? notConfiguredTip : omsiRunning ? 'OMSI est déjà en cours d\'exécution' : ''}
+            title={!configured ? notConfiguredTip : omsiRunning ? alreadyRunningTip : ''}
             placement="left"
           >
             <span>
@@ -329,14 +310,14 @@ function Launchpad({ settings }) {
                   },
                 }}
               >
-                LANCER OMSI 2
+                {t('home.launchOmsi')}
               </Button>
             </span>
           </Tooltip>
 
           {/* LANCER BBS */}
           <Tooltip
-            title={!configured ? notConfiguredTip : omsiRunning ? 'OMSI est déjà en cours d\'exécution' : 'Busbetrieb-Simulator'}
+            title={!configured ? notConfiguredTip : omsiRunning ? alreadyRunningTip : t('home.bbsTooltip')}
             placement="left"
           >
             <span>
@@ -347,30 +328,31 @@ function Launchpad({ settings }) {
                 onClick={() => handleLaunch('bbs', () => window.api.omsi.launchBBS(omsiPath))}
                 startIcon={
                   launching === 'bbs'
-                    ? <CircularProgress size={13} sx={{ color: 'rgba(255,255,255,0.72)' }} />
+                    ? <CircularProgress size={13} sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : 'inherit' }} />
                     : <BusinessIcon sx={{ fontSize: 15 }} />
                 }
                 sx={{
                   ...btnBase,
                   py: 0.6,
-                  color: 'rgba(255,255,255,0.72)',
-                  borderColor: 'rgba(255,255,255,0.14)',
-                  ...hoverSx,
-                  '&:not(.Mui-disabled):hover': {
-                    transform: 'scale(1.04)',
-                    borderColor: 'rgba(255,255,255,0.38)',
-                    background: 'rgba(255,255,255,0.04)',
-                  },
+                  ...(isDark ? {
+                    color: 'rgba(255,255,255,0.72)',
+                    borderColor: 'rgba(255,255,255,0.14)',
+                    '&:not(.Mui-disabled):hover': {
+                      transform: 'scale(1.04)',
+                      borderColor: 'rgba(255,255,255,0.38)',
+                      background: 'rgba(255,255,255,0.04)',
+                    },
+                  } : { ...hoverSx }),
                 }}
               >
-                LANCER BBS
+                {t('home.launchBbs')}
               </Button>
             </span>
           </Tooltip>
 
           {/* ÉDITEUR DE CARTES */}
           <Tooltip
-            title={!configured ? notConfiguredTip : omsiRunning ? 'OMSI est déjà en cours d\'exécution' : 'OMSI 2 Map Editor'}
+            title={!configured ? notConfiguredTip : omsiRunning ? alreadyRunningTip : 'OMSI 2 Map Editor'}
             placement="left"
           >
             <span>
@@ -381,30 +363,31 @@ function Launchpad({ settings }) {
                 onClick={() => handleLaunch('editor', () => window.api.omsi.launchEditor())}
                 startIcon={
                   launching === 'editor'
-                    ? <CircularProgress size={13} sx={{ color: 'rgba(255,255,255,0.72)' }} />
+                    ? <CircularProgress size={13} sx={{ color: isDark ? 'rgba(255,255,255,0.72)' : 'inherit' }} />
                     : <MapIcon sx={{ fontSize: 15 }} />
                 }
                 sx={{
                   ...btnBase,
                   py: 0.6,
-                  color: 'rgba(255,255,255,0.72)',
-                  borderColor: 'rgba(255,255,255,0.14)',
-                  ...hoverSx,
-                  '&:not(.Mui-disabled):hover': {
-                    transform: 'scale(1.04)',
-                    borderColor: 'rgba(255,255,255,0.38)',
-                    background: 'rgba(255,255,255,0.04)',
-                  },
+                  ...(isDark ? {
+                    color: 'rgba(255,255,255,0.72)',
+                    borderColor: 'rgba(255,255,255,0.14)',
+                    '&:not(.Mui-disabled):hover': {
+                      transform: 'scale(1.04)',
+                      borderColor: 'rgba(255,255,255,0.38)',
+                      background: 'rgba(255,255,255,0.04)',
+                    },
+                  } : { ...hoverSx }),
                 }}
               >
-                ÉDITEUR DE CARTES
+                {t('home.launchEditor')}
               </Button>
             </span>
           </Tooltip>
         </div>
       </div>
 
-      {/* Snackbar — instance déjà en cours */}
+      {/* Snackbar */}
       <Snackbar
         open={snackOpen}
         autoHideDuration={4000}
@@ -417,7 +400,7 @@ function Launchpad({ settings }) {
           variant="filled"
           sx={{ fontSize: 13, borderRadius: '8px' }}
         >
-          Une instance d'OMSI ou d'un outil associé est déjà en cours d'exécution.
+          {t('home.omsiAlreadyRunning')}
         </Alert>
       </Snackbar>
     </>
@@ -425,14 +408,15 @@ function Launchpad({ settings }) {
 }
 
 // ── Page principale ────────────────────────────────────────────────────────
-export default function HomePage({ onNavigate }) {
+export default function HomePage({ onNavigate, isDark = true }) {
+  const { t, i18n } = useTranslation()
   const [projects,        setProjects]        = useState([])
   const [settings,        setSettings]        = useState({})
   const [isFirstLaunch,   setIsFirstLaunch]   = useState(false)
   const [apiStatus,       setApiStatus]       = useState('checking')
   const [sftpStatus,      setSftpStatus]      = useState('checking')
   const [activity,        setActivity]        = useState([])
-  const [activityStatus,  setActivityStatus]  = useState('loading') // 'loading' | 'ok' | 'error'
+  const [activityStatus,  setActivityStatus]  = useState('loading')
 
   useEffect(() => {
     const load = async () => {
@@ -455,7 +439,6 @@ export default function HomePage({ onNavigate }) {
         setApiStatus('error')
       }
 
-      // Activité récente — indépendant du statut API principal
       try {
         const acts = await projectService.getRecentActivity()
         setActivity(Array.isArray(acts) ? acts : [])
@@ -476,6 +459,23 @@ export default function HomePage({ onNavigate }) {
     load()
   }, [])
 
+  const fmtRelative = (dateStr) => {
+    if (!dateStr) return '—'
+    const d    = new Date(dateStr)
+    const diff = Date.now() - d.getTime()
+    const sec  = Math.floor(diff / 1000)
+    const min  = Math.floor(sec  / 60)
+    const hr   = Math.floor(min  / 60)
+    const days = Math.floor(hr   / 24)
+    if (sec  <  60) return t('home.timeJustNow')
+    if (min  <  60) return t('home.timeMinutes', { count: min })
+    if (hr   <  24) return t('home.timeHours',   { count: hr  })
+    if (days === 1)  return t('home.timeYesterday')
+    if (days  <  7)  return t('home.timeDays',    { count: days })
+    const locale = i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'
+    return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short', year: 'numeric' }).format(d)
+  }
+
   const sorted = [...projects].sort(
     (a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0)
   )
@@ -485,31 +485,61 @@ export default function HomePage({ onNavigate }) {
   const formatDate = (p) => {
     if (!p) return '—'
     const d = new Date(p.updated_at || p.created_at || 0)
-    return d.getTime() === 0 ? '—'
-      : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+    if (d.getTime() === 0) return '—'
+    const locale = i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR'
+    return d.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
   const quotaPct = Math.min(Math.round((projects.length / 20) * 100), 100)
 
+  const STATUS_LABEL = {
+    checking:     t('home.statusChecking'),
+    ok:           t('home.statusOnline'),
+    error:        t('home.statusOffline'),
+    unconfigured: t('home.statusUnconfigured'),
+  }
+
+  // Render welcome message with clickable links
+  const renderWelcomeMsg = () => {
+    const msg = t('home.welcomeMsg')
+    const parts = msg.split('{{settings}}')
+    const [middle, after] = (parts[1] || '').split('{{projects}}')
+    return (
+      <>
+        {parts[0]}
+        <span style={{ textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={() => onNavigate('settings')}>
+          {t('home.welcomeSettings')}
+        </span>
+        {middle}
+        <span style={{ textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={() => onNavigate('projects')}>
+          {t('home.welcomeProjects')}
+        </span>
+        {after}
+      </>
+    )
+  }
+
   return (
     <div className="fade-in">
 
-      {/* ── En-tête ──────────────────────────────────────────────── */}
+      {/* ── En-tête */}
       <div style={{
         display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 14,
       }}>
         <div className="page-header" style={{ marginBottom: 0 }}>
-          <div className="page-title">Tableau de bord</div>
-          <div className="page-subtitle">État de la flotte de bus NEROSY</div>
+          <div className="page-title">{t('home.title')}</div>
+          <div className="page-subtitle">{t('home.subtitle')}</div>
         </div>
         <div style={{ display: 'flex', gap: 6, paddingTop: 2 }}>
-          <StatusBadge label="Serveur API"  status={apiStatus}  />
-          <StatusBadge label="Service SFTP" status={sftpStatus} />
+          <StatusBadge label={t('home.apiStatus')}  status={apiStatus}  />
+          <StatusBadge label={t('home.sftpStatus')} status={sftpStatus} />
         </div>
       </div>
 
-      {/* ── Layout 2 colonnes ────────────────────────────────────── */}
+      {/* ── Layout 2 colonnes */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 262px',
@@ -523,12 +553,11 @@ export default function HomePage({ onNavigate }) {
           {/* KPI row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
 
-            {/* KPI 1 — Projets + quota */}
             <KpiCard
               icon={GridViewOutlinedIcon}
               iconColor="#42a5f5"
-              title="Projets"
-              sub="bus sur le serveur"
+              title={t('home.kpiProjects')}
+              sub={t('home.kpiProjectsSub')}
               value={apiStatus === 'checking' ? <CircularProgress size={18} /> : projects.length}
               extra={
                 <div style={{ position: 'relative', display: 'inline-flex' }}>
@@ -551,21 +580,19 @@ export default function HomePage({ onNavigate }) {
               }
             />
 
-            {/* KPI 2 — Dernière synchro */}
             <KpiCard
               icon={CalendarTodayOutlinedIcon}
               iconColor="#f0a030"
-              title="Dernière synchro"
+              title={t('home.kpiLastSync')}
               sub={lastSynced?.name ?? '—'}
               value={apiStatus === 'checking' ? '…' : formatDate(lastSynced)}
             />
 
-            {/* KPI 3 — Statut SFTP */}
             <KpiCard
               icon={CableOutlinedIcon}
               iconColor={sftpStatus === 'ok' ? '#6ccb5f' : sftpStatus === 'error' ? '#fc3d39' : '#f0a030'}
-              title="Connexion SFTP"
-              sub={settings.vpsIp || 'Non configuré'}
+              title={t('home.kpiSftp')}
+              sub={settings.vpsIp || t('home.statusUnconfigured')}
               value={
                 <span style={{
                   color: sftpStatus === 'ok'           ? '#6ccb5f'
@@ -574,23 +601,22 @@ export default function HomePage({ onNavigate }) {
                        : 'var(--text-muted)',
                   fontSize: 13,
                 }}>
-                  {STATUS[sftpStatus]?.label ?? '—'}
+                  {STATUS_LABEL[sftpStatus] ?? '—'}
                 </span>
               }
               extra={
                 sftpStatus !== 'checking' && sftpStatus !== 'unconfigured' ? (
-                  <span className={`status-dot ${STATUS[sftpStatus].dot}`}
+                  <span className={`status-dot ${STATUS_DOT[sftpStatus]}`}
                     style={{ width: 8, height: 8, marginTop: 2 }} />
                 ) : null
               }
             />
 
-            {/* KPI 4 — Tendance */}
             <KpiCard
               icon={TrendingUpOutlinedIcon}
               iconColor="#ce93d8"
-              title="Tendance syncs"
-              sub="10 derniers points (mock)"
+              title={t('home.kpiTrend')}
+              sub={t('home.kpiTrendSub')}
               value={`+${SPARKLINE_DATA[SPARKLINE_DATA.length - 1]}`}
               extra={<Sparkline color="#ce93d8" />}
             />
@@ -604,16 +630,7 @@ export default function HomePage({ onNavigate }) {
               background: 'rgba(25,118,210,0.05)',
             }}>
               <div style={{ fontSize: 12, color: '#42a5f5', lineHeight: 1.65 }}>
-                Bienvenue dans Cinnamon ! Configurez d'abord votre connexion dans les{' '}
-                <span style={{ textDecoration: 'underline', cursor: 'pointer' }}
-                  onClick={() => onNavigate('settings')}>
-                  Paramètres
-                </span>
-                , puis créez un premier projet dans{' '}
-                <span style={{ textDecoration: 'underline', cursor: 'pointer' }}
-                  onClick={() => onNavigate('projects')}>
-                  Projets
-                </span>.
+                {renderWelcomeMsg()}
               </div>
             </div>
           )}
@@ -622,11 +639,11 @@ export default function HomePage({ onNavigate }) {
           <div className="w11-card" style={{ marginBottom: 0 }}>
             <div className="w11-card-title">
               <DirectionsBusOutlinedIcon sx={{ fontSize: 14 }} />
-              Accès rapide
+              {t('home.quickAccess')}
               {quickProjects.length > 0 && (
                 <span style={{
                   marginLeft: 6, fontSize: 10, color: 'var(--text-muted)',
-                  background: 'rgba(255,255,255,0.06)', padding: '1px 7px', borderRadius: 10,
+                  background: 'var(--surface-subtle)', padding: '1px 7px', borderRadius: 10,
                 }}>
                   {quickProjects.length}
                 </span>
@@ -636,7 +653,7 @@ export default function HomePage({ onNavigate }) {
             {apiStatus === 'checking' && (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '24px 0', gap: 10 }}>
                 <CircularProgress size={18} />
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Chargement…</span>
+                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('common.loading')}</span>
               </div>
             )}
 
@@ -648,7 +665,7 @@ export default function HomePage({ onNavigate }) {
                 display: 'flex', alignItems: 'center', gap: 7,
               }}>
                 <WarningAmberOutlinedIcon sx={{ fontSize: 14 }} />
-                Impossible de charger les projets. Vérifiez votre connexion.
+                {t('home.loadError')}
               </div>
             )}
 
@@ -657,7 +674,7 @@ export default function HomePage({ onNavigate }) {
                 <div className="empty-state-icon">
                   <DirectionsBusOutlinedIcon sx={{ fontSize: 40, opacity: 0.2 }} />
                 </div>
-                <div className="empty-state-text">Aucun projet pour l'instant.</div>
+                <div className="empty-state-text">{t('home.noProjects')}</div>
               </div>
             )}
 
@@ -680,38 +697,34 @@ export default function HomePage({ onNavigate }) {
           <div className="w11-card" style={{ marginBottom: 0 }}>
             <div className="w11-card-title" style={{ marginBottom: 6 }}>
               <RocketLaunchOutlinedIcon sx={{ fontSize: 14 }} />
-              Activité récente
+              {t('home.recentActivity')}
             </div>
 
-            {/* Chargement */}
             {activityStatus === 'loading' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8,
                 padding: '18px 0', justifyContent: 'center' }}>
                 <CircularProgress size={14} />
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Chargement…</span>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('common.loading')}</span>
               </div>
             )}
 
-            {/* Erreur */}
             {activityStatus === 'error' && (
               <div style={{ padding: '7px 10px', borderRadius: 5, fontSize: 12,
                 color: '#f0a030', background: 'rgba(240,160,48,0.06)',
                 border: '1px solid rgba(240,160,48,0.18)',
                 display: 'flex', alignItems: 'center', gap: 7 }}>
                 <WarningAmberOutlinedIcon sx={{ fontSize: 13 }} />
-                Impossible de charger l'activité.
+                {t('home.activityLoadError')}
               </div>
             )}
 
-            {/* Vide */}
             {activityStatus === 'ok' && activity.length === 0 && (
               <div style={{ fontSize: 12, color: 'var(--text-muted)',
                 fontStyle: 'italic', padding: '10px 0 4px' }}>
-                Aucune activité récente pour le moment.
+                {t('home.noActivity')}
               </div>
             )}
 
-            {/* Timeline */}
             {activityStatus === 'ok' && activity.length > 0 && (
               <Timeline
                 sx={{
@@ -720,8 +733,8 @@ export default function HomePage({ onNavigate }) {
                 }}
               >
                 {activity.map((event, i) => {
-                  const label = `Version ${event.version_number} de ${event.project_name}`
-                  const time  = fmtRelative(event.created_at)
+                  const label  = t('home.activityVersion', { version: event.version_number, project: event.project_name })
+                  const time   = fmtRelative(event.created_at)
                   const isLast = i === activity.length - 1
                   return (
                     <TimelineItem key={event.id}>
@@ -735,7 +748,7 @@ export default function HomePage({ onNavigate }) {
                         </TimelineDot>
                         {!isLast && (
                           <TimelineConnector sx={{
-                            background: 'rgba(255,255,255,0.07)', minHeight: 18,
+                            background: 'var(--border-subtle)', minHeight: 18,
                           }} />
                         )}
                       </TimelineSeparator>
@@ -761,7 +774,7 @@ export default function HomePage({ onNavigate }) {
 
       </div>
 
-      <Launchpad settings={settings} />
+      <Launchpad settings={settings} isDark={isDark} />
     </div>
   )
 }

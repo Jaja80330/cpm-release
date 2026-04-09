@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import Tooltip from '@mui/material/Tooltip'
 import IconButton from '@mui/material/IconButton'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
@@ -10,18 +11,20 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined'
 
-const NAV_ITEMS = [
-  { id: 'home',     Icon: HomeOutlinedIcon,      label: 'Tableau de bord' },
-  { id: 'projects', Icon: GridViewOutlinedIcon,  label: 'Projets' },
-  { id: 'users',    Icon: PeopleAltOutlinedIcon, label: 'Utilisateurs', adminOnly: true },
-  { id: 'tools',    Icon: BuildOutlinedIcon,     label: 'Outils' },
-  { id: 'settings', Icon: SettingsOutlinedIcon,  label: 'Paramètres' },
+const NAV_ITEM_DEFS = [
+  { id: 'home',     Icon: HomeOutlinedIcon      },
+  { id: 'projects', Icon: GridViewOutlinedIcon  },
+  { id: 'users',    Icon: PeopleAltOutlinedIcon, adminOnly: true },
+  { id: 'tools',    Icon: BuildOutlinedIcon     },
+  { id: 'settings', Icon: SettingsOutlinedIcon  },
 ]
 
 const W_EXPANDED  = 260
 const W_COLLAPSED = 70
 
 export default function Sidebar({ currentPage, onNavigate, user, onLogout, isDark, isCollapsed, onToggleCollapse }) {
+  const { t } = useTranslation()
+  const NAV_ITEMS = NAV_ITEM_DEFS.map(item => ({ ...item, label: t(`nav.${item.id}`) }))
   const initials = user
     ? `${(user.firstName?.[0] || '').toUpperCase()}${(user.lastName?.[0] || '').toUpperCase()}` || '?'
     : '?'
@@ -154,7 +157,7 @@ export default function Sidebar({ currentPage, onNavigate, user, onLogout, isDar
           </div>
         </div>
 
-        <Tooltip title="Se déconnecter" placement="right">
+        <Tooltip title={t('nav.logout')} placement="right">
           <button
             onClick={onLogout}
             style={{

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import Button from '@mui/material/Button'
 import CircularProgress from '@mui/material/CircularProgress'
@@ -243,6 +244,7 @@ function Lightbox({ screenshots, index, onClose, onPrev, onNext }) {
 
 // ── Section Screenshots ────────────────────────────────────────────────────
 function ScreenshotsSection({ screenshots = [], isOwnerOrAdmin, onAdd, onDelete }) {
+  const { t } = useTranslation()
   const addInputRef = useRef(null)
   const [uploading,  setUploading]  = useState(false)
   const [deletingId, setDeletingId] = useState(null)
@@ -310,7 +312,7 @@ function ScreenshotsSection({ screenshots = [], isOwnerOrAdmin, onAdd, onDelete 
                 sx={{ fontSize: 11, textTransform: 'none', borderRadius: '6px',
                   py: 0.25, minWidth: 0 }}
               >
-                {uploading ? 'Envoi…' : 'Ajouter'}
+                {uploading ? t('common.loading') : t('common.add')}
               </Button>
             </>
           )}
@@ -395,7 +397,7 @@ function ScreenshotsSection({ screenshots = [], isOwnerOrAdmin, onAdd, onDelete 
           </div>
         ) : (
           <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic', paddingTop: 2 }}>
-            Aucune capture d'écran. Cliquez sur "Ajouter" pour en uploader.
+            {t('detail.noScreenshots')}
           </div>
         )}
       </div>
@@ -418,6 +420,7 @@ function ScreenshotsSection({ screenshots = [], isOwnerOrAdmin, onAdd, onDelete 
 function TabDescription({ project, thumb, cinStatus, onUninstall, isUninstalling,
                           latestCloudVersion, onInstallLatest, busFiles, knownZipNames, canDeploy,
                           screenshots, isOwnerOrAdmin, onAddScreenshots, onDeleteScreenshot }) {
+  const { t } = useTranslation()
   const installDate = cinStatus?.installDate
     ? new Date(cinStatus.installDate).toLocaleString('fr-FR', {
         day: '2-digit', month: '2-digit', year: 'numeric',
@@ -447,7 +450,7 @@ function TabDescription({ project, thumb, cinStatus, onUninstall, isUninstalling
       sx={{ color: '#fc3d39', borderColor: 'rgba(252,61,57,0.3)', flexShrink: 0,
         '&:hover': { borderColor: '#fc3d39', background: 'rgba(252,61,57,0.06)' } }}
     >
-      {isUninstalling ? 'Désinstallation...' : 'Désinstaller'}
+      {isUninstalling ? t('detail.uninstalling') : t('detail.uninstall')}
     </Button>
   )
 
@@ -582,7 +585,7 @@ function TabDescription({ project, thumb, cinStatus, onUninstall, isUninstalling
               ) : (
                 <div style={{ fontSize: 12, color: 'var(--text-muted)',
                   display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <CancelOutlinedIcon sx={{ fontSize: 13 }} /> Non installé
+                  <CancelOutlinedIcon sx={{ fontSize: 13 }} /> {t('detail.notInstalled')}
                 </div>
               )}
             </div>
@@ -652,6 +655,7 @@ function TabDescription({ project, thumb, cinStatus, onUninstall, isUninstalling
 
 // ── Bouton "Copier le nom" avec feedback visuel ────────────────────────────
 function CopyButton({ text }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const handleCopy = () => {
     navigator.clipboard.writeText(text).then(() => {
@@ -685,22 +689,23 @@ function CopyButton({ text }) {
         }),
       }}
     >
-      {copied ? 'Copié !' : 'Copier le nom'}
+      {copied ? t('detail.nameCopied') : t('detail.copyName')}
     </Button>
   )
 }
 
 // ── Modale de progression — Diagnostic complet ─────────────────────────────
 function DiagProgressModal({ open, progress }) {
+  const { t } = useTranslation()
   const PHASE_ORDER  = ['collecting', 'scanning_meshes', 'scanning_cfg', 'scanning_ctc', 'scanning_bus', 'scanning_fonts', 'scanning_sounds']
   const PHASE_LABELS = {
-    collecting:      'Collecte des fichiers…',
-    scanning_meshes: 'Analyse binaire des modèles 3D (.o3d)…',
-    scanning_cfg:    'Lecture des configurations model*.cfg…',
-    scanning_ctc:    'Lecture des fichiers CTC…',
-    scanning_bus:    'Lecture des fichiers .bus / .org…',
-    scanning_fonts:  'Analyse des polices (fonts)…',
-    scanning_sounds: 'Analyse des fichiers audio…',
+    collecting:      t('diag.collecting'),
+    scanning_meshes: t('diag.scanningMeshes'),
+    scanning_cfg:    t('diag.scanningCfg'),
+    scanning_ctc:    t('diag.scanningCtc'),
+    scanning_bus:    t('diag.scanningBus'),
+    scanning_fonts:  t('diag.scanningFonts'),
+    scanning_sounds: t('diag.scanningSounds'),
   }
 
   const phase       = progress?.phase       ?? 'collecting'
@@ -721,14 +726,14 @@ function DiagProgressModal({ open, progress }) {
       PaperProps={{
         sx: {
           borderRadius: '14px',
-          background: '#0c0f14',
-          border: '1px solid rgba(255,255,255,0.09)',
+          background: 'var(--bg-paper)',
+          border: '1px solid var(--border-subtle)',
           boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
         }
       }}
     >
       <DialogTitle sx={{ fontSize: 15, fontWeight: 700, pb: 0.5 }}>
-        Analyse approfondie en cours…
+        {t('diag.title')}
       </DialogTitle>
       <DialogContent sx={{ pt: '12px !important' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
@@ -748,7 +753,7 @@ function DiagProgressModal({ open, progress }) {
             value={overallPct}
             sx={{
               height: 7, borderRadius: 4,
-              backgroundColor: 'rgba(255,255,255,0.07)',
+              backgroundColor: 'var(--border-subtle)',
               '& .MuiLinearProgress-bar': { borderRadius: 4 },
             }}
           />
@@ -762,13 +767,13 @@ function DiagProgressModal({ open, progress }) {
                 <div key={p} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
                   <span style={{
                     width: 14, flexShrink: 0, textAlign: 'center', fontWeight: 700,
-                    color: isDone ? '#6ccb5f' : isActive ? '#42a5f5' : 'rgba(255,255,255,0.18)',
+                    color: isDone ? '#6ccb5f' : isActive ? '#42a5f5' : 'var(--text-muted)',
                   }}>
                     {isDone ? '✓' : isActive ? '›' : '·'}
                   </span>
                   <span style={{
                     flex: 1,
-                    color: isDone ? '#6ccb5f' : isActive ? 'var(--text-primary)' : 'rgba(255,255,255,0.25)',
+                    color: isDone ? '#6ccb5f' : isActive ? 'var(--text-primary)' : 'var(--text-muted)',
                   }}>
                     {PHASE_LABELS[p]}
                   </span>
@@ -799,6 +804,7 @@ function DiagProgressModal({ open, progress }) {
 
 // ── Ligne fichier orphelin ─────────────────────────────────────────────────
 function OrphanRow({ name, relativePath, size, onDelete }) {
+  const { t } = useTranslation()
   function fmt(b) {
     if (!b) return '—'
     if (b < 1024)    return `${b} o`
@@ -838,7 +844,7 @@ function OrphanRow({ name, relativePath, size, onDelete }) {
           '&:hover': { borderColor: '#fc3d39', background: 'rgba(252,61,57,0.07)' },
         }}
       >
-        Supprimer
+        {t('common.delete')}
       </Button>
     </div>
   )
@@ -851,6 +857,7 @@ function TabAvertissements({
   onScanDiag, onDeleteFile, onDeleteAll, onImportFont,
   canScan,
 }) {
+  const { t } = useTranslation()
   const isScanning = scanProgress !== null
   const isDone     = !isScanning && fontTotal !== null
   const total      = scanProgress?.total   ?? fontTotal ?? 0
@@ -902,7 +909,7 @@ function TabAvertissements({
         {/* En-tête */}
         <div className="w11-card-title" style={{ marginBottom: 10 }}>
           <FontDownloadOutlinedIcon sx={{ fontSize: 14 }} />
-          Analyse des Polices d'écriture (Fonts)
+          {t('detail.scanFonts')}
           {isDone && total > 0 && (
             <span style={{
               marginLeft: 'auto', fontSize: 10,
@@ -910,7 +917,7 @@ function TabAvertissements({
               background: 'rgba(255,255,255,0.06)',
               padding: '1px 8px', borderRadius: 10,
             }}>
-              {total} fichier{total > 1 ? 's' : ''} .cfg analysé{total > 1 ? 's' : ''}
+              {t('detail.cfgAnalyzed', { count: total })}
             </span>
           )}
         </div>
@@ -921,10 +928,10 @@ function TabAvertissements({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                 {scanProgress.phase === 'collecting'
-                  ? 'Collecte des fichiers de configuration…'
+                  ? t('detail.collectingFiles')
                   : (
                     <>
-                      Scan en cours :{' '}
+                      {t('detail.scanInProgress')}{' '}
                       <code style={{ fontFamily: 'monospace', color: 'var(--text-primary)', fontSize: 11 }}>
                         {scanProgress.currentFile}
                       </code>
@@ -959,15 +966,14 @@ function TabAvertissements({
         {/* ── Aucun .cfg trouvé ────────────────────────────────────────── */}
         {isDone && total === 0 && (
           <Alert severity="info" variant="outlined" sx={{ borderRadius: '7px', fontSize: 13 }}>
-            Aucune configuration de modèle détectée pour ce projet.
-            Assurez-vous que le dossier <strong>Vehicles</strong> est correctement configuré.
+            {t('detail.noModelConfig')}
           </Alert>
         )}
 
         {/* ── Tout OK ──────────────────────────────────────────────────── */}
         {isDone && total > 0 && fontWarnings.length === 0 && (
           <Alert severity="success" variant="outlined" sx={{ borderRadius: '7px', fontSize: 13 }}>
-            Toutes les polices requises sont présentes dans votre dossier OMSI 2.
+            {t('detail.fontAllOk')}
           </Alert>
         )}
 
@@ -979,17 +985,14 @@ function TabAvertissements({
               variant="outlined"
               sx={{ borderRadius: '7px', fontSize: 13, lineHeight: 1.55 }}
             >
-              {fontWarnings.length} police{fontWarnings.length > 1 ? 's' : ''} requise{fontWarnings.length > 1 ? 's' : ''}{' '}
-              pour l'affichage (girouettes, tableaux de bord){' '}
-              {fontWarnings.length > 1 ? 'sont manquantes' : 'est manquante'} dans votre dossier{' '}
-              <strong>Fonts</strong> d'OMSI 2.
+              {t('detail.fontsWarning', { count: fontWarnings.length })}
             </Alert>
 
             {/* Chips des polices manquantes */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
                 textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-                Fichiers manquants
+                {t('detail.missingFiles')}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {fontWarnings.map((w, i) => (
@@ -1020,9 +1023,7 @@ function TabAvertissements({
               icon={<CheckCircleOutlinedIcon fontSize="inherit" />}
               sx={{ borderRadius: '7px', fontSize: 12, lineHeight: 1.6 }}
             >
-              <strong>Note de sécurité :</strong> Cinnamon ne supprimera jamais ces fichiers
-              lors d'une désinstallation. Les polices sont partagées entre plusieurs bus
-              et doivent être gérées manuellement.
+              {t('detail.fontSafetyNote')}
             </Alert>
           </div>
         )}
@@ -1036,14 +1037,14 @@ function TabAvertissements({
           {/* En-tête */}
           <div className="w11-card-title" style={{ marginBottom: 10 }}>
             <FontDownloadOutlinedIcon sx={{ fontSize: 14 }} />
-            Bibliothèque des polices du projet
+            {t('detail.fontLibrary')}
             <span style={{
               marginLeft: 'auto', fontSize: 10,
               color: 'var(--text-muted)',
               background: 'rgba(255,255,255,0.06)',
               padding: '1px 8px', borderRadius: 10,
             }}>
-              {allFonts.length} police{allFonts.length > 1 ? 's' : ''} unique{allFonts.length > 1 ? 's' : ''}
+              {t('detail.fontUnique', { count: allFonts.length })}
             </span>
           </div>
 
@@ -1053,17 +1054,17 @@ function TabAvertissements({
                 <TableCell sx={{ width: '42%', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
                   letterSpacing: '0.07em', color: 'var(--text-muted)', borderColor: 'rgba(255,255,255,0.07)',
                   py: 0.75, px: 1.5 }}>
-                  Nom de la police
+                  {t('detail.fontColName')}
                 </TableCell>
                 <TableCell sx={{ width: '40%', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
                   letterSpacing: '0.07em', color: 'var(--text-muted)', borderColor: 'rgba(255,255,255,0.07)',
                   py: 0.75, px: 1.5 }}>
-                  Fichier source
+                  {t('detail.fontColSource')}
                 </TableCell>
                 <TableCell sx={{ width: '18%', fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
                   letterSpacing: '0.07em', color: 'var(--text-muted)', borderColor: 'rgba(255,255,255,0.07)',
                   py: 0.75, px: 1.5 }}>
-                  Statut .oft
+                  {t('detail.fontColStatus')}
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -1103,17 +1104,17 @@ function TabAvertissements({
                     {/* Statut : .oft trouvé via [newfont] dans Fonts/ */}
                     <TableCell sx={{ py: 0.75, px: 1.5 }}>
                       {f.present
-                        ? <Chip size="small" label=".oft trouvé" sx={{
+                        ? <Chip size="small" label={t('detail.fontFound')} sx={{
                             fontSize: 10, height: 18,
                             background: 'rgba(108,203,95,0.10)',
                             color: '#6ccb5f',
                             border: '1px solid rgba(108,203,95,0.28)',
                           }} />
-                        : <Tooltip title="Aucun fichier .oft dans Fonts/ ne déclare ce nom sous [newfont]" placement="left">
+                        : <Tooltip title={t('detail.fontNotDeclared')} placement="left">
                             <Chip
                               icon={<WarningAmberOutlinedIcon style={{ fontSize: 11 }} />}
                               size="small"
-                              label=".oft manquant"
+                              label={t('detail.fontMissing')}
                               sx={{
                                 fontSize: 10, height: 18,
                                 background: 'rgba(252,61,57,0.10)',
@@ -1137,7 +1138,7 @@ function TabAvertissements({
         <div className="w11-card-title" style={{ marginBottom: 10 }}>
           <DescriptionOutlinedIcon sx={{ fontSize: 14 }} />
           <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: 11 }}>
-            📦 Analyse des Sources
+            {t('detail.sources')}
           </span>
           {diagScanned && missingTextures.length === 0 && !hasOrphans && missingInProject.length === 0 && missingEverywhere.length === 0 && missingSounds.length === 0 && (
             <CheckCircleOutlinedIcon sx={{ fontSize: 15, color: '#6ccb5f', ml: 'auto' }} />
@@ -1152,16 +1153,11 @@ function TabAvertissements({
         {/* État initial */}
         {!diagScanned && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start' }}>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.7 }}>
-              Analyse les <strong>3 piliers</strong> du projet sur le même plan :{' '}
-              binaires <code style={{ fontFamily: 'monospace' }}>.o3d</code>,
-              textures <code style={{ fontFamily: 'monospace' }}>.bmp/.tga</code>,
-              et polices <code style={{ fontFamily: 'monospace' }}>.oft</code> (via <code style={{ fontFamily: 'monospace' }}>model.cfg</code>).{' '}
-              Détecte les fichiers orphelins, les références manquantes,
-              et vérifie la cohérence des polices à deux niveaux : projet et OMSI global.
-            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.7 }}
+              dangerouslySetInnerHTML={{ __html: t('detail.sourcesLongDesc') }}
+            />
             <Tooltip
-              title={!canScan ? 'Configurez le dossier Vehicles dans les paramètres du projet.' : ''}
+              title={!canScan ? t('detail.configureVehicles') : ''}
               placement="right"
             >
               <span>
@@ -1177,7 +1173,7 @@ function TabAvertissements({
                     '&:hover': { borderColor: '#42a5f5', color: '#42a5f5' },
                   }}
                 >
-                  Lancer l'analyse approfondie
+                  {t('detail.launchDiag')}
                 </Button>
               </span>
             </Tooltip>
@@ -1356,7 +1352,7 @@ function TabAvertissements({
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, lineHeight: 1.6 }}>
                       À la racine de <code style={{ fontFamily: 'monospace' }}>Texture/</code> mais
                       non citées dans .o3d, model*.cfg, .ctc, .bus ni .org.
-                      Les sous-dossiers (Werbung, Scripts…) sont exclus de cette analyse.
+                      {t('detail.subFoldersExcluded')}
                     </div>
                     {orphanTextures.map(t => (
                       <OrphanRow key={t.absPath} name={t.name} relativePath=""
@@ -1546,7 +1542,7 @@ function TabAvertissements({
               <Button size="small" variant="text" onClick={() => onScanDiag()}
                 sx={{ fontSize: 11, textTransform: 'none', color: 'var(--text-muted)',
                   '&:hover': { color: '#42a5f5' } }}>
-                Relancer l'analyse
+                {t('detail.relaunchDiag')}
               </Button>
               {hasOrphans && (
                 <Button size="small" variant="contained" color="error"
@@ -1564,10 +1560,10 @@ function TabAvertissements({
       <Dialog open={!!confirmFile} onClose={() => setConfirmFile(null)} maxWidth="xs" fullWidth
         PaperProps={{ sx: { borderRadius: '12px', background: '#0c0f14',
           border: '1px solid rgba(255,255,255,0.09)' } }}>
-        <DialogTitle sx={{ fontSize: 14, fontWeight: 700, pb: 0.5 }}>Confirmer la suppression</DialogTitle>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700, pb: 0.5 }}>{t('detail.confirmDelete')}</DialogTitle>
         <DialogContent sx={{ pt: '10px !important' }}>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            Supprimer définitivement ce fichier ?
+            {t('detail.confirmDeleteBody')}
           </div>
           <div style={{ marginTop: 8, padding: '6px 10px', borderRadius: 6,
             background: 'rgba(252,61,57,0.07)', border: '1px solid rgba(252,61,57,0.2)' }}>
@@ -1577,11 +1573,11 @@ function TabAvertissements({
           </div>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmFile(null)} sx={{ textTransform: 'none' }}>Annuler</Button>
+          <Button onClick={() => setConfirmFile(null)} sx={{ textTransform: 'none' }}>{t('common.cancel')}</Button>
           <Button color="error" variant="outlined"
             onClick={() => { onDeleteFile(confirmFile.absPath); setConfirmFile(null) }}
             sx={{ textTransform: 'none' }}>
-            Supprimer
+            {t('detail.deleteFile')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1590,7 +1586,7 @@ function TabAvertissements({
       <Dialog open={cleanStep1} onClose={() => setCleanStep1(false)} maxWidth="xs" fullWidth
         PaperProps={{ sx: { borderRadius: '12px', background: '#0c0f14',
           border: '1px solid rgba(255,255,255,0.09)' } }}>
-        <DialogTitle sx={{ fontSize: 14, fontWeight: 700, pb: 0.5 }}>Confirmer le nettoyage</DialogTitle>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700, pb: 0.5 }}>{t('detail.confirmClean')}</DialogTitle>
         <DialogContent sx={{ pt: '10px !important' }}>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
             Vous allez supprimer{' '}
@@ -1609,11 +1605,11 @@ function TabAvertissements({
           </div>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCleanStep1(false)} sx={{ textTransform: 'none' }}>Annuler</Button>
+          <Button onClick={() => setCleanStep1(false)} sx={{ textTransform: 'none' }}>{t('common.cancel')}</Button>
           <Button color="warning" variant="outlined"
             onClick={() => { setCleanStep1(false); setCleanStep2(true) }}
             sx={{ textTransform: 'none' }}>
-            Continuer →
+            {t('detail.confirmCleanBody')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1638,7 +1634,7 @@ function TabAvertissements({
           </div>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCleanStep2(false)} sx={{ textTransform: 'none' }}>Annuler</Button>
+          <Button onClick={() => setCleanStep2(false)} sx={{ textTransform: 'none' }}>{t('common.cancel')}</Button>
           <Button color="error" variant="contained"
             onClick={() => {
               setCleanStep2(false)
@@ -1660,10 +1656,11 @@ function TabAvertissements({
 
 // ── Onglet Contenu ─────────────────────────────────────────────────────────
 function TabContenu({ project, fontDetails }) {
+  const { t } = useTranslation()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div className="w11-card" style={{ marginBottom: 0 }}>
-        <div className="w11-card-title"><FolderOutlinedIcon sx={{ fontSize: 14 }} /> Dossiers synchronisés</div>
+        <div className="w11-card-title"><FolderOutlinedIcon sx={{ fontSize: 14 }} /> {t('detail.syncFolders')}</div>
         <PathRow Icon={DirectionsBusOutlinedIcon} label="Vehicles (obligatoire)" value={project.vehicles} />
         <PathRow Icon={FolderOutlinedIcon}        label="Addons (facultatif)"    value={project.addons} />
         <PathRow Icon={MusicNoteOutlinedIcon}     label="Sounds (facultatif)"    value={project.sounds} />
@@ -1733,6 +1730,7 @@ function VersionDetailModal({ v, project, isAdmin, userCanPull, cinStatus,
                                installedEntry, isOperating, installing,
                                onInstall, onTogglePublish, onDeprecate,
                                actionLoading, onClose }) {
+  const { t } = useTranslation()
   const [showDowngradeWarning, setShowDowngradeWarning] = useState(false)
 
   const isPublished  = v.id === null || !!v.is_published
@@ -1759,9 +1757,9 @@ function VersionDetailModal({ v, project, isAdmin, userCanPull, cinStatus,
               <span style={{ fontSize: 17, fontWeight: 700, color: isDeprecated ? 'var(--text-muted)' : '#fff' }}>
                 {v.version_name ?? v.versionName}
               </span>
-              {isDraft      && <StatusTag color="gray">Brouillon</StatusTag>}
-              {isDeprecated && <StatusTag color="red">Périmée</StatusTag>}
-              {isInstalled  && <StatusTag color="green">Installée</StatusTag>}
+              {isDraft      && <StatusTag color="gray">{t('detail.statusDraft')}</StatusTag>}
+              {isDeprecated && <StatusTag color="red">{t('detail.statusOutdated')}</StatusTag>}
+              {isInstalled  && <StatusTag color="green">{t('detail.statusInstalled')}</StatusTag>}
             </div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
               <CalendarTodayOutlinedIcon sx={{ fontSize: 11, verticalAlign: 'middle', mr: 0.5 }} />
@@ -1872,7 +1870,7 @@ function VersionDetailModal({ v, project, isAdmin, userCanPull, cinStatus,
           </Box>
         )}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <Button variant="outlined" size="small" onClick={onClose}>Fermer</Button>
+          <Button variant="outlined" size="small" onClick={onClose}>{t('common.close')}</Button>
           {userCanPull && !isDeprecated && (
             <Button
               variant="contained"
@@ -1883,12 +1881,12 @@ function VersionDetailModal({ v, project, isAdmin, userCanPull, cinStatus,
               disabled={isOperating || !!installing}
             >
               {isThis
-                ? 'Installation...'
+                ? t('detail.installing')
                 : showDowngradeWarning
                   ? 'Continuer quand même'
                   : isInstalled
                     ? 'Réparer'
-                    : 'Installer'}
+                    : t('detail.install')}
             </Button>
           )}
           {!userCanPull && !isDeprecated && (
@@ -1902,6 +1900,7 @@ function VersionDetailModal({ v, project, isAdmin, userCanPull, cinStatus,
 
 // ── Onglet Versions ────────────────────────────────────────────────────────
 function TabVersions({ project, settings, onInstall, isOperating, cinStatus, refreshTrigger, userCanPull, userCanPush, user }) {
+  const { t } = useTranslation()
   const [versions,        setVersions]        = useState([])
   const [loading,         setLoading]         = useState(false)
   const [error,           setError]           = useState(null)
@@ -2056,7 +2055,7 @@ function TabVersions({ project, settings, onInstall, isOperating, cinStatus, ref
           </div>
           <Button variant="text" size="small" startIcon={loading ? <CircularProgress size={13} /> : <RefreshOutlinedIcon />}
             onClick={loadVersions} disabled={loading}>
-            Actualiser
+            {t('common.refresh')}
           </Button>
         </div>
 
@@ -2111,10 +2110,10 @@ function TabVersions({ project, settings, onInstall, isOperating, cinStatus, ref
                     <span style={{ fontSize: 13, fontWeight: 700, color: isDeprecated ? 'var(--text-muted)' : '#fff' }}>
                       {v.version_name ?? v.versionName}
                     </span>
-                    {isLatest && !isDraft && !isDeprecated && <StatusTag color="blue">Dernière</StatusTag>}
-                    {isDraft      && <StatusTag color="gray">Brouillon</StatusTag>}
-                    {isDeprecated && <StatusTag color="red">Périmée</StatusTag>}
-                    {isInstalled  && <StatusTag color="green">Installée</StatusTag>}
+                    {isLatest && !isDraft && !isDeprecated && <StatusTag color="blue">{t('detail.statusLatest')}</StatusTag>}
+                    {isDraft      && <StatusTag color="gray">{t('detail.statusDraft')}</StatusTag>}
+                    {isDeprecated && <StatusTag color="red">{t('detail.statusOutdated')}</StatusTag>}
+                    {isInstalled  && <StatusTag color="green">{t('detail.statusInstalled')}</StatusTag>}
                   </div>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0,
                     display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -2132,6 +2131,7 @@ function TabVersions({ project, settings, onInstall, isOperating, cinStatus, ref
 
 // ── Onglet Équipe ──────────────────────────────────────────────────────────
 function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
+  const { t } = useTranslation()
   const [members,       setMembers]       = useState([])
   const [loading,       setLoading]       = useState(false)
   const [error,         setError]         = useState(null)
@@ -2274,8 +2274,8 @@ function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Activer Backlogs</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Permet de gérer les demandes et suggestions d'évolution</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{t('detail.enableBacklogs')}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('detail.backlogsDesc')}</div>
               </div>
               {projectLoading
                 ? <CircularProgress size={16} sx={{ flexShrink: 0 }} />
@@ -2309,7 +2309,7 @@ function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
 
       {/* Propriétaire */}
       <div className="w11-card" style={{ marginBottom: 0 }}>
-        <div className="w11-card-title"><PersonOutlinedIcon sx={{ fontSize: 14 }} /> Propriétaire</div>
+        <div className="w11-card-title"><PersonOutlinedIcon sx={{ fontSize: 14 }} /> {t('detail.owner')}</div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <div style={{
             width: 36, height: 36, borderRadius: '50%', background: 'rgba(66,165,245,0.12)',
@@ -2323,7 +2323,7 @@ function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
               {project.owner
                 ? `${project.owner.first_name || ''} ${project.owner.last_name || ''}`.trim()
                   + (project.owner.username ? ` (@${project.owner.username})` : '')
-                : 'Chargement…'}
+                : t('common.loading')}
             </div>
             {ownerEmail && (
               <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ownerEmail}</div>
@@ -2336,7 +2336,7 @@ function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
       <div className="w11-card" style={{ marginBottom: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div className="w11-card-title" style={{ marginBottom: 0 }}>
-            <PeopleAltOutlinedIcon sx={{ fontSize: 14 }} /> Membres de l'équipe
+            <PeopleAltOutlinedIcon sx={{ fontSize: 14 }} /> {t('detail.teamMembers')}
             {members.length > 0 && (
               <span style={{ marginLeft: 7, fontSize: 10, color: 'var(--text-muted)',
                 background: 'rgba(255,255,255,0.06)', padding: '1px 7px', borderRadius: 10 }}>
@@ -2352,7 +2352,7 @@ function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
         {loading && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '22px 0', gap: 8 }}>
             <CircularProgress size={18} />
-            <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Chargement…</span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{t('common.loading')}</span>
           </div>
         )}
 
@@ -2419,7 +2419,7 @@ function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>{fullName}</span>
-                            {isOwner && <StatusTag color="blue">Propriétaire</StatusTag>}
+                            {isOwner && <StatusTag color="blue">{t('detail.owner')}</StatusTag>}
                           </div>
                           {m.email && fullName !== m.email && (
                             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.email}</div>
@@ -2490,7 +2490,7 @@ function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
 
                     {isAdmin && (
                       <TableCell sx={{ width: 44, textAlign: 'center' }}>
-                        <Tooltip title="Retirer de l'équipe">
+                        <Tooltip title={t('detail.removeFromTeam')}>
                           <span>
                             <IconButton
                               size="small"
@@ -2608,6 +2608,7 @@ function TabTeam({ project, projectLoading, user, onProjectUpdate }) {
 
 // ── Modale Apparence (bannière / logo) ─────────────────────────────────────
 function AppearanceModal({ open, onClose, project, onUpdate }) {
+  const { t } = useTranslation()
   const bannerInputRef = useRef(null)
   const logoInputRef   = useRef(null)
   const [bannerLoading, setBannerLoading] = useState(false)
@@ -2661,7 +2662,7 @@ function AppearanceModal({ open, onClose, project, onUpdate }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <BrushOutlinedIcon sx={{ fontSize: 17, color: 'var(--text-muted)' }} />
             <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'Inter, sans-serif' }}>
-              Éditer l'apparence
+              {t('detail.editAppearance')}
             </span>
           </div>
           <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
@@ -2737,7 +2738,7 @@ function AppearanceModal({ open, onClose, project, onUpdate }) {
                 sx={{ borderRadius: '6px', fontSize: 12, textTransform: 'none',
                   color: '#fc3d39', borderColor: 'rgba(252,61,57,0.3)',
                   '&:hover': { borderColor: '#fc3d39', background: 'rgba(252,61,57,0.06)' } }}>
-                Supprimer
+                {t('common.delete')}
               </Button>
             )}
           </div>
@@ -2793,14 +2794,14 @@ function AppearanceModal({ open, onClose, project, onUpdate }) {
                 sx={{ borderRadius: '6px', fontSize: 12, textTransform: 'none',
                   color: '#fc3d39', borderColor: 'rgba(252,61,57,0.3)',
                   '&:hover': { borderColor: '#fc3d39', background: 'rgba(252,61,57,0.06)' } }}>
-                Supprimer
+                {t('common.delete')}
               </Button>
             )}
           </div>
         </div>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} size="small">Fermer</Button>
+        <Button onClick={onClose} size="small">{t('common.close')}</Button>
       </DialogActions>
     </Dialog>
   )
@@ -2865,6 +2866,7 @@ function PriorityChip({ priority }) {
 
 // ── Composant générique de liste Backlog/Ticket ─────────────────────────────
 function ItemDetailView({ item, isOwner, projectId, onBack, onRefresh, type }) {
+  const { t } = useTranslation()
   const [newComment,     setNewComment]     = useState('')
   const [sendingComment, setSendingComment] = useState(false)
   const [uploadingImg,   setUploadingImg]   = useState(false)
@@ -2943,7 +2945,7 @@ function ItemDetailView({ item, isOwner, projectId, onBack, onRefresh, type }) {
         <IconButton size="small" onClick={onBack}>
           <ArrowBackIosNewOutlinedIcon sx={{ fontSize: 14 }} />
         </IconButton>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Retour à la liste</span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('detail.back')}</span>
       </div>
 
       {/* En-tête */}
@@ -3124,6 +3126,7 @@ function ItemDetailView({ item, isOwner, projectId, onBack, onRefresh, type }) {
 
 // ── Formulaire de création ─────────────────────────────────────────────────
 function CreateItemForm({ type, projectId, onCreated, onCancel }) {
+  const { t } = useTranslation()
   const [subject,     setSubject]     = useState('')
   const [description, setDescription] = useState('')
   const [priority,    setPriority]    = useState('normal')
@@ -3182,7 +3185,7 @@ function CreateItemForm({ type, projectId, onCreated, onCancel }) {
           <Alert severity="error" sx={{ py: 0, fontSize: 12 }}>{error}</Alert>
         )}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <Button size="small" onClick={onCancel} disabled={saving}>Annuler</Button>
+          <Button size="small" onClick={onCancel} disabled={saving}>{t('common.cancel')}</Button>
           <Button size="small" variant="contained" onClick={handleSubmit} disabled={saving || !subject.trim()}>
             {saving ? <CircularProgress size={14} /> : 'Créer'}
           </Button>
@@ -3194,6 +3197,7 @@ function CreateItemForm({ type, projectId, onCreated, onCancel }) {
 
 // ── Tab Backlogs ───────────────────────────────────────────────────────────
 function TabBacklogs({ project, user }) {
+  const { t } = useTranslation()
   const [items,          setItems]          = useState([])
   const [loading,        setLoading]        = useState(false)
   const [error,          setError]          = useState(null)
@@ -3261,16 +3265,16 @@ function TabBacklogs({ project, user }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Dialog confirmation suppression */}
       <Dialog open={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontSize: 14, fontWeight: 700 }}>Confirmer la suppression</DialogTitle>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700 }}>{t('detail.confirmDelete')}</DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 13 }}>
             Supprimer ce backlog ? Cette action est irréversible.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button size="small" onClick={() => setDeleteConfirmId(null)} disabled={deleting}>Annuler</Button>
+          <Button size="small" onClick={() => setDeleteConfirmId(null)} disabled={deleting}>{t('common.cancel')}</Button>
           <Button size="small" variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
-            {deleting ? <CircularProgress size={14} /> : 'Supprimer'}
+            {deleting ? <CircularProgress size={14} /> : t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -3372,6 +3376,7 @@ function TabBacklogs({ project, user }) {
 
 // ── Tab Ticketing ──────────────────────────────────────────────────────────
 function TabTicketing({ project, user }) {
+  const { t } = useTranslation()
   const [items,           setItems]           = useState([])
   const [loading,         setLoading]         = useState(false)
   const [error,           setError]           = useState(null)
@@ -3439,16 +3444,16 @@ function TabTicketing({ project, user }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Dialog confirmation suppression */}
       <Dialog open={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontSize: 14, fontWeight: 700 }}>Confirmer la suppression</DialogTitle>
+        <DialogTitle sx={{ fontSize: 14, fontWeight: 700 }}>{t('detail.confirmDelete')}</DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 13 }}>
             Supprimer ce ticket ? Cette action est irréversible.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button size="small" onClick={() => setDeleteConfirmId(null)} disabled={deleting}>Annuler</Button>
+          <Button size="small" onClick={() => setDeleteConfirmId(null)} disabled={deleting}>{t('common.cancel')}</Button>
           <Button size="small" variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
-            {deleting ? <CircularProgress size={14} /> : 'Supprimer'}
+            {deleting ? <CircularProgress size={14} /> : t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -3551,6 +3556,7 @@ function TabTicketing({ project, user }) {
 
 // ── Page principale ────────────────────────────────────────────────────────
 export default function ProjectDetailPage({ project, onNavigate, user }) {
+  const { t } = useTranslation()
   const [settings,       setSettings]       = useState({})
   const [thumb,          setThumb]          = useState(null)
   const [fontDetails,    setFontDetails]    = useState([])
@@ -3597,17 +3603,31 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
       .catch(() => {})
       .finally(() => setProjectLoading(false))
 
-    window.api.settings.get().then(s => {
+    const init = async () => {
+      // ── Charger les chemins locaux depuis le store si absents du prop ───
+      // (cas : navigation depuis HomePage qui ne les joint pas)
+      const allStoredPaths = await window.api.store.get(PROJECT_PATHS_KEY).catch(() => ({})) || {}
+      const stored = allStoredPaths[project.id] || {}
+      const vehicles = project.vehicles || stored.vehiclesPath || null
+      const addons   = project.addons   || stored.addonsPath   || null
+      const sounds   = project.sounds   || stored.soundsPath   || null
+      const fonts    = project.fonts?.length ? project.fonts : (stored.fonts || [])
+
+      if (!project.vehicles && vehicles) {
+        setFullProject(prev => ({ ...prev, vehicles, addons, sounds, fonts }))
+        setLocalFonts(fonts)
+      }
+
+      const s = await window.api.settings.get()
       setSettings(s)
       window.api.cinnamon.readStatus(project, s).then(setCinStatus)
+
       // Scan des polices manquantes dans les Model.cfg du projet
-      if (project.vehicles && s?.omsiPath) {
-        // Abonnement aux événements de progression (écoute active pendant le scan)
+      if (vehicles && s?.omsiPath) {
         window.api.omsi.offScanFontsProgress()
         window.api.omsi.onScanFontsProgress(setScanProgress)
         setScanProgress({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
-
-        window.api.omsi.scanModelFonts(project.vehicles, s.omsiPath)
+        window.api.omsi.scanModelFonts(vehicles, s.omsiPath)
           .then(res => {
             setFontWarnings(res?.missing || [])
             setAllFonts(res?.all || [])
@@ -3623,13 +3643,17 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
       } else {
         setFontTotal(0)
       }
-    })
+
+      Promise.all([...new Set(fonts)].map(f => window.api.oft.parse(f))).then(setFontDetails)
+      if (vehicles) {
+        window.api.projects.parseBusFiles(vehicles).then(setBusFiles).catch(() => {})
+      }
+    }
+
+    init()
+
     if (project.thumbnailPath) {
       window.api.file.readAsDataUrl(project.thumbnailPath).then(setThumb)
-    }
-    Promise.all([...new Set(project.fonts || [])].map(f => window.api.oft.parse(f))).then(setFontDetails)
-    if (project.vehicles) {
-      window.api.projects.parseBusFiles(project.vehicles).then(setBusFiles).catch(() => {})
     }
   }, [project])
 
@@ -3661,7 +3685,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
   // overrideFonts : permet de passer une liste à jour sans attendre le re-render de localFonts.
   // On vérifie que c'est bien un tableau (pas un SyntheticEvent passé par onClick).
   const handleFullDiag = useCallback(async (overrideFonts) => {
-    if (!project.vehicles) return
+    if (!fullProject.vehicles) return
     const fontsToUse = Array.isArray(overrideFonts) ? overrideFonts : localFonts
     window.api.omsi.offDiagProgress()
     window.api.omsi.onDiagProgress(setDiagProgress)
@@ -3669,10 +3693,10 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
     setDiagProgress({ phase: 'collecting', current: 0, total: 0, currentFile: '' })
     try {
       const res = await window.api.omsi.fullDiagnostic(
-        project.vehicles,
+        fullProject.vehicles,
         settings?.omsiPath || null,
         fontsToUse,
-        project.sounds || null
+        fullProject.sounds || null
       )
       setDiagResult(res || null)
       setDiagScanned(true)
@@ -3811,7 +3835,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
     window.api.sync.onStep(setPushStep)
     window.api.sync.onProgress(setPushProgress)
     try {
-      const result = await window.api.sync.start(project, settings, versionMeta)
+      const result = await window.api.sync.start(fullProject, settings, versionMeta)
       setPushResult(result)
       if (result?.success) {
         try {
@@ -3845,7 +3869,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
     window.api.sync.onStep(setPullStep)
     window.api.sync.onProgress(setPullProgress)
     try {
-      const result = await window.api.pull.install(project, settings, zipName, versionMeta)
+      const result = await window.api.pull.install(fullProject, settings, zipName, versionMeta)
       setPullResult(result)
     } catch (e) {
       setPullResult({ success: false, logs: [], error: e.message })
@@ -3928,7 +3952,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
         </div>
 
         {(() => {
-          const hasLocalPaths = !!(project.vehicles || project.addons || project.sounds || project.fonts?.length)
+          const hasLocalPaths = !!(fullProject.vehicles || fullProject.addons || fullProject.sounds || fullProject.fonts?.length)
           const pushDisabled  = !isConfigured || isOperating || !userCanPush || !hasLocalPaths
           const pushTitle     = !userCanPush   ? 'Permission requise'
                               : !hasLocalPaths ? 'Configurez les chemins locaux du projet (icône crayon)'
@@ -4047,7 +4071,7 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
 
             {/* Bouton Éditer l'apparence — coin supérieur droit */}
             {isOwnerOrAdmin && (
-              <Tooltip title="Éditer l'apparence">
+              <Tooltip title={t('detail.editAppearance')}>
                 <IconButton
                   size="small"
                   onClick={() => setAppearanceOpen(true)}
@@ -4080,8 +4104,8 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
         sx={{ borderBottom: '1px solid rgba(255,255,255,0.07)', mb: 1, minHeight: 36 }}
       >
         <Tab label="Description" icon={<ImageOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />
-        {userCanPull && <Tab label="Contenu" icon={<FolderOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
-        <Tab label="Dépôts" icon={<CloudOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />
+        {userCanPull && <Tab label={t('detail.tabContent')} icon={<FolderOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
+        <Tab label={t('detail.tabDepots')} icon={<CloudOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />
         <Tab
           iconPosition="start"
           icon={<WarningAmberOutlinedIcon sx={{ fontSize: 15 }} />}
@@ -4092,13 +4116,13 @@ export default function ProjectDetailPage({ project, onNavigate, user }) {
               invisible={fontWarnings.length === 0 && !diagResult?.fontResults?.missingInProject?.length && !diagResult?.fontResults?.missingEverywhere?.length}
               sx={{ '& .MuiBadge-badge': { fontSize: 9, minWidth: 16, height: 16, right: -8, top: -2 } }}
             >
-              Contrôle &amp; Alertes
+              {t('detail.tabControls')}
             </Badge>
           }
         />
         {projectBacklogEnabled && userCanBacklogs && <Tab label="Backlogs" icon={<AssignmentOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
-        {projectTicketingEnabled && userCanTicketing && <Tab label="Ticketing" icon={<BugReportOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
-        {isOwnerOrAdmin && <Tab label="Équipe" icon={<GroupsOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
+        {projectTicketingEnabled && userCanTicketing && <Tab label={t('detail.tabTickets')} icon={<BugReportOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
+        {isOwnerOrAdmin && <Tab label={t('detail.tabTeam')} icon={<GroupsOutlinedIcon sx={{ fontSize: 15 }} />} iconPosition="start" />}
       </Tabs>
 
       {/* Contenu des onglets */}

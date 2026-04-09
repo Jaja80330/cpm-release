@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
@@ -11,6 +12,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 
 export default function PushDialog({ open, projectName, onConfirm, onCancel }) {
+  const { t } = useTranslation()
   const [versionName, setVersionName] = useState('')
   const [changelog,   setChangelog]   = useState('')
 
@@ -20,7 +22,7 @@ export default function PushDialog({ open, projectName, onConfirm, onCancel }) {
 
   const handleConfirm = () => {
     onConfirm({
-      name:      versionName.trim() || 'Sauvegarde automatique',
+      name:      versionName.trim() || t('push.autoSave'),
       changelog: changelog.trim()
     })
   }
@@ -34,7 +36,7 @@ export default function PushDialog({ open, projectName, onConfirm, onCancel }) {
     const now   = new Date()
     const date  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const time  = `${String(now.getHours()).padStart(2,'0')}h${String(now.getMinutes()).padStart(2,'0')}`
-    const slug  = (versionName.trim() || 'Sauvegarde-automatique')
+    const slug  = (versionName.trim() || t('push.autoSave'))
       .replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '').replace(/-+/g, '-').slice(0, 40)
     const proj  = (projectName || '').replace(/\s+/g, '_')
     return `${date}_${time}_${slug}_${proj}.zip`
@@ -49,23 +51,23 @@ export default function PushDialog({ open, projectName, onConfirm, onCancel }) {
       onKeyDown={handleKeyDown}
     >
       <DialogTitle sx={{ fontSize: 15, fontWeight: 700 }}>
-        Nouvelle version — {projectName}
+        {t('push.title', { project: projectName })}
       </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '12px !important' }}>
         <TextField
           autoFocus
-          label="Nom de la version"
-          placeholder='Ex : "Release 1.0", "Fix textures moteur"'
-          helperText='Laissez vide pour "Sauvegarde automatique"'
+          label={t('push.versionName')}
+          placeholder={t('push.versionPlaceholder')}
+          helperText={t('push.versionHelper')}
           value={versionName}
           onChange={e => setVersionName(e.target.value)}
           fullWidth
           size="small"
         />
         <TextField
-          label="Notes de version"
-          placeholder={"- Correction des textures\n- Ajout du son moteur\n- Optimisation des fichiers..."}
-          helperText="Optionnel — décrit les modifications apportées. Supporte le Markdown."
+          label={t('push.changelog')}
+          placeholder={t('push.changelogPlaceholder')}
+          helperText={t('push.changelogHelper')}
           value={changelog}
           onChange={e => setChangelog(e.target.value)}
           multiline
@@ -81,7 +83,7 @@ export default function PushDialog({ open, projectName, onConfirm, onCancel }) {
           borderRadius: 1.5,
         }}>
           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
-            Fichier généré :
+            {t('push.fileGenerated')}
           </Typography>
           <code style={{ fontSize: 11, color: '#42a5f5', fontFamily: 'monospace', wordBreak: 'break-all' }}>
             {filePreview}
@@ -90,10 +92,10 @@ export default function PushDialog({ open, projectName, onConfirm, onCancel }) {
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button variant="outlined" startIcon={<CloseIcon />} onClick={onCancel}>
-          Annuler
+          {t('common.cancel')}
         </Button>
         <Button variant="contained" startIcon={<CloudUploadIcon />} onClick={handleConfirm}>
-          Lancer le PUSH
+          {t('push.launch')}
         </Button>
       </DialogActions>
     </Dialog>

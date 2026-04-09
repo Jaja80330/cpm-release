@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import BusEditorTab from './BusEditorTab'
+import { useTranslation } from 'react-i18next'
 import Box from '@mui/material/Box'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
@@ -21,15 +21,45 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
 
 // ── Palette console ──────────────────────────────────────────────────────────
-const C = {
-  bg:      '#07090c',
-  bgCard:  '#0d1014',
-  bgRow:   '#0f1318',
-  bgRowAlt:'#111519',
-  warning: '#f0a030',
-  error:   '#fc3d39',
-  muted:   '#5a6270',
-  border:  'rgba(255,255,255,0.06)',
+const PALETTE = {
+  dark: {
+    bg:      '#07090c',
+    bgCard:  '#0d1014',
+    bgRow:   '#0f1318',
+    bgRowAlt:'#111519',
+    warning: '#f0a030',
+    error:   '#fc3d39',
+    muted:   '#5a6270',
+    border:  'rgba(255,255,255,0.06)',
+    scrollbar: 'rgba(255,255,255,0.1) transparent',
+    textFaint:  'rgba(255,255,255,0.35)',
+    textHint:   'rgba(255,255,255,0.45)',
+    textStrong: 'rgba(255,255,255,0.7)',
+    textBtn:    'rgba(255,255,255,0.5)',
+    chipActive: 'rgba(255,255,255,0.1)',
+    chipBorder: 'rgba(255,255,255,0.08)',
+    chipBorderActive: 'rgba(255,255,255,0.3)',
+    chipHover:  'rgba(255,255,255,0.07)',
+  },
+  light: {
+    bg:      'var(--bg-default)',
+    bgCard:  'var(--bg-paper)',
+    bgRow:   '#f6f8fb',
+    bgRowAlt:'#eef1f5',
+    warning: '#d48a00',
+    error:   '#d32f2f',
+    muted:   '#8a9ab0',
+    border:  'rgba(0,0,0,0.06)',
+    scrollbar: 'rgba(0,0,0,0.12) transparent',
+    textFaint:  'rgba(0,0,0,0.35)',
+    textHint:   'rgba(0,0,0,0.45)',
+    textStrong: 'rgba(0,0,0,0.7)',
+    textBtn:    'rgba(0,0,0,0.5)',
+    chipActive: 'rgba(0,0,0,0.08)',
+    chipBorder: 'rgba(0,0,0,0.08)',
+    chipBorderActive: 'rgba(0,0,0,0.3)',
+    chipHover:  'rgba(0,0,0,0.05)',
+  },
 }
 
 const MONO = "'Cascadia Code', 'Consolas', 'Courier New', monospace"
@@ -42,7 +72,9 @@ function countByType(entries) {
 }
 
 // ── Composant Logfile ─────────────────────────────────────────────────────────
-function TabLogfile({ omsiPath }) {
+function TabLogfile({ omsiPath, isDark }) {
+  const { t, i18n } = useTranslation()
+  const C = isDark ? PALETTE.dark : PALETTE.light
   const [filter,   setFilter]   = useState('all')   // 'all' | 'warning' | 'error'
   const [liveMode, setLiveMode] = useState(false)
   const [parsing,  setParsing]  = useState(false)
@@ -106,11 +138,12 @@ function TabLogfile({ omsiPath }) {
         <SettingsOutlinedIcon sx={{ color: '#f0a030', mt: 0.2, flexShrink: 0 }} />
         <div>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#f0a030', marginBottom: 4 }}>
-            Chemin OMSI 2 non configuré
+            {t('tools.noOmsiPath')}
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6 }}>
-            Rendez-vous dans <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Paramètres → Répertoire OMSI 2</strong> pour
-            définir le chemin d'installation, puis revenez ici.
+          <div style={{ fontSize: 12, color: C.textHint, lineHeight: 1.6 }}>
+            {t('tools.noOmsiPathDesc').split(t('tools.noOmsiPathSettings'))[0]}
+            <strong style={{ color: C.textStrong }}>{t('tools.noOmsiPathSettings')}</strong>
+            {t('tools.noOmsiPathDesc').split(t('tools.noOmsiPathSettings'))[1]}
           </div>
         </div>
       </div>
@@ -139,7 +172,7 @@ function TabLogfile({ omsiPath }) {
             onClick={runParse}
             sx={{ fontSize: 12, textTransform: 'none', borderRadius: '6px' }}
           >
-            {parsing ? 'Parsing…' : result ? 'Re-parser' : 'Lancer le parsing'}
+            {parsing ? t('tools.parsing') : result ? t('tools.reParse') : t('tools.parse')}
           </Button>
         )}
 
@@ -164,7 +197,7 @@ function TabLogfile({ omsiPath }) {
                 <FiberManualRecordIcon sx={{ fontSize: 8, color: '#fc3d39',
                   animation: 'pulse 1.2s ease-in-out infinite' }} />
               )}
-              Mode Live
+              {t('tools.liveMode')}
             </span>
           }
           sx={{ m: 0 }}
@@ -176,9 +209,9 @@ function TabLogfile({ omsiPath }) {
         {result && (
           <div style={{ display: 'flex', gap: 6 }}>
             {[
-              { key: 'all',     label: `Tous (${entries.length})`,      color: undefined },
-              { key: 'warning', label: `Warnings (${warnings})`,        color: C.warning },
-              { key: 'error',   label: `Erreurs (${errors})`,           color: C.error },
+              { key: 'all',     label: t('tools.filterAll',      { count: entries.length }), color: undefined },
+              { key: 'warning', label: t('tools.filterWarnings', { count: warnings }),       color: C.warning },
+              { key: 'error',   label: t('tools.filterErrors',   { count: errors }),         color: C.error },
             ].map(({ key, label, color }) => (
               <Chip
                 key={key}
@@ -191,13 +224,13 @@ function TabLogfile({ omsiPath }) {
                   cursor: 'pointer',
                   borderRadius: '6px',
                   background: filter === key
-                    ? (color ? `${color}22` : 'rgba(255,255,255,0.1)')
+                    ? (color ? `${color}22` : C.chipActive)
                     : 'transparent',
                   border: `1px solid ${filter === key
-                    ? (color || 'rgba(255,255,255,0.3)')
-                    : 'rgba(255,255,255,0.08)'}`,
+                    ? (color || C.chipBorderActive)
+                    : C.chipBorder}`,
                   color: filter === key ? (color || 'var(--text-primary)') : 'var(--text-muted)',
-                  '&:hover': { background: color ? `${color}18` : 'rgba(255,255,255,0.07)' },
+                  '&:hover': { background: color ? `${color}18` : C.chipHover },
                 }}
               />
             ))}
@@ -228,9 +261,9 @@ function TabLogfile({ omsiPath }) {
         }}>
           <CheckCircleOutlinedIcon sx={{ fontSize: 15, color: '#42a5f5', flexShrink: 0 }} />
           <div>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)',
+            <span style={{ fontSize: 11, color: C.textFaint,
               textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-              Dernier lancement OMSI 2
+              {t('tools.lastLaunch')}
             </span>
             <span style={{ marginLeft: 10, fontSize: 13, fontWeight: 600,
               color: '#42a5f5', fontFamily: MONO }}>
@@ -239,9 +272,9 @@ function TabLogfile({ omsiPath }) {
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 12,
             fontSize: 11, color: 'var(--text-muted)' }}>
-            <span>{result.totalLines?.toLocaleString('fr-FR')} lignes analysées</span>
-            <span style={{ color: C.warning }}>⚠ {warnings} warning{warnings !== 1 ? 's' : ''}</span>
-            <span style={{ color: C.error }}>✗ {errors} erreur{errors !== 1 ? 's' : ''}</span>
+            <span>{result.totalLines?.toLocaleString(i18n.language === 'de' ? 'de-DE' : i18n.language === 'en' ? 'en-US' : 'fr-FR')} {t('tools.linesAnalyzed')}</span>
+            <span style={{ color: C.warning }}>⚠ {t('tools.warningCount', { count: warnings })}</span>
+            <span style={{ color: C.error }}>✗ {t('tools.errorCount', { count: errors })}</span>
           </div>
         </div>
       )}
@@ -271,7 +304,7 @@ function TabLogfile({ omsiPath }) {
               overflowY: 'auto',
               background: C.bg,
               scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(255,255,255,0.1) transparent',
+              scrollbarColor: C.scrollbar,
             }}
           >
             {filtered.length === 0 ? (
@@ -295,7 +328,7 @@ function TabLogfile({ omsiPath }) {
                       alignItems: 'baseline',
                       background: idx % 2 === 0 ? C.bgRow : C.bgRowAlt,
                       borderLeft: `2px solid ${accent}`,
-                      borderBottom: idx < filtered.length - 1 ? `1px solid rgba(255,255,255,0.03)` : 'none',
+                      borderBottom: idx < filtered.length - 1 ? `1px solid var(--border-subtle)` : 'none',
                     }}
                   >
                     {/* Numéro de ligne */}
@@ -338,7 +371,7 @@ function TabLogfile({ omsiPath }) {
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
         }}>
           <DescriptionOutlinedIcon sx={{ fontSize: 36, opacity: 0.2 }} />
-          <div>Cliquez sur <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Lancer le parsing</strong> pour analyser le logfile OMSI 2.</div>
+          <div>Cliquez sur <strong style={{ color: C.textBtn }}>Lancer le parsing</strong> pour analyser le logfile OMSI 2.</div>
           <div style={{ fontSize: 11, opacity: 0.5 }}>Chemin : {omsiPath}\logfile.txt</div>
         </div>
       )}
@@ -348,7 +381,8 @@ function TabLogfile({ omsiPath }) {
 }
 
 // ── Page Outils ───────────────────────────────────────────────────────────────
-export default function ToolsPage() {
+export default function ToolsPage({ isDark = true }) {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState(0)
   const [omsiPath,  setOmsiPath]  = useState(null) // null = chargement
 
@@ -371,8 +405,8 @@ export default function ToolsPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <BuildOutlinedIcon sx={{ fontSize: 20, color: 'var(--text-muted)' }} />
           <div>
-            <div className="page-title">Outils</div>
-            <div className="page-subtitle">Utilitaires de diagnostic OMSI 2</div>
+            <div className="page-title">{t('tools.title')}</div>
+            <div className="page-subtitle">{t('tools.subtitle')}</div>
           </div>
         </div>
       </div>
@@ -381,16 +415,16 @@ export default function ToolsPage() {
       <Tabs
         value={activeTab}
         onChange={(_, v) => setActiveTab(v)}
-        sx={{ borderBottom: '1px solid rgba(255,255,255,0.07)', mb: 2, minHeight: 36 }}
+        sx={{ borderBottom: '1px solid var(--border-subtle)', mb: 2, minHeight: 36 }}
       >
         <Tab
-          label="Logfile"
+          label={t('tools.tabLogfile')}
           icon={<DescriptionOutlinedIcon sx={{ fontSize: 15 }} />}
           iconPosition="start"
           sx={{ minHeight: 36, fontSize: 13, textTransform: 'none' }}
         />
         <Tab
-          label="Éditeur .bus"
+          label={t('tools.tabBusEditor')}
           icon={<BuildOutlinedIcon sx={{ fontSize: 15 }} />}
           iconPosition="start"
           sx={{ minHeight: 36, fontSize: 13, textTransform: 'none' }}
@@ -403,9 +437,13 @@ export default function ToolsPage() {
           <CircularProgress size={24} />
         </Box>
       ) : activeTab === 0 ? (
-        <TabLogfile omsiPath={omsiPath} />
+        <TabLogfile omsiPath={omsiPath} isDark={isDark} />
       ) : activeTab === 1 ? (
-        <BusEditorTab />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          pt: 8, gap: 1.5, color: 'var(--text-muted)' }}>
+          <BuildOutlinedIcon sx={{ fontSize: 36, opacity: 0.25 }} />
+          <span style={{ fontSize: 14 }}>{t('tools.wip')}</span>
+        </Box>
       ) : null}
 
       {/* ── Animation pulse pour le point live ──────────────────────────── */}

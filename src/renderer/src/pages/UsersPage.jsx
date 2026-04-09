@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Alert from '@mui/material/Alert'
@@ -25,17 +26,19 @@ import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined'
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import { usersService } from '../services/usersService'
 
-const ROLES = [
-  { value: 'user',            label: 'Utilisateur'      },
-  { value: 'contributor',     label: 'Contributeur'     },
-  { value: 'project_manager', label: 'Chef de projet'   },
-  { value: 'super_admin',     label: 'Super Admin'      },
-]
-const ROLE_LABELS = Object.fromEntries(ROLES.map(r => [r.value, r.label]))
+const ROLE_KEYS = ['user', 'contributor', 'project_manager', 'super_admin']
 
 const EMPTY_FORM = { username: '', firstName: '', lastName: '', email: '', role: 'user' }
 
 export default function UsersPage({ currentUser }) {
+  const { t } = useTranslation()
+  const ROLE_LABEL_MAP = {
+    user:            t('users.roleUser'),
+    contributor:     t('users.roleContributor'),
+    project_manager: t('users.roleProjectManager'),
+    super_admin:     t('users.roleSuperAdmin'),
+  }
+  const ROLES = ROLE_KEYS.map(v => ({ value: v, label: ROLE_LABEL_MAP[v] }))
   const [users,        setUsers]        = useState([])
   const [loading,      setLoading]      = useState(true)
   const [loadError,    setLoadError]    = useState(null)
@@ -57,7 +60,7 @@ export default function UsersPage({ currentUser }) {
       const data = await usersService.getAll()
       setUsers(Array.isArray(data) ? data : [])
     } catch (err) {
-      setLoadError(err?.response?.data?.message || err?.message || 'Impossible de charger les utilisateurs.')
+      setLoadError(err?.response?.data?.message || err?.message || t('users.loadError'))
     } finally {
       setLoading(false)
     }
@@ -72,10 +75,10 @@ export default function UsersPage({ currentUser }) {
   }
 
   const handleCreate = async () => {
-    if (!form.username)  { setCreateError("Le nom d'utilisateur est requis."); return }
-    if (!form.firstName) { setCreateError('Le prénom est requis.'); return }
-    if (!form.lastName)  { setCreateError('Le nom est requis.'); return }
-    if (!form.email)     { setCreateError("L'adresse e-mail est requise."); return }
+    if (!form.username)  { setCreateError(t('users.validationUsername')); return }
+    if (!form.firstName) { setCreateError(t('users.validationFirstName')); return }
+    if (!form.lastName)  { setCreateError(t('users.validationLastName')); return }
+    if (!form.email)     { setCreateError(t('users.validationEmail')); return }
     setCreating(true)
     setCreateError(null)
     try {
@@ -92,7 +95,7 @@ export default function UsersPage({ currentUser }) {
       setGeneratedPwd(result?.temporaryPassword || result?.password || null)
       await load()
     } catch (err) {
-      setCreateError(err?.response?.data?.message || err?.message || 'Erreur lors de la création.')
+      setCreateError(err?.response?.data?.message || err?.message || t('users.createError'))
     } finally {
       setCreating(false)
     }
@@ -107,7 +110,7 @@ export default function UsersPage({ currentUser }) {
       await usersService.updateRole(u.id, newRole)
     } catch (err) {
       setUsers(prev => prev.map(x => x.id === u.id ? { ...x, role: prevRole } : x))
-      setLoadError(err?.response?.data?.message || err?.message || 'Impossible de modifier le rôle.')
+      setLoadError(err?.response?.data?.message || err?.message || t('users.roleError'))
       setTimeout(() => setLoadError(null), 4000)
     } finally {
       setUpdatingRole(null)
@@ -140,13 +143,13 @@ export default function UsersPage({ currentUser }) {
       {/* En-tête */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <div className="page-header" style={{ marginBottom: 0 }}>
-          <div className="page-title">Utilisateurs</div>
-          <div className="page-subtitle">Gestion des comptes membres NEROSY</div>
+          <div className="page-title">{t('users.title')}</div>
+          <div className="page-subtitle">{t('users.subtitle')}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Button variant="text" size="small" startIcon={<RefreshOutlinedIcon />} onClick={load} disabled={loading} />
           <Button variant="contained" size="small" startIcon={<AddOutlinedIcon />} onClick={openModal}>
-            Créer un utilisateur
+            {t('users.create')}
           </Button>
         </div>
       </div>
@@ -155,13 +158,13 @@ export default function UsersPage({ currentUser }) {
       <Dialog open={!!generatedPwd} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <CheckCircleOutlinedIcon sx={{ color: '#6ccb5f', fontSize: 18 }} />
-          Utilisateur créé avec succès
+          {t('users.createSuccess')}
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, lineHeight: 1.6 }}>
-            Voici le mot de passe temporaire de ce compte. Notez-le bien —{' '}
+            {t('users.tempPasswordMsg')}{' '}
             <strong style={{ color: 'var(--text-primary)' }}>
-              il ne sera plus jamais affiché.
+              {t('users.tempPasswordWarn')}
             </strong>
           </Typography>
           <Box sx={{
@@ -172,7 +175,7 @@ export default function UsersPage({ currentUser }) {
           }}>
             <Typography sx={{ fontSize: 10, color: '#6ccb5f', fontWeight: 700, mb: 0.8,
               textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Mot de passe temporaire
+              {t('users.tempPasswordLabel')}
             </Typography>
             <code style={{
               display: 'block',
@@ -185,7 +188,7 @@ export default function UsersPage({ currentUser }) {
             </code>
           </Box>
           <Alert severity="warning" sx={{ fontSize: 12, py: 0.5 }}>
-            L'utilisateur devra changer ce mot de passe lors de sa première connexion.
+            {t('users.tempPasswordAlert')}
           </Alert>
         </DialogContent>
         <DialogActions>
@@ -196,10 +199,10 @@ export default function UsersPage({ currentUser }) {
             onClick={copyPassword}
             sx={copied ? { background: '#3d7a32' } : {}}
           >
-            {copied ? 'Copié !' : 'Copier le mot de passe'}
+            {copied ? t('common.copied') : t('users.copyPassword')}
           </Button>
           <Button variant="text" size="small" onClick={() => setGeneratedPwd(null)}>
-            Fermer
+            {t('common.close')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -217,16 +220,16 @@ export default function UsersPage({ currentUser }) {
         ) : users.length === 0 ? (
           <div className="empty-state">
             <PeopleAltOutlinedIcon sx={{ fontSize: 40, opacity: 0.25 }} />
-            <div className="empty-state-text">Aucun utilisateur trouvé.</div>
+            <div className="empty-state-text">{t('users.noUsers')}</div>
           </div>
         ) : (
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 200 }}>Nom</TableCell>
-                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>E-mail</TableCell>
-                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 160 }}>Rôle</TableCell>
-                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 120 }}>Inscrit le</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 200 }}>{t('users.colName')}</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('users.colEmail')}</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 160 }}>{t('users.colRole')}</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 120 }}>{t('users.colCreated')}</TableCell>
                 <TableCell sx={{ width: 50 }} />
               </TableRow>
             </TableHead>
@@ -240,7 +243,7 @@ export default function UsersPage({ currentUser }) {
                     <TableCell>
                       <div style={{ fontWeight: 600, fontSize: 13 }}>{fullName}</div>
                       {isSelf && (
-                        <div style={{ fontSize: 10, color: '#42a5f5', marginTop: 1 }}>Vous</div>
+                        <div style={{ fontSize: 10, color: '#42a5f5', marginTop: 1 }}>{t('users.you')}</div>
                       )}
                     </TableCell>
                     <TableCell>
@@ -256,7 +259,7 @@ export default function UsersPage({ currentUser }) {
                           border: '1px solid rgba(66,165,245,0.3)',
                           color: '#42a5f5',
                         }}>
-                          {ROLE_LABELS[u.role] || u.role}
+                          {ROLE_LABEL_MAP[u.role] || u.role}
                         </span>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -289,7 +292,7 @@ export default function UsersPage({ currentUser }) {
                         disabled={isSelf || deleting === u.id}
                         onClick={() => handleDelete(u.id)}
                         sx={{ minWidth: 0, color: isSelf ? undefined : '#fc3d39', p: '4px' }}
-                        title={isSelf ? 'Vous ne pouvez pas supprimer votre propre compte' : 'Supprimer'}
+                        title={isSelf ? t('users.cantDeleteSelf') : t('users.deleteTooltip')}
                       >
                         {deleting === u.id
                           ? <CircularProgress size={14} />
@@ -307,37 +310,37 @@ export default function UsersPage({ currentUser }) {
 
       {/* Modal création */}
       <Dialog open={modalOpen} onClose={() => !creating && setModalOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Créer un utilisateur</DialogTitle>
+        <DialogTitle>{t('users.create')}</DialogTitle>
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: '12px !important' }}>
           <TextField
-            label="Nom d'utilisateur (identifiant) *"
+            label={t('users.username')}
             value={form.username}
             onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-            placeholder="jean.dupont"
+            placeholder={t('users.usernamePlaceholder')}
             fullWidth size="small"
           />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <TextField
-              label="Prénom *"
+              label={t('users.firstNameLabel')}
               value={form.firstName}
               onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
-              placeholder="Jean"
+              placeholder={t('users.firstNamePlaceholder')}
               size="small" fullWidth
             />
             <TextField
-              label="Nom *"
+              label={t('users.lastNameLabel')}
               value={form.lastName}
               onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
-              placeholder="Dupont"
+              placeholder={t('users.lastNamePlaceholder')}
               size="small" fullWidth
             />
           </div>
           <TextField
             type="email"
-            label="Adresse e-mail *"
+            label={t('users.emailLabel')}
             value={form.email}
             onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-            placeholder="jean.dupont@nerosy.fr"
+            placeholder={t('users.emailPlaceholder')}
             fullWidth size="small"
           />
           <FormControl size="small" fullWidth>
@@ -346,12 +349,13 @@ export default function UsersPage({ currentUser }) {
               onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
               sx={{ fontSize: 12 }}
             >
-              <MenuItem value="user" sx={{ fontSize: 12 }}>Utilisateur</MenuItem>
-              <MenuItem value="super_admin" sx={{ fontSize: 12 }}>Super Admin</MenuItem>
+              {ROLES.map(r => (
+                <MenuItem key={r.value} value={r.value} sx={{ fontSize: 12 }}>{r.label}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.5 }}>
-            Un mot de passe temporaire sera généré automatiquement par le serveur.
+            {t('users.tempPasswordAuto')}
           </Typography>
           {createError && (
             <Alert severity="error" sx={{ fontSize: 12, py: 0.3 }}>{createError}</Alert>
@@ -359,7 +363,7 @@ export default function UsersPage({ currentUser }) {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button variant="text" size="small" onClick={() => setModalOpen(false)} disabled={creating}>
-            Annuler
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -368,7 +372,7 @@ export default function UsersPage({ currentUser }) {
             onClick={handleCreate}
             disabled={creating || !form.username || !form.firstName || !form.lastName || !form.email}
           >
-            Créer
+            {t('common.create')}
           </Button>
         </DialogActions>
       </Dialog>

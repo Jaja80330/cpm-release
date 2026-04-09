@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Alert from '@mui/material/Alert'
@@ -18,17 +19,12 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined'
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined'
+import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined'
 import { updateProfile, changePassword } from '../services/authService'
 
 const SFTP_HOST = '158.220.90.1'
 const SFTP_PORT = 22
 const SFTP_USER = 'root'
-
-const THEME_OPTIONS = [
-  { id: 'system', label: 'Système', desc: 'Suit Windows',    Icon: DesktopWindowsOutlinedIcon },
-  { id: 'dark',   label: 'Sombre',  desc: 'Toujours sombre', Icon: DarkModeOutlinedIcon       },
-  { id: 'light',  label: 'Clair',   desc: 'Toujours clair',  Icon: LightModeOutlinedIcon      }
-]
 
 function SectionCard({ title, icon: Icon, children }) {
   return (
@@ -50,21 +46,21 @@ function FL({ children }) {
   )
 }
 
-function SecBtn({ onClick, disabled, children }) {
-  return (
-    <Button
-      variant="outlined"
-      size="small"
-      onClick={onClick}
-      disabled={disabled}
-      sx={{ fontSize: 12, whiteSpace: 'nowrap' }}
-    >
-      {children}
-    </Button>
-  )
-}
+export default function SettingsPage({ onThemeChange, onLangChange, user, onUserChange }) {
+  const { t, i18n } = useTranslation()
 
-export default function SettingsPage({ onThemeChange, user, onUserChange }) {
+  const THEME_OPTIONS = [
+    { id: 'system', label: t('settings.themeSystem'), desc: t('settings.themeSystemSub'), Icon: DesktopWindowsOutlinedIcon },
+    { id: 'dark',   label: t('settings.themeDark'),   desc: t('settings.themeDarkSub'),   Icon: DarkModeOutlinedIcon       },
+    { id: 'light',  label: t('settings.themeLight'),  desc: t('settings.themeLightSub'),  Icon: LightModeOutlinedIcon      }
+  ]
+
+  const LANG_OPTIONS = [
+    { id: 'fr', label: t('settings.langFr'), flag: '🇫🇷' },
+    { id: 'en', label: t('settings.langEn'), flag: '🇬🇧' },
+    { id: 'de', label: t('settings.langDe'), flag: '🇩🇪' },
+  ]
+
   const [settings, setSettings] = useState({
     omsiPath: '', omsiValid: false,
     theme: 'system'
@@ -134,7 +130,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
       setProfileStatus('ok')
       setTimeout(() => setProfileStatus(null), 3000)
     } catch (err) {
-      setProfileError(err?.response?.data?.message || err?.message || 'Erreur lors de la sauvegarde.')
+      setProfileError(err?.response?.data?.message || err?.message || t('settings.saveError'))
       setProfileStatus('error')
     } finally { setProfileSaving(false) }
   }
@@ -148,7 +144,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
   const savePassword = async () => {
     if (pwdForm.newPwd !== pwdForm.confirm) { setPwdStatus('mismatch'); return }
     if (pwdForm.newPwd.length < 6) {
-      setPwdError('Le nouveau mot de passe doit contenir au moins 6 caractères.')
+      setPwdError(t('settings.passwordTooShort'))
       setPwdStatus('error'); return
     }
     setPwdSaving(true); setPwdStatus(null)
@@ -160,7 +156,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
     } catch (err) {
       const status = err?.response?.status
       const serverMsg = err?.response?.data?.message
-      setPwdError(status === 401 ? 'Mot de passe actuel incorrect.' : (serverMsg || err?.message || 'Erreur lors de la mise à jour.'))
+      setPwdError(status === 401 ? t('settings.passwordWrong') : (serverMsg || err?.message || t('settings.saveError')))
       setPwdStatus('error')
     } finally { setPwdSaving(false) }
   }
@@ -171,9 +167,11 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
     setSettings(s => ({ ...s, [key]: val })); setSaved(false)
   }
 
-  const handleThemeChange = (themeId) => {
+  const handleThemeChange = async (themeId) => {
     setSettings(s => ({ ...s, theme: themeId }))
-    onThemeChange?.(themeId); setSaved(false)
+    onThemeChange?.(themeId)
+    const current = await window.api.settings.get()
+    await window.api.settings.save({ ...current, theme: themeId })
   }
 
   const saveSettings = async () => {
@@ -200,7 +198,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
       setGenerateResult('ok')
       setTimeout(() => setGenerateResult(null), 5000)
     } else {
-      setGenerateError(result.error || 'Erreur inconnue')
+      setGenerateError(result.error || t('common.error'))
       setGenerateResult('error')
     }
     setGeneratingKey(false)
@@ -225,11 +223,13 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
     setTestResult(result); setTesting(false)
   }
 
+  const currentLang = i18n.language || 'fr'
+
   return (
     <div className="fade-in">
       <div className="page-header">
-        <div className="page-title">Paramètres</div>
-        <div className="page-subtitle">Configuration globale de Cinnamon</div>
+        <div className="page-title">{t('settings.title')}</div>
+        <div className="page-subtitle">{t('settings.subtitle')}</div>
       </div>
 
       {/* Modale clé publique */}
@@ -237,19 +237,18 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.78)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}
           onClick={e => { if (e.target === e.currentTarget) setPubKeyModal(false) }}>
-          <div style={{ background: '#1e2328', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10,
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-base)', borderRadius: 10,
             width: 620, maxHeight: '85vh', display: 'flex', flexDirection: 'column',
             boxShadow: '0 24px 64px rgba(0,0,0,0.65)', overflow: 'hidden' }}>
 
-            <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-subtle)',
               display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <KeyOutlinedIcon sx={{ fontSize: 15, color: '#42a5f5' }} /> Clé publique SSH Cinnamon
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <KeyOutlinedIcon sx={{ fontSize: 15, color: '#42a5f5' }} /> {t('settings.pubKeyTitle')}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>
-                  Fichier : <code style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>cinnamon_vault.pub</code>
-                  {' '}— Ajoutez cette clé dans <code style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>~/.ssh/authorized_keys</code> de votre serveur.
+                  {t('settings.pubKeyDesc')}
                 </div>
               </div>
               <button onClick={() => setPubKeyModal(false)}
@@ -261,10 +260,10 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
 
             <div style={{ flex: 1, overflowY: 'auto', padding: 18 }}>
               <pre style={{
-                fontSize: 11, color: '#b0b0b0', fontFamily: "'Cascadia Code', 'Consolas', monospace",
-                background: 'rgba(0,0,0,0.3)', padding: '12px 14px', borderRadius: 6,
+                fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'Cascadia Code', 'Consolas', monospace",
+                background: 'var(--bg-default)', padding: '12px 14px', borderRadius: 6,
                 wordBreak: 'break-all', whiteSpace: 'pre-wrap', margin: 0,
-                border: '1px solid rgba(255,255,255,0.06)', lineHeight: 1.6
+                border: '1px solid var(--border-subtle)', lineHeight: 1.6
               }}>
                 {pubKeyContent}
               </pre>
@@ -272,21 +271,20 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
                 background: 'rgba(108,203,95,0.06)', border: '1px solid rgba(108,203,95,0.15)',
                 fontSize: 11, color: '#6ccb5f', display: 'flex', gap: 6, alignItems: 'flex-start' }}>
                 <SecurityOutlinedIcon sx={{ fontSize: 13, flexShrink: 0, mt: 0.1 }} />
-                Cette clé est unique à Cinnamon et n'affecte pas vos autres clés SSH.
-                La clé privée ne quitte jamais votre machine.
+                {t('settings.pubKeyNote')}
               </div>
             </div>
 
-            <div style={{ padding: '10px 18px', borderTop: '1px solid rgba(255,255,255,0.07)',
+            <div style={{ padding: '10px 18px', borderTop: '1px solid var(--border-subtle)',
               display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <Button variant="outlined" size="small" onClick={() => setPubKeyModal(false)}>Fermer</Button>
+              <Button variant="outlined" size="small" onClick={() => setPubKeyModal(false)}>{t('common.close')}</Button>
               <Button
                 variant="contained"
                 size="small"
                 startIcon={copySuccess ? <CheckCircleOutlinedIcon /> : <ContentCopyOutlinedIcon />}
                 onClick={copyToClipboard}
                 sx={copySuccess ? { background: '#3d7a32' } : {}}>
-                {copySuccess ? 'Copié !' : 'Copier dans le presse-papier'}
+                {copySuccess ? t('common.copied') : t('settings.pubKeyCopy')}
               </Button>
             </div>
           </div>
@@ -294,15 +292,15 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
       )}
 
       {/* Mon profil */}
-      <SectionCard title="Mon profil" icon={PersonOutlinedIcon}>
+      <SectionCard title={t('settings.profile')} icon={PersonOutlinedIcon}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-          <TextField label="Prénom" value={profile.firstName}
+          <TextField label={t('settings.firstName')} value={profile.firstName}
             onChange={handleProfileChange('firstName')} placeholder="Jean" size="small" fullWidth />
-          <TextField label="Nom" value={profile.lastName}
+          <TextField label={t('settings.lastName')} value={profile.lastName}
             onChange={handleProfileChange('lastName')} placeholder="Dupont" size="small" fullWidth />
         </div>
         <div style={{ marginBottom: 14 }}>
-          <TextField label="Téléphone" value={profile.phone}
+          <TextField label={t('settings.phone')} value={profile.phone}
             onChange={handleProfileChange('phone')} placeholder="+33 6 00 00 00 00"
             size="small" style={{ maxWidth: 280 }} fullWidth />
         </div>
@@ -314,7 +312,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
             onClick={saveProfile}
             disabled={profileSaving}
           >
-            {profileStatus === 'ok' ? 'Sauvegardé ✓' : 'Sauvegarder'}
+            {profileStatus === 'ok' ? t('common.saved') : t('common.save')}
           </Button>
           {profileStatus === 'error' && (
             <Alert severity="error" sx={{ fontSize: 12, py: 0.3 }}>{profileError}</Alert>
@@ -323,17 +321,17 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
       </SectionCard>
 
       {/* Sécurité / Mot de passe */}
-      <SectionCard title="Sécurité — Changer le mot de passe" icon={LockOutlinedIcon}>
+      <SectionCard title={t('settings.security')} icon={LockOutlinedIcon}>
         <div style={{ display: 'grid', gap: 10, maxWidth: 360 }}>
-          <TextField type="password" label="Mot de passe actuel"
+          <TextField type="password" label={t('settings.currentPassword')}
             value={pwdForm.current} onChange={handlePwdChange('current')}
-            placeholder="••••••••" size="small" fullWidth />
-          <TextField type="password" label="Nouveau mot de passe"
+            placeholder={t('common.placeholder_password')} size="small" fullWidth />
+          <TextField type="password" label={t('settings.newPassword')}
             value={pwdForm.newPwd} onChange={handlePwdChange('newPwd')}
-            placeholder="••••••••" size="small" fullWidth />
-          <TextField type="password" label="Confirmer le nouveau mot de passe"
+            placeholder={t('common.placeholder_password')} size="small" fullWidth />
+          <TextField type="password" label={t('settings.confirmPassword')}
             value={pwdForm.confirm} onChange={handlePwdChange('confirm')}
-            placeholder="••••••••" size="small" fullWidth />
+            placeholder={t('common.placeholder_password')} size="small" fullWidth />
         </div>
         <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <Button
@@ -343,16 +341,16 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
             onClick={savePassword}
             disabled={pwdSaving || !pwdForm.current || !pwdForm.newPwd || !pwdForm.confirm}
           >
-            {pwdStatus === 'ok' ? 'Mis à jour ✓' : 'Mettre à jour le mot de passe'}
+            {pwdStatus === 'ok' ? t('common.updated') : t('settings.updatePassword')}
           </Button>
         </div>
-        {pwdStatus === 'ok' && <Alert severity="success" sx={{ fontSize: 12, py: 0.3, mt: 1.2 }}>Mot de passe mis à jour avec succès.</Alert>}
-        {pwdStatus === 'mismatch' && <Alert severity="warning" sx={{ fontSize: 12, py: 0.3, mt: 1.2 }}>Les mots de passe ne correspondent pas.</Alert>}
-        {pwdStatus === 'error' && <Alert severity="error" sx={{ fontSize: 12, py: 0.3, mt: 1.2 }}>{pwdError}</Alert>}
+        {pwdStatus === 'ok'       && <Alert severity="success" sx={{ fontSize: 12, py: 0.3, mt: 1.2 }}>{t('settings.passwordSuccess')}</Alert>}
+        {pwdStatus === 'mismatch' && <Alert severity="warning" sx={{ fontSize: 12, py: 0.3, mt: 1.2 }}>{t('settings.passwordMismatch')}</Alert>}
+        {pwdStatus === 'error'    && <Alert severity="error"   sx={{ fontSize: 12, py: 0.3, mt: 1.2 }}>{pwdError}</Alert>}
       </SectionCard>
 
       {/* Thème */}
-      <SectionCard title="Thème de l'application" icon={DesktopWindowsOutlinedIcon}>
+      <SectionCard title={t('settings.theme')} icon={DesktopWindowsOutlinedIcon}>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {THEME_OPTIONS.map(({ id, label, desc, Icon }) => {
             const active = (settings.theme || 'system') === id
@@ -374,15 +372,40 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
           })}
         </div>
         <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)' }}>
-          Le thème s'applique instantanément. Il sera sauvegardé avec les autres paramètres.
+          {t('settings.themeHint')}
+        </div>
+      </SectionCard>
+
+      {/* Langue */}
+      <SectionCard title={t('settings.language')} icon={LanguageOutlinedIcon}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {LANG_OPTIONS.map(({ id, label, flag }) => {
+            const active = currentLang === id
+            return (
+              <div key={id} onClick={() => onLangChange?.(id)} style={{
+                padding: '10px 16px', borderRadius: 6, cursor: 'pointer',
+                border: `1px solid ${active ? '#1976d2' : 'rgba(255,255,255,0.1)'}`,
+                background: active ? 'rgba(25,118,210,0.12)' : 'transparent',
+                color: active ? '#42a5f5' : 'var(--text-secondary)',
+                transition: 'all 0.12s', minWidth: 110, userSelect: 'none'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>{flag}</span>
+                  <span style={{ fontWeight: 600, fontSize: 13 }}>{label}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)' }}>
+          {t('settings.languageHint')}
         </div>
       </SectionCard>
 
       {/* OMSI */}
-      <SectionCard title="Répertoire OMSI 2 (global)" icon={FolderOutlinedIcon}>
+      <SectionCard title={t('settings.omsiDir')} icon={FolderOutlinedIcon}>
         <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10 }}>
-          Ce chemin est partagé par tous les projets. OMSI doit y être installé
-          (<code style={{ fontFamily: 'monospace', color: 'var(--text-primary)' }}>Omsi.exe</code> détecté).
+          {t('settings.omsiDirHint')}
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <TextField
@@ -399,26 +422,30 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
             onClick={selectOmsiFolder}
             disabled={omsiChecking}
           >
-            Parcourir &amp; Vérifier
+            {t('settings.omsiDirBrowse')}
           </Button>
         </div>
         {settings.omsiPath && (
           <div style={{ marginTop: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6,
             color: settings.omsiValid ? '#6ccb5f' : '#fc3d39' }}>
             {settings.omsiValid
-              ? <><CheckCircleOutlinedIcon sx={{ fontSize: 13 }} /> Omsi.exe détecté — chemin valide</>
-              : <><CancelOutlinedIcon sx={{ fontSize: 13 }} /> Omsi.exe introuvable — vérifiez le chemin</>
+              ? <><CheckCircleOutlinedIcon sx={{ fontSize: 13 }} /> {t('settings.omsiValid')}</>
+              : <><CancelOutlinedIcon sx={{ fontSize: 13 }} /> {t('settings.omsiInvalid')}</>
             }
           </div>
         )}
       </SectionCard>
 
       {/* Connexion SSH / SFTP */}
-      <SectionCard title="Connexion au serveur — SSH / SFTP" icon={CableOutlinedIcon}>
+      <SectionCard title={t('settings.ssh')} icon={CableOutlinedIcon}>
         {/* Paramètres constants */}
         <div style={{ display: 'flex', gap: 24, marginBottom: 16, padding: '8px 12px',
           background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 6 }}>
-          {[['Serveur', SFTP_HOST], ['Port', String(SFTP_PORT)], ['Utilisateur', SFTP_USER]].map(([k, v]) => (
+          {[
+            [t('settings.server'),  SFTP_HOST],
+            [t('settings.port'),    String(SFTP_PORT)],
+            [t('settings.sshUser'), SFTP_USER]
+          ].map(([k, v]) => (
             <div key={k}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>{k}</div>
               <code style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{v}</code>
@@ -428,7 +455,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
 
         {/* Clé SSH */}
         <div style={{ marginBottom: 18 }}>
-          <FL>Clé SSH Cinnamon</FL>
+          <FL>{t('settings.sshKey')}</FL>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <div style={{
               width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
@@ -436,13 +463,13 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
               boxShadow: sshKeyExists ? '0 0 6px #6ccb5f' : '0 0 6px #fc3d39'
             }} />
             <span style={{ fontSize: 13, color: sshKeyExists ? '#6ccb5f' : '#fc3d39', fontWeight: 500 }}>
-              {sshKeyExists ? 'Clé Cinnamon présente et active' : 'Aucune clé Cinnamon détectée'}
+              {sshKeyExists ? t('settings.sshKeyPresent') : t('settings.sshKeyMissing')}
             </span>
           </div>
 
           {sshKeyExists ? (
             <Button variant="outlined" size="small" startIcon={<KeyOutlinedIcon />} onClick={viewPublicKey}>
-              Voir ma clé publique Cinnamon
+              {t('settings.viewPublicKey')}
             </Button>
           ) : (
             <Button
@@ -452,7 +479,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
               onClick={generateKey}
               disabled={generatingKey}
             >
-              {generatingKey ? 'Génération en cours...' : 'Créer une clé SSH Cinnamon'}
+              {generatingKey ? t('settings.generatingKey') : t('settings.generateKey')}
             </Button>
           )}
 
@@ -461,18 +488,14 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
               background: 'rgba(108,203,95,0.07)', border: '1px solid rgba(108,203,95,0.2)',
               fontSize: 12, color: '#6ccb5f', display: 'flex', gap: 5, alignItems: 'flex-start' }}>
               <CheckCircleOutlinedIcon sx={{ fontSize: 13, flexShrink: 0, mt: 0.1 }} />
-              <span>
-                Paire de clés RSA 4096 bits générée avec succès.
-                Ajoutez la clé publique à <code style={{ fontFamily: 'monospace' }}>~/.ssh/authorized_keys</code> sur le serveur.
-              </span>
+              <span>{t('settings.keyGenSuccess')}</span>
             </div>
           )}
           {generateResult === 'error' && (
-            <Alert severity="error" sx={{ mt: 1, fontSize: 12, py: 0.3 }}>Erreur : {generateError}</Alert>
+            <Alert severity="error" sx={{ mt: 1, fontSize: 12, py: 0.3 }}>{generateError}</Alert>
           )}
           <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.55 }}>
-            La clé est stockée dans le dossier de données de Cinnamon.
-            Elle est unique à cette application et n'affecte pas vos autres clés SSH.
+            {t('settings.sshKeyStoredNote')}
           </div>
         </div>
 
@@ -483,7 +506,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
             startIcon={<SaveOutlinedIcon />}
             onClick={saveSettings}
           >
-            {saved ? 'Sauvegardé ✓' : 'Sauvegarder'}
+            {saved ? t('common.saved') : t('settings.saveAll')}
           </Button>
           <Button
             variant="outlined"
@@ -492,7 +515,7 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
             onClick={testConnection}
             disabled={!sshKeyExists || testing}
           >
-            {testing ? 'Test en cours...' : 'Tester la connexion'}
+            {testing ? t('settings.testingConnection') : t('settings.testConnection')}
           </Button>
         </div>
 
@@ -504,31 +527,27 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
             color: testResult.success ? '#6ccb5f' : '#fc3d39'
           }}>
             {testResult.success
-              ? '✓ Connexion SSH établie avec succès !'
-              : `✗ Échec : ${testResult.error}`
+              ? t('settings.testSuccess')
+              : t('settings.testFail', { error: testResult.error })
             }
           </div>
         )}
       </SectionCard>
 
       {/* Chemin distant */}
-      <SectionCard title="Chemin de sauvegarde distant" icon={InfoOutlinedIcon}>
+      <SectionCard title={t('settings.backupPath')} icon={InfoOutlinedIcon}>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-          Les archives ZIP sont déposées dans :{' '}
-          <code style={{ background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 4,
-            color: 'var(--text-primary)', fontFamily: "'Cascadia Code', 'Consolas', monospace", fontSize: 12 }}>
-            /srv/nerosy/backups/[NomDuProjet]/
-          </code>
+          {t('settings.backupPathDesc')}
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
-          Le dossier est créé automatiquement lors du premier transfert.
+          {t('settings.backupPathHint')}
         </div>
       </SectionCard>
 
       {/* Fichiers ignorés */}
-      <SectionCard title="Fichiers ignorés" icon={BlockOutlinedIcon}>
+      <SectionCard title={t('settings.ignoredFiles')} icon={BlockOutlinedIcon}>
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 10 }}>
-          Ces extensions sont exclues automatiquement lors de l'archivage :
+          {t('settings.ignoredFilesDesc')}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {['.blend', '.psd'].map(ext => (
@@ -540,20 +559,20 @@ export default function SettingsPage({ onThemeChange, user, onUserChange }) {
           ))}
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
-          Fichiers Blender et Photoshop exclus — réduisent la taille de l'archive.
+          {t('settings.ignoredFilesNote')}
         </div>
       </SectionCard>
 
       {/* À propos */}
-      <SectionCard title="À propos" icon={InfoOutlinedIcon}>
+      <SectionCard title={t('settings.about')} icon={InfoOutlinedIcon}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
           {[
-            ['Application', 'Cinnamon v1.1.0'],
-            ['Éditeur',     'NEROSY'],
-            ['Framework',   'Electron + React'],
-            ['UI',          'Material UI v5 (Dark)'],
-            ['Transfert',   'SSH2 / SFTP'],
-            ['Archivage',   'archiver (streams)']
+            [t('settings.aboutApplication'), 'Cinnamon v1.1.0'],
+            [t('settings.aboutEditor'),      'NEROSY'],
+            [t('settings.aboutFramework'),   'Electron + React'],
+            [t('settings.aboutUI'),          'Material UI v5'],
+            [t('settings.aboutTransfer'),    'SSH2 / SFTP'],
+            [t('settings.aboutArchiving'),   'archiver (streams)']
           ].map(([k, v]) => (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between',
               padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 13 }}>

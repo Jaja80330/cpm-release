@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import Alert from '@mui/material/Alert'
@@ -7,6 +8,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { changePassword } from '../services/authService'
 
 export default function ForceChangePasswordPage({ onDone }) {
+  const { t } = useTranslation()
   const [form,    setForm]    = useState({ current: '', newPwd: '', confirm: '' })
   const [saving,  setSaving]  = useState(false)
   const [status,  setStatus]  = useState(null) // null | 'mismatch' | 'short' | 'error'
@@ -20,6 +22,7 @@ export default function ForceChangePasswordPage({ onDone }) {
   const handleSubmit = async () => {
     if (form.newPwd !== form.confirm) { setStatus('mismatch'); return }
     if (form.newPwd.length < 6) { setStatus('short'); return }
+
     setSaving(true)
     setStatus(null)
     try {
@@ -28,8 +31,8 @@ export default function ForceChangePasswordPage({ onDone }) {
     } catch (err) {
       const code = err?.response?.status
       const msg  = code === 401
-        ? 'Mot de passe actuel incorrect.'
-        : (err?.response?.data?.message || err?.message || 'Erreur lors de la mise à jour.')
+        ? t('changePassword.wrongCurrent')
+        : (err?.response?.data?.message || err?.message || t('common.error'))
       setErrMsg(msg)
       setStatus('error')
     } finally {
@@ -68,11 +71,10 @@ export default function ForceChangePasswordPage({ onDone }) {
             <LockOutlinedIcon sx={{ fontSize: 24 }} />
           </div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#e8eaed', marginBottom: 6 }}>
-            Changement de mot de passe requis
+            {t('changePassword.title')}
           </div>
           <div style={{ fontSize: 12, color: '#9aa0a6', lineHeight: 1.55 }}>
-            Pour des raisons de sécurité, vous devez définir un nouveau mot de passe
-            avant d'accéder à l'application.
+            {t('changePassword.subtitle')}
           </div>
         </div>
 
@@ -80,24 +82,24 @@ export default function ForceChangePasswordPage({ onDone }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
           <TextField
             type="password"
-            label="Mot de passe temporaire (actuel)"
-            placeholder="••••••••"
+            label={t('changePassword.currentPassword')}
+            placeholder={t('common.placeholder_password')}
             value={form.current}
             onChange={handleChange('current')}
             fullWidth size="small"
           />
           <TextField
             type="password"
-            label="Nouveau mot de passe"
-            placeholder="••••••••"
+            label={t('changePassword.newPassword')}
+            placeholder={t('common.placeholder_password')}
             value={form.newPwd}
             onChange={handleChange('newPwd')}
             fullWidth size="small"
           />
           <TextField
             type="password"
-            label="Confirmer le nouveau mot de passe"
-            placeholder="••••••••"
+            label={t('changePassword.confirmPassword')}
+            placeholder={t('common.placeholder_password')}
             value={form.confirm}
             onChange={handleChange('confirm')}
             onKeyDown={e => e.key === 'Enter' && canSubmit && handleSubmit()}
@@ -107,12 +109,12 @@ export default function ForceChangePasswordPage({ onDone }) {
 
         {status === 'mismatch' && (
           <Alert severity="warning" sx={{ mb: 1.5, fontSize: 12, py: 0.5 }}>
-            Le nouveau mot de passe et la confirmation ne correspondent pas.
+            {t('changePassword.mismatch')}
           </Alert>
         )}
         {status === 'short' && (
           <Alert severity="warning" sx={{ mb: 1.5, fontSize: 12, py: 0.5 }}>
-            Le mot de passe doit contenir au moins 6 caractères.
+            {t('changePassword.tooShort')}
           </Alert>
         )}
         {status === 'error' && (
@@ -127,7 +129,7 @@ export default function ForceChangePasswordPage({ onDone }) {
           fullWidth
           sx={{ mt: 0.5 }}
         >
-          Définir le nouveau mot de passe
+          {t('changePassword.submit')}
         </Button>
       </div>
     </div>

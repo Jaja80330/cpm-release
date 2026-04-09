@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import Checkbox from '@mui/material/Checkbox'
@@ -12,7 +13,8 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { login } from '../services/authService'
 
-export default function LoginView({ onLoginSuccess }) {
+export default function LoginView({ onLoginSuccess, isDark = true }) {
+  const { t } = useTranslation()
   const [email,         setEmail]         = useState('')
   const [password,      setPassword]      = useState('')
   const [showPwd,       setShowPwd]       = useState(false)
@@ -29,13 +31,13 @@ export default function LoginView({ onLoginSuccess }) {
     try {
       const data = await login(email.trim(), password)
       const token = data?.token || data?.access_token || data?.accessToken
-      if (!token) throw new Error('Aucun token reçu du serveur.')
+      if (!token) throw new Error(t('auth.noToken'))
       onLoginSuccess(token, data, staySignedIn)
     } catch (err) {
       const msg = err?.response?.data?.message
         || err?.response?.data?.error
         || err?.message
-        || 'Erreur de connexion.'
+        || t('auth.defaultError')
       setError(msg)
     } finally {
       setLoading(false)
@@ -57,10 +59,10 @@ export default function LoginView({ onLoginSuccess }) {
       backgroundRepeat: 'no-repeat',
       WebkitAppRegion: 'drag'
     }}>
-      {/* Overlay sombre */}
+      {/* Overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'rgba(0,0,0,0.55)',
+        background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.45)',
         pointerEvents: 'none',
       }} />
 
@@ -68,11 +70,11 @@ export default function LoginView({ onLoginSuccess }) {
       <div style={{
         position: 'relative',
         width: 380,
-        background: 'rgba(15,19,23,0.70)',
-        border: '1px solid rgba(255,255,255,0.10)',
+        background: isDark ? 'rgba(15,19,23,0.70)' : 'rgba(255,255,255,0.85)',
+        border: isDark ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(0,0,0,0.12)',
         borderRadius: 16,
         padding: '36px 32px 28px',
-        boxShadow: '0 16px 56px rgba(0,0,0,0.55)',
+        boxShadow: isDark ? '0 16px 56px rgba(0,0,0,0.55)' : '0 16px 56px rgba(0,0,0,0.15)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         WebkitAppRegion: 'no-drag'
@@ -84,8 +86,8 @@ export default function LoginView({ onLoginSuccess }) {
             alt="Cinnamon"
             style={{ width: 140, marginBottom: 16, userSelect: 'none', pointerEvents: 'none' }}
           />
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
-            NEROSY Asset Manager · Connexion
+          <div style={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)' }}>
+            {t('auth.subtitle')}
           </div>
         </div>
 
@@ -94,29 +96,29 @@ export default function LoginView({ onLoginSuccess }) {
           <TextField
             id="cin-email"
             type="email"
-            label="Adresse e-mail"
-            placeholder="vous@exemple.com"
+            label={t('auth.email')}
+            placeholder={t('auth.emailPlaceholder')}
             value={email}
             onChange={e => { setEmail(e.target.value); setError(null) }}
             disabled={loading}
             autoFocus
             fullWidth
             size="small"
-            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255,255,255,0.05)' } }}
+            sx={{ '& .MuiOutlinedInput-root': { background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' } }}
           />
 
           <TextField
             id="cin-password"
             type={showPwd ? 'text' : 'password'}
-            label="Mot de passe"
-            placeholder="••••••••"
+            label={t('auth.password')}
+            placeholder={t('common.placeholder_password')}
             value={password}
             onChange={e => { setPassword(e.target.value); setError(null) }}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             disabled={loading}
             fullWidth
             size="small"
-            sx={{ '& .MuiOutlinedInput-root': { background: 'rgba(255,255,255,0.05)' } }}
+            sx={{ '& .MuiOutlinedInput-root': { background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' } }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -145,7 +147,7 @@ export default function LoginView({ onLoginSuccess }) {
                 size="small"
               />
             }
-            label={<span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Rester connecté</span>}
+            label={<span style={{ fontSize: 12, color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)' }}>{t('auth.staySignedIn')}</span>}
             style={{ marginTop: -4, marginBottom: -4 }}
           />
 
@@ -161,16 +163,16 @@ export default function LoginView({ onLoginSuccess }) {
             fullWidth
             sx={{ height: 38, fontWeight: 600, mt: 0.5 }}
           >
-            {loading ? 'Connexion…' : 'Se connecter'}
+            {loading ? t('auth.signingIn') : t('auth.signIn')}
           </Button>
         </form>
 
         {/* Footer */}
         <div style={{
           marginTop: 20, textAlign: 'center',
-          fontSize: 10, color: 'rgba(255,255,255,0.25)'
+          fontSize: 10, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.35)'
         }}>
-          Accès réservé aux membres NEROSY
+          {t('auth.reserved')}
         </div>
       </div>
 
@@ -178,10 +180,10 @@ export default function LoginView({ onLoginSuccess }) {
       <div style={{
         position: 'relative',
         marginTop: 16, fontSize: 10,
-        color: 'rgba(255,255,255,0.3)',
+        color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)',
         WebkitAppRegion: 'no-drag'
       }}>
-        Cinnamon v1.1.0
+        {t('auth.version')}
       </div>
     </div>
   )
