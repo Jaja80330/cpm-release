@@ -53,8 +53,9 @@
     "signingIn": "Signing in…",
     "noToken": "No token received from server.",
     "defaultError": "Login error.",
+    "accountBlocked": "Your account has been blocked by an administrator. Contact NEROSY support.",
     "reserved": "Access restricted to NEROSY members",
-    "version": "Cinnamon v1.1.0"
+    "version": "Cinnamon v26.4.0"
   },
   "home": {
     "title": "Dashboard",
@@ -402,7 +403,15 @@
     "validationFirstName": "First name is required.",
     "validationLastName": "Last name is required.",
     "validationEmail": "Email address is required.",
-    "createError": "Error creating user."
+    "createError": "Error creating user.",
+    "resetPasswordTooltip": "Reset password",
+    "resetPasswordSuccess": "Password reset",
+    "resetPasswordMsg": "A new temporary password has been generated for {{name}}.",
+    "resetError": "Error resetting password.",
+    "blockTooltip": "Block account",
+    "unblockTooltip": "Unblock account",
+    "blocked": "Blocked",
+    "blockError": "Error updating account status."
   },
   "changePassword": {
     "title": "Password change required",

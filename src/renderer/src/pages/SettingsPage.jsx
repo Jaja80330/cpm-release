@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
@@ -11,6 +11,10 @@ import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import CableOutlinedIcon from '@mui/icons-material/CableOutlined'
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
+import SystemUpdateAltOutlinedIcon from '@mui/icons-material/SystemUpdateAltOutlined'
+import DownloadingOutlinedIcon from '@mui/icons-material/DownloadingOutlined'
+import NewReleasesOutlinedIcon from '@mui/icons-material/NewReleasesOutlined'
+import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined'
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined'
@@ -25,6 +29,124 @@ import { updateProfile, changePassword } from '../services/authService'
 const SFTP_HOST = '158.220.90.1'
 const SFTP_PORT = 22
 const SFTP_USER = 'root'
+
+// ── Modale de mise à jour ─────────────────────────────────────────────────
+function UpdateModal({ state, version, percent, error, onClose }) {
+  const busy = state === 'checking' || state === 'downloading' || state === 'downloaded'
+
+  const STATUS = {
+    checking:   { color: '#60cdff', label: 'Recherche de mises à jour…'        },
+    downloading:{ color: '#60cdff', label: 'Téléchargement en cours…'          },
+    downloaded: { color: '#6ccb5f', label: 'Installation en cours…'            },
+    'up-to-date':{ color: '#6ccb5f', label: 'Votre application est à jour !'   },
+    error:      { color: '#fc3d39', label: 'Une erreur est survenue'            },
+    idle:       { color: 'var(--text-muted)', label: ''                         },
+  }
+
+  const { color, label } = STATUS[state] || STATUS.idle
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
+    }}
+      onClick={e => { if (!busy && e.target === e.currentTarget) onClose() }}>
+
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-base)',
+        borderRadius: 10, width: 420,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.65)',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden'
+      }}>
+
+        {/* En-tête */}
+        <div style={{
+          padding: '14px 18px', borderBottom: '1px solid var(--border-subtle)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8,
+            fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
+            <SystemUpdateAltOutlinedIcon sx={{ fontSize: 15, color: '#60cdff' }} />
+            Mises à jour
+          </div>
+          <button onClick={onClose} disabled={busy} style={{
+            background: 'none', border: 'none', color: busy ? 'var(--text-muted)' : 'var(--text-secondary)',
+            cursor: busy ? 'not-allowed' : 'pointer', fontSize: 16,
+            padding: '2px 6px', borderRadius: 4, opacity: busy ? 0.4 : 1
+          }}>✕</button>
+        </div>
+
+        {/* Corps */}
+        <div style={{ padding: '24px 20px' }}>
+
+          {/* Icône centrale */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
+            {(state === 'checking') && (
+              <CircularProgress size={48} thickness={2.5} sx={{ color: '#60cdff' }} />
+            )}
+            {state === 'downloading' && (
+              <DownloadingOutlinedIcon sx={{ fontSize: 48, color: '#60cdff' }} />
+            )}
+            {state === 'downloaded' && (
+              <CheckCircleOutlinedIcon sx={{ fontSize: 48, color: '#6ccb5f' }} />
+            )}
+            {state === 'up-to-date' && (
+              <CheckCircleOutlinedIcon sx={{ fontSize: 48, color: '#6ccb5f' }} />
+            )}
+            {state === 'error' && (
+              <ErrorOutlineOutlinedIcon sx={{ fontSize: 48, color: '#fc3d39' }} />
+            )}
+          </div>
+
+          {/* Label principal */}
+          <div style={{
+            textAlign: 'center', fontSize: 15, fontWeight: 600,
+            color, marginBottom: 6
+          }}>
+            {label}
+          </div>
+
+          {/* Sous-titre contextuel */}
+          <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', marginBottom: 20, minHeight: 18 }}>
+            {state === 'checking'    && 'Connexion au serveur de mises à jour…'}
+            {state === 'up-to-date' && version && `Vous utilisez la dernière version (${version})`}
+            {state === 'downloading' && version && `Version ${version} disponible`}
+            {state === 'downloaded'  && 'L\'application va redémarrer automatiquement'}
+            {state === 'error'       && error}
+          </div>
+
+          {/* Barre de progression (visible uniquement en téléchargement) */}
+          <div style={{
+            height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2,
+            overflow: 'hidden', marginBottom: 8,
+            opacity: state === 'downloading' ? 1 : 0,
+            transition: 'opacity 0.2s'
+          }}>
+            <div style={{
+              height: '100%', borderRadius: 2, background: '#60cdff',
+              width: `${percent}%`, transition: 'width 0.3s ease'
+            }} />
+          </div>
+          {state === 'downloading' && (
+            <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--text-muted)' }}>
+              {Math.round(percent)} %
+            </div>
+          )}
+        </div>
+
+        {/* Pied */}
+        <div style={{
+          padding: '10px 18px', borderTop: '1px solid var(--border-subtle)',
+          display: 'flex', justifyContent: 'flex-end'
+        }}>
+          <Button variant="outlined" size="small" onClick={onClose} disabled={busy}>
+            {state === 'up-to-date' || state === 'error' ? 'Fermer' : 'Annuler'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function SectionCard({ title, icon: Icon, children }) {
   return (
@@ -87,8 +209,41 @@ export default function SettingsPage({ onThemeChange, onLangChange, user, onUser
   const [pubKeyModal,    setPubKeyModal]    = useState(false)
   const [pubKeyContent,  setPubKeyContent]  = useState('')
   const [copySuccess,    setCopySuccess]    = useState(false)
+  const [appVersion,     setAppVersion]     = useState('…')
+
+  // ── Mise à jour ───────────────────────────────────────────────────────────
+  // state: idle | checking | downloading | downloaded | up-to-date | error
+  const [updateState,   setUpdateState]   = useState('idle')
+  const [updateVersion, setUpdateVersion] = useState(null)
+  const [updatePercent, setUpdatePercent] = useState(0)
+  const [updateError,   setUpdateError]   = useState('')
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
 
   useEffect(() => {
+    window.api.updater.onStatus(({ state, version, percent, error }) => {
+      setUpdateState(state)
+      if (version !== undefined) setUpdateVersion(version)
+      if (percent !== undefined) setUpdatePercent(percent)
+      if (error   !== undefined) setUpdateError(error)
+    })
+    return () => window.api.updater.offStatus()
+  }, [])
+
+  const checkForUpdates = useCallback(async () => {
+    setUpdateState('checking')
+    setUpdateVersion(null)
+    setUpdatePercent(0)
+    setUpdateError('')
+    setShowUpdateModal(true)
+    const result = await window.api.updater.check()
+    if (!result.success) {
+      setUpdateState('error')
+      setUpdateError(result.error || 'Erreur inconnue')
+    }
+  }, [])
+
+  useEffect(() => {
+    window.api.app.getVersion().then(setAppVersion)
     window.api.settings.get().then(s => {
       if (s && Object.keys(s).length > 0) {
         setSettings({ omsiPath: s.omsiPath || '', omsiValid: s.omsiValid || false, theme: s.theme || 'system' })
@@ -231,6 +386,17 @@ export default function SettingsPage({ onThemeChange, onLangChange, user, onUser
         <div className="page-title">{t('settings.title')}</div>
         <div className="page-subtitle">{t('settings.subtitle')}</div>
       </div>
+
+      {/* Modale mise à jour */}
+      {showUpdateModal && (
+        <UpdateModal
+          state={updateState}
+          version={updateVersion}
+          percent={updatePercent}
+          error={updateError}
+          onClose={() => setShowUpdateModal(false)}
+        />
+      )}
 
       {/* Modale clé publique */}
       {pubKeyModal && (
@@ -565,22 +731,37 @@ export default function SettingsPage({ onThemeChange, onLangChange, user, onUser
 
       {/* À propos */}
       <SectionCard title={t('settings.about')} icon={InfoOutlinedIcon}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+        <div style={{ marginBottom: 16 }}>
           {[
-            [t('settings.aboutApplication'), 'Cinnamon v1.1.0'],
+            [t('settings.aboutApplication'), `Cinnamon v${appVersion}`],
             [t('settings.aboutEditor'),      'NEROSY'],
-            [t('settings.aboutFramework'),   'Electron + React'],
-            [t('settings.aboutUI'),          'Material UI v5'],
+            [t('settings.aboutFramework'),   'Electron 29 + React 18'],
+            [t('settings.aboutUI'),          'Material UI v7'],
             [t('settings.aboutTransfer'),    'SSH2 / SFTP'],
             [t('settings.aboutArchiving'),   'archiver (streams)']
-          ].map(([k, v]) => (
-            <div key={k} style={{ display: 'flex', justifyContent: 'space-between',
-              padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 13 }}>
+          ].map(([k, v], i, arr) => (
+            <div key={k} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '8px 0',
+              borderBottom: i < arr.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              fontSize: 13
+            }}>
               <span style={{ color: 'var(--text-muted)' }}>{k}</span>
-              <span style={{ color: 'var(--text-secondary)' }}>{v}</span>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{v}</span>
             </div>
           ))}
         </div>
+
+        {/* Bouton mise à jour */}
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<SystemUpdateAltOutlinedIcon />}
+          onClick={checkForUpdates}
+          disabled={updateState === 'checking' || updateState === 'downloading' || updateState === 'downloaded'}
+        >
+          Rechercher des mises à jour
+        </Button>
       </SectionCard>
     </div>
   )

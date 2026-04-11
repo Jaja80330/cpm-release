@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { autoUpdater } from 'electron-updater'
 import Store from 'electron-store'
 import { existsSync, appendFileSync, createWriteStream, readFileSync, watch as fsWatch } from 'fs'
 import { readdir, mkdir, readFile, writeFile, unlink, stat, rename, chmod } from 'fs/promises'
@@ -72,7 +73,11 @@ function createSplashWindow() {
     skipTaskbar:     true,
     backgroundColor: '#1a1a1a',
     show:            false,
-    webPreferences:  { nodeIntegration: false, contextIsolation: true }
+    webPreferences:  {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: nativeAsset('preload-splash.js')
+    }
   })
 
   splash.loadFile(splashHtmlPath(), {
@@ -120,7 +125,7 @@ function createWindow() {
     }
   })
 
-  mainWindow.on('ready-to-show', () => mainWindow.show())
+  // Le show() est géré par fadeSplash — on ne montre pas ici
   mainWindow.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' } })
 
   // DevTools automatiques + récupération crash renderer en mode dev
@@ -151,28 +156,150 @@ function createWindow() {
 app.commandLine.appendSwitch('disable-features', 'RendererCodeIntegrity,OutOfBlinkCors')
 app.commandLine.appendSwitch('no-sandbox')
 
+// ── Auto-updater : configuration ────────────────────────────────────────────
+autoUpdater.autoDownload    = false  // on déclenche le DL manuellement
+autoUpdater.autoInstallOnAppQuit = false
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.nerosy.cinnamon')
   app.on('browser-window-created', (_, w) => optimizer.watchWindowShortcuts(w))
 
   // ── Splash screen ────────────────────────────────────────────────────────
-  const splash     = createSplashWindow()
-  const splashStart = Date.now()
-  const MIN_SPLASH  = 2500 // ms minimum d'affichage
+  const splash = createSplashWindow()
 
-  const win = createWindow()
+  // Helper pour envoyer un statut au splash
+  function sendSplashStatus(text, progress) {
+    if (!splash.isDestroyed()) {
+      splash.webContents.send('splash:status', { text, progress })
+    }
+  }
 
-  // Dès que l'app est prête, on attend le minimum puis on fond enchaîné
-  win.once('ready-to-show', () => {
-    const elapsed = Date.now() - splashStart
-    const delay   = Math.max(0, MIN_SPLASH - elapsed)
-    setTimeout(() => fadeSplash(splash, win), delay)
+  // Lance la vérification des mises à jour puis ouvre la fenêtre principale
+  function launchApp() {
+    const win = createWindow()
+
+    win.once('ready-to-show', () => fadeSplash(splash, win))
+
+    // Filet de sécurité
+    setTimeout(() => {
+      if (!win.isVisible()) fadeSplash(splash, win)
+    }, 8000)
+
+    // Process monitor OMSI (démarré ici car win n'existe pas encore au chargement)
+    let processMonitorInterval = null
+    win.once('ready-to-show', () => {
+      processMonitorInterval = setInterval(async () => {
+        if (win.isDestroyed()) { clearInterval(processMonitorInterval); return }
+        const running = await isOmsiRunning()
+        try { win.webContents.send('omsi:processStatus', { running }) } catch { /* fenêtre détruite */ }
+      }, 2500)
+    })
+    win.on('closed', () => { clearInterval(processMonitorInterval) })
+
+    return win
+  }
+
+  // ── Orchestration auto-update ────────────────────────────────────────────
+  let win = null
+
+  // Helper : envoie un événement au renderer si la fenêtre principale est ouverte
+  function sendUpdaterStatus(payload) {
+    if (win && !win.isDestroyed()) win.webContents.send('updater:status', payload)
+  }
+
+  autoUpdater.on('checking-for-update', () => {
+    sendSplashStatus('Recherche de mises à jour…')
+    sendUpdaterStatus({ state: 'checking' })
   })
 
-  // Filet de sécurité : si ready-to-show ne se déclenche pas (rare)
-  setTimeout(() => {
-    if (!win.isVisible()) fadeSplash(splash, win)
-  }, MIN_SPLASH + 4000)
+  autoUpdater.on('update-available', (info) => {
+    sendSplashStatus('Téléchargement de la mise à jour…', 0)
+    sendUpdaterStatus({ state: 'downloading', version: info.version, percent: 0 })
+    autoUpdater.downloadUpdate()
+  })
+
+  autoUpdater.on('download-progress', ({ percent }) => {
+    sendSplashStatus('Téléchargement de la mise à jour…', percent)
+    sendUpdaterStatus({ state: 'downloading', percent })
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    sendSplashStatus('Installation…', 100)
+    sendUpdaterStatus({ state: 'downloaded', version: info.version })
+    setTimeout(() => autoUpdater.quitAndInstall(true, true), 1500)
+  })
+
+  autoUpdater.on('update-not-available', (info) => {
+    clearTimeout(updateTimeout)
+    sendUpdaterStatus({ state: 'up-to-date', version: info.version })
+    if (!win) win = launchApp()
+  })
+
+  autoUpdater.on('error', (err) => {
+    debugLog(`[autoUpdater] Erreur : ${err?.message}`)
+    clearTimeout(updateTimeout)
+    sendUpdaterStatus({ state: 'error', error: err?.message })
+    if (!win) win = launchApp()
+  })
+
+  // IPC : vérification manuelle depuis la page Paramètres
+  ipcMain.handle('updater:check', async () => {
+    // En mode dev, electron-updater saute silencieusement sans émettre d'événement
+    if (is.dev) {
+      sendUpdaterStatus({ state: 'up-to-date', version: app.getVersion() })
+      return { success: true }
+    }
+
+    // Timeout de sécurité : si aucun événement n'arrive dans les 20s → erreur
+    let settled = false
+    const guard = setTimeout(() => {
+      if (!settled) {
+        settled = true
+        sendUpdaterStatus({ state: 'error', error: 'Le serveur de mises à jour ne répond pas.' })
+      }
+    }, 20000)
+
+    const settle = () => {
+      if (!settled) { settled = true; clearTimeout(guard) }
+    }
+    autoUpdater.once('update-available',    settle)
+    autoUpdater.once('update-not-available', settle)
+    autoUpdater.once('error',               settle)
+
+    try {
+      await autoUpdater.checkForUpdates()
+      return { success: true }
+    } catch (err) {
+      settle()
+      debugLog(`[autoUpdater] Vérification manuelle échouée : ${err?.message}`)
+      return { success: false, error: err?.message }
+    }
+  })
+
+  // Fallback de sécurité : si aucun événement updater ne déclenche launchApp
+  // (ex. : mode dev, serveur lent, event manqué)
+  const updateTimeout = setTimeout(() => {
+    if (!win) {
+      debugLog('[autoUpdater] Timeout — lancement sans mise à jour')
+      win = launchApp()
+    }
+  }, 12000)
+
+  // Lancer la vérification dès que le splash est visible
+  splash.once('ready-to-show', () => {
+    // En mode dev, electron-updater saute la vérification sans émettre d'événement
+    if (is.dev) {
+      clearTimeout(updateTimeout)
+      win = launchApp()
+      return
+    }
+
+    autoUpdater.checkForUpdates().catch((err) => {
+      debugLog(`[autoUpdater] checkForUpdates échoué : ${err?.message}`)
+      clearTimeout(updateTimeout)
+      if (!win) win = launchApp()
+    })
+  })
 
   // Window controls
   ipcMain.on('window:minimize', () => win.minimize())
@@ -182,11 +309,14 @@ app.whenReady().then(() => {
   // Native theme
   ipcMain.handle('nativeTheme:isDark', () => nativeTheme.shouldUseDarkColors)
   nativeTheme.on('updated', () => {
-    win.webContents.send('nativeTheme:changed', nativeTheme.shouldUseDarkColors)
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('nativeTheme:changed', nativeTheme.shouldUseDarkColors)
+    }
   })
 
 
   // Store
+  ipcMain.handle('app:getVersion', () => app.getVersion())
   ipcMain.handle('store:get', (_, key) => store.get(key))
   ipcMain.handle('store:set', (_, key, value) => store.set(key, value))
   ipcMain.handle('store:delete', (_, key) => store.delete(key))
@@ -598,6 +728,35 @@ app.whenReady().then(() => {
     }
   })
 
+  // ── Helper : résolution des chemins de déploiement ──────────────────────────
+  // Priorité : champ projet > store local > dérivation automatique depuis omsiPath + bus_path
+  function resolveDeployPaths(project, settings) {
+    const omsiPath  = settings?.omsiPath || store.get('settings')?.omsiPath || null
+    const busPath   = project.bus_path   || ''
+    const stored    = (store.get('projectPaths') || {})[project.id] || {}
+
+    const vehicles = project.vehicles || stored.vehiclesPath
+      || (omsiPath && busPath ? path.join(omsiPath, 'Vehicles', busPath) : null)
+    const addons   = project.addons   || stored.addonsPath
+      || (omsiPath && busPath ? path.join(omsiPath, 'Addons',   busPath) : null)
+    const sounds   = project.sounds   || stored.soundsPath
+      || (omsiPath && busPath ? path.join(omsiPath, 'Sounds',   busPath) : null)
+    const fonts    = project.fonts?.length ? project.fonts : (stored.fonts || [])
+    const fontsDir = (fonts.length > 0 ? path.dirname(fonts[0]) : null)
+      || (omsiPath ? path.join(omsiPath, 'Fonts') : null)
+
+    // Persiste les chemins auto-dérivés dans le store pour les prochains pulls
+    if (omsiPath && busPath && (!stored.vehiclesPath)) {
+      const allPaths = store.get('projectPaths') || {}
+      store.set('projectPaths', {
+        ...allPaths,
+        [project.id]: { ...stored, vehiclesPath: vehicles, addonsPath: addons, soundsPath: sounds }
+      })
+    }
+
+    return { vehicles, addons, sounds, fontsDir }
+  }
+
   // ── PULL : installer une version spécifique ───────────────────────────────
   ipcMain.handle('pull:install', async (event, project, settings, zipName, versionMeta = {}) => {
     const logs = []
@@ -646,13 +805,17 @@ app.whenReady().then(() => {
       const zip = await JSZip.loadAsync(zipData)
       const entries = Object.entries(zip.files).filter(([, f]) => !f.dir)
 
-      const fontsDir = project.fonts?.length > 0 ? path.dirname(project.fonts[0]) : null
-      const deployMap = {
-        vehicles: project.vehicles,
-        addons:   project.addons,
-        sounds:   project.sounds,
-        fonts:    fontsDir
+      // ── Résolution des chemins locaux ────────────────────────────────────────
+      const { vehicles, addons, sounds, fontsDir } = resolveDeployPaths(project, settings)
+
+      log(`Chemins : vehicles=${vehicles || '—'} addons=${addons || '—'} sounds=${sounds || '—'} fonts=${fontsDir || '—'}`)
+
+      if (!vehicles && !addons && !sounds) {
+        log('ERREUR : Impossible de résoudre les chemins locaux.')
+        return { success: false, logs, error: 'Impossible de résoudre les chemins locaux. Vérifiez que le chemin OMSI est configuré dans les Paramètres.' }
       }
+
+      const deployMap = { vehicles, addons, sounds, fonts: fontsDir }
 
       let deployed = 0, skipped = 0
       const deployedPaths = []
@@ -758,15 +921,17 @@ app.whenReady().then(() => {
       const zip = await JSZip.loadAsync(zipData)
       const entries = Object.entries(zip.files).filter(([, f]) => !f.dir)
 
-      // Déterminer la racine des fonts (dossier du premier .oft)
-      const fontsDir = project.fonts?.length > 0 ? path.dirname(project.fonts[0]) : null
+      // ── Résolution des chemins locaux ────────────────────────────────────────
+      const { vehicles, addons, sounds, fontsDir } = resolveDeployPaths(project, settings)
 
-      const deployMap = {
-        vehicles: project.vehicles,
-        addons:   project.addons,
-        sounds:   project.sounds,
-        fonts:    fontsDir
+      log(`Chemins : vehicles=${vehicles || '—'} addons=${addons || '—'} sounds=${sounds || '—'} fonts=${fontsDir || '—'}`)
+
+      if (!vehicles && !addons && !sounds) {
+        log('ERREUR : Impossible de résoudre les chemins locaux.')
+        return { success: false, logs, error: 'Impossible de résoudre les chemins locaux. Vérifiez que le chemin OMSI est configuré dans les Paramètres.' }
       }
+
+      const deployMap = { vehicles, addons, sounds, fonts: fontsDir }
 
       let deployed = 0, skipped = 0
       const deployedPaths = []
@@ -999,16 +1164,7 @@ app.whenReady().then(() => {
     })
   }
 
-  // Intervalle de monitoring — démarre quand la fenêtre est prête
-  let processMonitorInterval = null
-  win.once('ready-to-show', () => {
-    processMonitorInterval = setInterval(async () => {
-      if (win.isDestroyed()) { clearInterval(processMonitorInterval); return }
-      const running = await isOmsiRunning()
-      try { win.webContents.send('omsi:processStatus', { running }) } catch { /* fenêtre détruite */ }
-    }, 2500)
-  })
-  win.on('closed', () => { clearInterval(processMonitorInterval) })
+  // Le process monitor OMSI est démarré dans launchApp() après création de win
 
   ipcMain.handle('omsi:getProcessStatus', async () => {
     const running = await isOmsiRunning()
@@ -1750,6 +1906,73 @@ app.whenReady().then(() => {
       else errors.push({ path: filePaths[i], error: r.reason?.message })
     })
     return { success: errors.length === 0, deleted, errors }
+  })
+
+  // ── Constfile Parser ────────────────────────────────────────────────────────
+  ipcMain.handle('constfile:parse', async (_, filePath) => {
+    try {
+      const buffer  = await readFile(filePath)
+      const content = iconv.decode(buffer, 'win1252')
+      const lines   = content.split(/\r?\n/).map(l => l.trim())
+      const entries = []
+      let id = 0
+
+      for (let i = 0; i < lines.length; i++) {
+        const lc = lines[i].toLowerCase()
+        if (lc === '[const]') {
+          const name  = lines[i + 1] ?? ''
+          const value = lines[i + 2] ?? ''
+          if (name) entries.push({ id: String(id++), type: 'const', name, value })
+          i += 2
+        } else if (lc === '[newcurve]') {
+          const name   = lines[i + 1] ?? ''
+          const points = []
+          let j = i + 2
+          while (j < lines.length) {
+            const jlc = lines[j].toLowerCase()
+            if (jlc === '[const]' || jlc === '[newcurve]') break
+            if (jlc === '[pnt]') {
+              const x = parseFloat((lines[j + 1] ?? '').replace(',', '.'))
+              const y = parseFloat((lines[j + 2] ?? '').replace(',', '.'))
+              if (!isNaN(x) && !isNaN(y)) points.push({ x, y })
+              j += 3
+            } else { j++ }
+          }
+          if (name) entries.push({ id: String(id++), type: 'curve', name, points })
+          i = j - 1
+        }
+      }
+
+      if (entries.length === 0) {
+        return { success: false, error: 'Fichier non-conforme ou corrompu' }
+      }
+      return { success: true, entries }
+    } catch (err) {
+      return { success: false, error: String(err.message) }
+    }
+  })
+
+  ipcMain.handle('constfile:save', async (_, filePath, rawEntries) => {
+    try {
+      // Sérialisation stricte : on ne transfère que des primitives
+      const lines = []
+      for (const entry of rawEntries) {
+        if (entry.type === 'const') {
+          lines.push('[const]', String(entry.name ?? ''), String(entry.value ?? ''), '')
+        } else if (entry.type === 'curve') {
+          lines.push('[newcurve]', String(entry.name ?? ''))
+          for (const pt of (entry.points ?? [])) {
+            lines.push('[pnt]', String(pt.x), String(pt.y))
+          }
+          lines.push('')
+        }
+      }
+      const content = lines.join('\r\n')
+      await writeFile(filePath, iconv.encode(content, 'win1252'))
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: String(err.message) }
+    }
   })
 
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })

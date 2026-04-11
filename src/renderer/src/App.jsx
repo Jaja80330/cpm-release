@@ -14,7 +14,7 @@ import LoginView from './pages/LoginView'
 import UsersPage from './pages/UsersPage'
 import ToolsPage from './pages/ToolsPage'
 import ForceChangePasswordPage from './pages/ForceChangePasswordPage'
-import { setAuthToken, getProfile } from './services/authService'
+import { setAuthToken, getProfile, registerForceLogout } from './services/authService'
 
 const TOKEN_KEY   = 'authToken'
 const PROFILE_KEY = 'userProfile'
@@ -38,9 +38,10 @@ export default function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // Auth
-  const [token,       setToken]       = useState(null)
-  const [user,        setUser]        = useState(null)
-  const [authLoading, setAuthLoading] = useState(true)
+  const [token,         setToken]         = useState(null)
+  const [user,          setUser]          = useState(null)
+  const [authLoading,   setAuthLoading]   = useState(true)
+  const [blockedReason, setBlockedReason] = useState(false)
 
   // Thème : 'system' | 'dark' | 'light'
   // Lecture synchrone depuis localStorage pour éviter le flash au démarrage
@@ -55,6 +56,11 @@ export default function App() {
   const [lang, setLang] = useState(
     () => localStorage.getItem('cinnamon-lang') || 'fr'
   )
+
+  // ── Déconnexion forcée (compte bloqué) ─────────────────────────────────
+  useEffect(() => {
+    registerForceLogout(() => handleLogout('blocked'))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Initialisation ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -126,7 +132,7 @@ export default function App() {
     setCurrentPage('home')
   }
 
-  const handleLogout = async () => {
+  const handleLogout = async (reason = null) => {
     await Promise.all([
       window.api.store.delete(TOKEN_KEY),
       window.api.store.delete(PROFILE_KEY)
@@ -135,6 +141,7 @@ export default function App() {
     setToken(null)
     setUser(null)
     setCurrentPage('home')
+    if (reason === 'blocked') setBlockedReason(true)
   }
 
   // ── Navigation ──────────────────────────────────────────────────────────
@@ -178,7 +185,11 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <TitleBar />
-        <LoginView onLoginSuccess={handleLoginSuccess} isDark={isDark} />
+        <LoginView
+          onLoginSuccess={(token, data, stay) => { setBlockedReason(false); handleLoginSuccess(token, data, stay) }}
+          isDark={isDark}
+          blockedReason={blockedReason}
+        />
       </ThemeProvider>
     )
   }

@@ -53,8 +53,9 @@
     "signingIn": "Anmelden…",
     "noToken": "Kein Token vom Server erhalten.",
     "defaultError": "Anmeldefehler.",
+    "accountBlocked": "Ihr Konto wurde von einem Administrator gesperrt. Kontaktieren Sie den NEROSY-Support.",
     "reserved": "Zugang nur für NEROSY-Mitglieder",
-    "version": "Cinnamon v1.1.0"
+    "version": "Cinnamon v26.4.0"
   },
   "home": {
     "title": "Dashboard",
@@ -402,7 +403,15 @@
     "validationFirstName": "Vorname ist erforderlich.",
     "validationLastName": "Nachname ist erforderlich.",
     "validationEmail": "E-Mail-Adresse ist erforderlich.",
-    "createError": "Fehler beim Erstellen."
+    "createError": "Fehler beim Erstellen.",
+    "resetPasswordTooltip": "Passwort zurücksetzen",
+    "resetPasswordSuccess": "Passwort zurückgesetzt",
+    "resetPasswordMsg": "Ein neues temporäres Passwort wurde für {{name}} generiert.",
+    "resetError": "Fehler beim Zurücksetzen des Passworts.",
+    "blockTooltip": "Konto sperren",
+    "unblockTooltip": "Konto entsperren",
+    "blocked": "Gesperrt",
+    "blockError": "Fehler beim Ändern des Kontostatus."
   },
   "changePassword": {
     "title": "Passwortänderung erforderlich",

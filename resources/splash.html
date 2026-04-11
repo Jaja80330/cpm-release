@@ -23,8 +23,7 @@
       background-repeat: no-repeat;
     }
 
-    /* Spinner positionné dans le tiers inférieur de l'image,
-       entre le bas du logo Cinnamon et le bas de la fenêtre */
+    /* Zone spinner + texte + barre de progression */
     #spinner-wrap {
       position: absolute;
       bottom: 14%;
@@ -34,6 +33,7 @@
       flex-direction: column;
       align-items: center;
       gap: 10px;
+      width: 220px;
     }
 
     /* Cercle de progression SVG — arc Fluent Blue */
@@ -52,6 +52,26 @@
       font-size: 12px;
       color: rgba(255, 255, 255, 0.55);
       letter-spacing: 0.04em;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Barre de progression — masquée par défaut */
+    #progress-track {
+      display: none;
+      width: 180px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #60cdff;
+      border-radius: 2px;
+      transition: width 0.25s ease;
     }
   </style>
 </head>
@@ -76,18 +96,36 @@
         class="ring" />
     </svg>
     <span id="label">Chargement…</span>
+    <div id="progress-track">
+      <div id="progress-bar"></div>
+    </div>
   </div>
 
   <script>
-    // Reçoit le chemin de l'image depuis la query string (?img=file:///...)
+    // Image de fond depuis la query string (?img=file:///...)
     const params  = new URLSearchParams(window.location.search)
     const imgPath = params.get('img')
     if (imgPath) {
-      // Normalise en URL file:/// (Windows backslashes → forward slashes)
       const fileUrl = imgPath.startsWith('file:')
         ? imgPath
         : 'file:///' + imgPath.replace(/\\/g, '/')
       document.getElementById('bg').style.backgroundImage = `url('${fileUrl}')`
+    }
+
+    const label        = document.getElementById('label')
+    const progressTrack = document.getElementById('progress-track')
+    const progressBar  = document.getElementById('progress-bar')
+
+    // Écoute les messages IPC envoyés depuis le processus principal
+    if (window.splashAPI) {
+      window.splashAPI.onStatus(({ text, progress }) => {
+        if (text !== undefined) label.textContent = text
+
+        if (progress !== undefined) {
+          progressTrack.style.display = 'block'
+          progressBar.style.width = Math.round(progress) + '%'
+        }
+      })
     }
   </script>
 </body>

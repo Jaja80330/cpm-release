@@ -13,7 +13,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import { login } from '../services/authService'
 
-export default function LoginView({ onLoginSuccess, isDark = true }) {
+export default function LoginView({ onLoginSuccess, isDark = true, blockedReason = false }) {
   const { t } = useTranslation()
   const [email,         setEmail]         = useState('')
   const [password,      setPassword]      = useState('')
@@ -34,10 +34,13 @@ export default function LoginView({ onLoginSuccess, isDark = true }) {
       if (!token) throw new Error(t('auth.noToken'))
       onLoginSuccess(token, data, staySignedIn)
     } catch (err) {
-      const msg = err?.response?.data?.message
-        || err?.response?.data?.error
-        || err?.message
-        || t('auth.defaultError')
+      const code = err?.response?.data?.code
+      const msg = code === 'ACCOUNT_BLOCKED'
+        ? t('auth.accountBlocked')
+        : (err?.response?.data?.message
+            || err?.response?.data?.error
+            || err?.message
+            || t('auth.defaultError'))
       setError(msg)
     } finally {
       setLoading(false)
@@ -151,6 +154,11 @@ export default function LoginView({ onLoginSuccess, isDark = true }) {
             style={{ marginTop: -4, marginBottom: -4 }}
           />
 
+          {blockedReason && !error && (
+            <Alert severity="error" sx={{ fontSize: 12, py: 0.5 }}>
+              {t('auth.accountBlocked')}
+            </Alert>
+          )}
           {error && (
             <Alert severity="error" sx={{ fontSize: 12, py: 0.5 }}>{error}</Alert>
           )}

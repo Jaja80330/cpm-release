@@ -24,6 +24,10 @@ import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined'
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
+import LockResetOutlinedIcon from '@mui/icons-material/LockResetOutlined'
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined'
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
+import Tooltip from '@mui/material/Tooltip'
 import { usersService } from '../services/usersService'
 
 const ROLE_KEYS = ['user', 'contributor', 'project_manager', 'super_admin']
@@ -49,9 +53,16 @@ export default function UsersPage({ currentUser }) {
   const [createError,  setCreateError]  = useState(null)
   const [generatedPwd, setGeneratedPwd] = useState(null)
 
-  const [deleting,     setDeleting]     = useState(null)
-  const [updatingRole, setUpdatingRole] = useState(null)
-  const [copied,       setCopied]       = useState(false)
+  const [deleting,       setDeleting]       = useState(null)
+  const [updatingRole,   setUpdatingRole]   = useState(null)
+  const [copied,         setCopied]         = useState(false)
+
+  const [resettingPwd,   setResettingPwd]   = useState(null)  // user id en cours
+  const [resetPwdResult, setResetPwdResult] = useState(null)  // { userId, password }
+  const [resetError,     setResetError]     = useState(null)
+
+  const [togglingBlock,  setTogglingBlock]  = useState(null)  // user id en cours
+  const [blockError,     setBlockError]     = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -134,6 +145,36 @@ export default function UsersPage({ currentUser }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleResetPassword = async (u) => {
+    setResettingPwd(u.id)
+    setResetError(null)
+    try {
+      const result = await usersService.resetPassword(u.id)
+      const pwd = result?.temporaryPassword || result?.password || null
+      setResetPwdResult({ userId: u.id, userName: [u.first_name || u.firstName, u.last_name || u.lastName].filter(Boolean).join(' ') || u.email, password: pwd })
+    } catch (err) {
+      setResetError(err?.response?.data?.message || err?.message || t('users.resetError'))
+      setTimeout(() => setResetError(null), 4000)
+    } finally {
+      setResettingPwd(null)
+    }
+  }
+
+  const handleToggleBlock = async (u) => {
+    const newBlocked = !u.is_blocked
+    setTogglingBlock(u.id)
+    setBlockError(null)
+    try {
+      await usersService.setBlocked(u.id, newBlocked)
+      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_blocked: newBlocked } : x))
+    } catch (err) {
+      setBlockError(err?.response?.data?.message || err?.message || t('users.blockError'))
+      setTimeout(() => setBlockError(null), 4000)
+    } finally {
+      setTogglingBlock(null)
+    }
+  }
+
   const formatDate = (d) => d
     ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
     : '—'
@@ -207,8 +248,69 @@ export default function UsersPage({ currentUser }) {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog mot de passe réinitialisé */}
+      <Dialog open={!!resetPwdResult} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LockResetOutlinedIcon sx={{ color: '#f59e0b', fontSize: 18 }} />
+          {t('users.resetPasswordSuccess')}
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, lineHeight: 1.6 }}>
+            {t('users.resetPasswordMsg', { name: resetPwdResult?.userName })}{' '}
+            <strong style={{ color: 'var(--text-primary)' }}>{t('users.tempPasswordWarn')}</strong>
+          </Typography>
+          <Box sx={{
+            p: '12px 16px', borderRadius: 2,
+            background: 'rgba(245,158,11,0.07)',
+            border: '2px solid rgba(245,158,11,0.35)',
+            mb: 2,
+          }}>
+            <Typography sx={{ fontSize: 10, color: '#f59e0b', fontWeight: 700, mb: 0.8,
+              textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              {t('users.tempPasswordLabel')}
+            </Typography>
+            <code style={{
+              display: 'block',
+              fontSize: 18, fontWeight: 700, letterSpacing: '0.08em',
+              color: 'var(--text-primary)',
+              fontFamily: "'Cascadia Code', 'Consolas', monospace",
+              wordBreak: 'break-all', userSelect: 'all',
+            }}>
+              {resetPwdResult?.password}
+            </code>
+          </Box>
+          <Alert severity="warning" sx={{ fontSize: 12, py: 0.5 }}>
+            {t('users.tempPasswordAlert')}
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<ContentCopyOutlinedIcon />}
+            onClick={() => {
+              navigator.clipboard.writeText(resetPwdResult?.password || '')
+              setCopied(true)
+              setTimeout(() => setCopied(false), 2000)
+            }}
+            sx={copied ? { background: '#3d7a32' } : { background: '#b45309' }}
+          >
+            {copied ? t('common.copied') : t('users.copyPassword')}
+          </Button>
+          <Button variant="text" size="small" onClick={() => { setResetPwdResult(null); setCopied(false) }}>
+            {t('common.close')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {loadError && (
         <Alert severity="error" sx={{ fontSize: 12, py: 0.5, mb: 1.5 }}>{loadError}</Alert>
+      )}
+      {resetError && (
+        <Alert severity="error" sx={{ fontSize: 12, py: 0.5, mb: 1.5 }}>{resetError}</Alert>
+      )}
+      {blockError && (
+        <Alert severity="error" sx={{ fontSize: 12, py: 0.5, mb: 1.5 }}>{blockError}</Alert>
       )}
 
       {/* Tableau */}
@@ -230,7 +332,7 @@ export default function UsersPage({ currentUser }) {
                 <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('users.colEmail')}</TableCell>
                 <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 160 }}>{t('users.colRole')}</TableCell>
                 <TableCell sx={{ fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', width: 120 }}>{t('users.colCreated')}</TableCell>
-                <TableCell sx={{ width: 50 }} />
+                <TableCell sx={{ width: 110 }} />
               </TableRow>
             </TableHead>
             <TableBody>
@@ -244,6 +346,12 @@ export default function UsersPage({ currentUser }) {
                       <div style={{ fontWeight: 600, fontSize: 13 }}>{fullName}</div>
                       {isSelf && (
                         <div style={{ fontSize: 10, color: '#42a5f5', marginTop: 1 }}>{t('users.you')}</div>
+                      )}
+                      {u.is_blocked && (
+                        <div style={{ fontSize: 10, color: '#fc3d39', marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <BlockOutlinedIcon sx={{ fontSize: 10 }} />
+                          {t('users.blocked')}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell>
@@ -286,19 +394,63 @@ export default function UsersPage({ currentUser }) {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="text"
-                        size="small"
-                        disabled={isSelf || deleting === u.id}
-                        onClick={() => handleDelete(u.id)}
-                        sx={{ minWidth: 0, color: isSelf ? undefined : '#fc3d39', p: '4px' }}
-                        title={isSelf ? t('users.cantDeleteSelf') : t('users.deleteTooltip')}
-                      >
-                        {deleting === u.id
-                          ? <CircularProgress size={14} />
-                          : <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
-                        }
-                      </Button>
+                      <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        {/* Reset mot de passe */}
+                        <Tooltip title={t('users.resetPasswordTooltip')} arrow>
+                          <span>
+                            <Button
+                              variant="text"
+                              size="small"
+                              disabled={isSelf || resettingPwd === u.id}
+                              onClick={() => handleResetPassword(u)}
+                              sx={{ minWidth: 0, color: '#f59e0b', p: '4px' }}
+                            >
+                              {resettingPwd === u.id
+                                ? <CircularProgress size={14} />
+                                : <LockResetOutlinedIcon sx={{ fontSize: 16 }} />
+                              }
+                            </Button>
+                          </span>
+                        </Tooltip>
+
+                        {/* Bloquer / Débloquer */}
+                        <Tooltip title={u.is_blocked ? t('users.unblockTooltip') : t('users.blockTooltip')} arrow>
+                          <span>
+                            <Button
+                              variant="text"
+                              size="small"
+                              disabled={isSelf || togglingBlock === u.id}
+                              onClick={() => handleToggleBlock(u)}
+                              sx={{ minWidth: 0, color: u.is_blocked ? '#6ccb5f' : '#fc3d39', p: '4px' }}
+                            >
+                              {togglingBlock === u.id
+                                ? <CircularProgress size={14} />
+                                : u.is_blocked
+                                  ? <LockOpenOutlinedIcon sx={{ fontSize: 16 }} />
+                                  : <BlockOutlinedIcon sx={{ fontSize: 16 }} />
+                              }
+                            </Button>
+                          </span>
+                        </Tooltip>
+
+                        {/* Supprimer */}
+                        <Tooltip title={isSelf ? t('users.cantDeleteSelf') : t('users.deleteTooltip')} arrow>
+                          <span>
+                            <Button
+                              variant="text"
+                              size="small"
+                              disabled={isSelf || deleting === u.id}
+                              onClick={() => handleDelete(u.id)}
+                              sx={{ minWidth: 0, color: isSelf ? undefined : '#fc3d39', p: '4px' }}
+                            >
+                              {deleting === u.id
+                                ? <CircularProgress size={14} />
+                                : <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
+                              }
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )

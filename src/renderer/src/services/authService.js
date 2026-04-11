@@ -81,4 +81,22 @@ export function setAuthToken(token) {
   }
 }
 
+// Handler appelé quand le compte de l'utilisateur courant est bloqué
+let _forceLogoutHandler = null
+export function registerForceLogout(fn) {
+  _forceLogoutHandler = fn
+}
+
+// Intercepteur : déconnexion forcée si le compte est bloqué côté serveur
+api.interceptors.response.use(
+  res => res,
+  err => {
+    const code = err?.response?.data?.code
+    if (err?.response?.status === 403 && code === 'ACCOUNT_BLOCKED') {
+      if (_forceLogoutHandler) _forceLogoutHandler()
+    }
+    return Promise.reject(err)
+  }
+)
+
 export default api

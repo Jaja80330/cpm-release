@@ -99,5 +99,17 @@ contextBridge.exposeInMainWorld('api', {
     checkKey:     ()  => ipcRenderer.invoke('ssh:checkKey'),
     generateKey:  ()  => ipcRenderer.invoke('ssh:generateKey'),
     getPublicKey: ()  => ipcRenderer.invoke('ssh:getPublicKey')
+  },
+  constfile: {
+    parse: (filePath)          => ipcRenderer.invoke('constfile:parse', filePath),
+    save:  (filePath, entries) => ipcRenderer.invoke('constfile:save',  filePath, entries),
+  },
+  app: {
+    getVersion: () => ipcRenderer.invoke('app:getVersion')
+  },
+  updater: {
+    check:     ()   => ipcRenderer.invoke('updater:check'),
+    onStatus:  (cb) => ipcRenderer.on('updater:status',  (_, d) => cb(d)),
+    offStatus: ()   => ipcRenderer.removeAllListeners('updater:status')
   }
 })
