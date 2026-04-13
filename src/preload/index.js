@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('api', {
     readFile:   (filePath)              => ipcRenderer.invoke('bus:readFile',   filePath),
     writeFile:  (filePath, content)     => ipcRenderer.invoke('bus:writeFile',  filePath, content),
     fileExists: (busDir, relativePath)  => ipcRenderer.invoke('bus:fileExists', busDir, relativePath),
+    listDir:    (dirPath, ext)          => ipcRenderer.invoke('bus:listDir',    dirPath, ext),
   },
   omsi: {
     launch:            ()         => ipcRenderer.invoke('omsi:launch'),

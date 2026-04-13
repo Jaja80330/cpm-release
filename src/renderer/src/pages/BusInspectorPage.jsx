@@ -5,12 +5,13 @@
 
 import React, { useEffect, useRef, useState, useMemo, Suspense } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { OrbitControls, Environment } from '@react-three/drei'
+import { OrbitControls, Environment, ContactShadows } from '@react-three/drei'
 import * as THREE from 'three'
 import { DDSLoader }     from 'three/examples/jsm/loaders/DDSLoader.js'
 import { TGALoader }     from 'three/examples/jsm/loaders/TGALoader.js'
 import { parseO3D, o3dToBufferGeometry } from '../utils/o3dParser'
-import { findModelCfgInBus, parseCfg, pathUtils } from '../utils/cfgParser'
+import { findModelCfgInBus, parseCfg, parseCfgCTC, pathUtils } from '../utils/cfgParser'
+import { parseCti } from '../utils/ctiParser'
 
 // ── Paramètres uniformes sur toutes les textures ─────────────────────────────
 //
@@ -20,7 +21,10 @@ import { findModelCfgInBus, parseCfg, pathUtils } from '../utils/cfgParser'
 //   seulement pour ces formats ; DDS/TGA ont flipY=false par défaut → décalage.
 //   Solution : flipY=false partout, les UVs natifs OMSI sont utilisés tels quels.
 //
-function applyTexParams(tex) {
+// colorSpace : SRGBColorSpace pour textures couleur (diffuse, envmap)
+//              NoColorSpace  pour cartes de données (roughnessMap, metalnessMap, normalMap)
+function applyTexParams(tex, colorSpace = THREE.SRGBColorSpace) {
+  tex.colorSpace  = colorSpace
   tex.flipY       = false
   tex.wrapS       = THREE.RepeatWrapping
   tex.wrapT       = THREE.RepeatWrapping
@@ -96,17 +100,21 @@ function makeMaterial(texture, matDef = {}, transmapTex = null, debugUV = false,
   const needsOffset = isTransparent || noDepthWrite
 
   // Roughness / Metalness de base
-  let roughness, metalness
+  //
+  // metalness = 0 TOUJOURS : le bus (peinture, caoutchouc, plastique) est un diélectrique.
+  // Un metalness > 0 en PBR réduit l'albedo → la texture devient grise.
+  // La réflexion est contrôlée uniquement par roughness + envMapIntensity.
+  let roughness
   if (useTransmap) {
-    roughness = Math.max(0.05, 1.0 - envmapIntensity * 0.90)
-    metalness = Math.min(1.0,  envmapIntensity * 0.65)
+    // Carrosserie : peinture avec vernis. roughnessMap (canal alpha) module par pixel.
+    roughness = Math.max(0.05, 1.0 - envmapIntensity * 0.9)
   } else if (envmap) {
-    roughness = Math.max(0.1, 1 - envmapIntensity * 0.9)
-    metalness = Math.min(1.0, envmapIntensity * 0.7)
+    // Matériaux avec [matl_envmap] (vitres, cadres, déco).
+    roughness = Math.max(0.1, 1.0 - envmapIntensity * 1.5)
   } else {
     roughness = 0.95
-    metalness = 0
   }
+  const metalness = 0
 
   const mat = new THREE.MeshStandardMaterial({
     map:         effectiveTexture || undefined,
@@ -124,6 +132,11 @@ function makeMaterial(texture, matDef = {}, transmapTex = null, debugUV = false,
 
   if (isGlassHint) mat.opacity = 0.35
 
+  // envMapIntensity global :
+  //   · matériaux avec [matl_envmap] ou [matl_transmap] → valeur CFG ÷ 2
+  //   · autres → 0 : empêche scene.environment de griser les textures sans reflets
+  mat.envMapIntensity = (useTransmap || envmap) ? envmapIntensity * 0.5 : 0
+
   // Règle 3 : [matl_illum] — émission (peut être écrasé par transmap)
   if (illum && effectiveTexture) {
     mat.emissiveMap       = effectiveTexture
@@ -140,30 +153,28 @@ function makeMaterial(texture, matDef = {}, transmapTex = null, debugUV = false,
   //
   // Mapping physique OMSI :
   //   · Alpha texture principale → roughnessMap :
-  //       alpha=0   → G=0   → roughness=0          (zone brillante : chrome, vernis)
-  //       alpha=255 → G=255 → roughness=base (0.05) (zone mate : peinture)
-  //   · transmapTex → metalnessMap (canal B = luminance pour grayscale)
-  //   · envmapTex   → mat.envMap   (réflexion d'environnement)
-  //   · envmapIntensity → mat.envMapIntensity
+  //       alpha=0   → G=0   → roughness=0     (zone brillante : chrome, vernis)
+  //       alpha=255 → G=255 → roughness=base  (zone mate : peinture)
+  //
+  // NOTE : metalness=0 → metalnessMap (transmapTex) est sans effet → non utilisé.
+  // NOTE : mat.envMap non défini → Three.js utilise scene.environment (<Environment />)
+  //        Le city preset fournit un IBL neutre et de qualité, sans la teinte grise
+  //        des textures OMSI spheriques.
   //
   if (useTransmap) {
     mat.transparent = false     // OPAQUE : aucune exception
     mat.opacity     = 1.0
     mat.alphaTest   = 0
     mat.depthWrite  = true
-    mat.side        = THREE.FrontSide   // carrosserie vue de l'extérieur uniquement
+    mat.side        = THREE.FrontSide
 
-    if (roughnessMapOverride) mat.roughnessMap = roughnessMapOverride
-    if (transmapTex)          mat.metalnessMap = transmapTex   // absent si '__self__'
-    if (envmapTex)            mat.envMap = envmapTex
-    mat.envMapIntensity = envmapIntensity
-
-  } else if (envmapTex) {
-    // Matériau standard avec [matl_envmap] sans transmap (caoutchouc, châssis, déco) :
-    // le sphere map OMSI est lié comme envMap PBR → reflets visibles sur fond sombre.
-    mat.envMap          = envmapTex
-    mat.envMapIntensity = envmapIntensity
+    if (roughnessMapOverride) {
+      roughnessMapOverride.colorSpace = THREE.NoColorSpace
+      mat.roughnessMap = roughnessMapOverride
+    }
+    // envMapIntensity déjà défini plus haut (envmapIntensity * 0.5)
   }
+  // Pour les matériaux avec [matl_envmap] sans transmap : envMapIntensity déjà défini.
 
   return mat
 }
@@ -220,6 +231,7 @@ function extractAlphaToRoughnessMap(texture) {
     out[i * 4 + 3] = 255
   }
   const rMap = new THREE.DataTexture(out, w, h, THREE.RGBAFormat)
+  rMap.colorSpace = THREE.NoColorSpace   // carte de données, pas de conversion gamma
   rMap.flipY = false; rMap.wrapS = rMap.wrapT = THREE.RepeatWrapping
   rMap.needsUpdate = true
   return rMap
@@ -309,13 +321,92 @@ async function resolveTexturePath(cfgTexPath, busDir, omsiRoot) {
   return null
 }
 
-// ── Composant caméra : auto-fit après chargement ─────────────────────────────
-function CameraAutoFit({ groupRef, ready }) {
-  const { camera, gl } = useThree()
-  const orbitRef = useRef()
+// ── Parser des caméras du fichier .bus ────────────────────────────────────────
+//
+// [add_camera_driver] / [add_camera_pax]
+//   Valeur 1 : posX          — latéral    (OMSI X)
+//   Valeur 2 : posY          — longitudinal (OMSI Y, avant du bus)
+//   Valeur 3 : posZ          — hauteur    (OMSI Z)
+//   Valeur 4 : neckOffset    — décalage scalaire du pivot (axe longitudinal)
+//   Valeur 5 : fov           — champ de vision (degrés)
+//   Valeur 6 : rotH          — rotation horizontale initiale (degrés, yaw)
+//   Valeur 7 : rotV          — rotation verticale initiale   (degrés, pitch)
+//
+// Conversion OMSI → Three.js :
+//   Three.js X =  -omsiX   (miroir latéral)
+//   Three.js Y =   omsiZ   (hauteur → up)
+//   Three.js Z =  -omsiY   (longitudinal → profondeur)
+//
+// Robustesse : lignes vides et commentaires (; //) ignorés,
+// valeurs multiples par ligne supportées.
+//
+function parseBusCameras(content) {
+  const lines = content.split(/\r?\n/).map(l => l.trim())
+  const cameras = []
+  let driverIdx = 0, paxIdx = 0
 
+  const isSkippable = (line) =>
+    line === '' || line.startsWith(';') || line.startsWith('//')
+
+  const extractNums = (line) =>
+    line.split(/\s+/).map(Number).filter(v => !isNaN(v))
+
+  for (let i = 0; i < lines.length; i++) {
+    const tag = lines[i].toLowerCase()
+    if (tag !== '[add_camera_driver]' && tag !== '[add_camera_pax]') continue
+
+    const type = tag === '[add_camera_driver]' ? 'driver' : 'pax'
+
+    // Collecte des 7 valeurs numériques suivantes, en ignorant vides/commentaires
+    const vals = []
+    let j = i + 1
+    while (j < lines.length && vals.length < 7) {
+      const line = lines[j]
+      if (line.startsWith('[')) break
+      if (!isSkippable(line)) vals.push(...extractNums(line))
+      j++
+    }
+
+    // Mapping strict : val[0..2]=pos, val[3]=neckOffset, val[4]=fov, val[5]=rotH, val[6]=rotV
+    const [px = 0, py = 0, pz = 0, neckOff = 0, fov = 60, rotH = 0, rotV = 0] = vals
+
+    // Conversion OMSI → Three.js
+    // neckOffset est le long de l'axe longitudinal OMSI (Y), soit -Z en Three.js
+    const threeX =  px   // pas de miroir : OMSI X gauche = Three.js X gauche
+    const threeY =  pz
+    const threeZ = -py
+    const neckThreeZ = -neckOff   // décalage pivot : OMSI Y → -Three.js Z
+
+    const index = type === 'driver' ? ++driverIdx : ++paxIdx
+    cameras.push({
+      type, index,
+      label: type === 'driver' ? `Conducteur ${index}` : `Passager ${index}`,
+      x: threeX, y: threeY, z: threeZ,
+      neckX: 0, neckY: 0, neckZ: neckThreeZ,
+      fov, rotH, rotV,
+    })
+
+    console.log(
+      `[BusInspector] Caméra détectée : ${type} à la position [${px}, ${py}, ${pz}] avec FOV ${fov}`
+    )
+  }
+  return cameras
+}
+
+// ── Contrôleur de caméra (libre + caméras bus) ────────────────────────────────
+//
+// activeCamera = 0      → caméra libre (OrbitControls plein)
+// activeCamera = N ≥ 1  → caméra bus N (position fixe, pivot = cou, OrbitControls restreint)
+//
+function CameraController({ groupRef, ready, cameras, activeCamera, freeFov }) {
+  const { camera, gl } = useThree()
+  const orbitRef  = useRef()
+  const hasFit    = useRef(false)
+
+  // ── Auto-fit initial : une seule fois au chargement ──────────────────────
   useEffect(() => {
-    if (!ready || !groupRef.current) return
+    if (!ready || !groupRef.current || hasFit.current) return
+    hasFit.current = true
     const box = new THREE.Box3().setFromObject(groupRef.current)
     if (box.isEmpty()) return
     const center = box.getCenter(new THREE.Vector3())
@@ -326,13 +417,82 @@ function CameraAutoFit({ groupRef, ready }) {
     camera.position.set(center.x + maxDim * 0.3, center.y + maxDim * 0.4, center.z + dist)
     camera.near = dist * 0.001
     camera.far  = dist * 50
+    camera.fov  = freeFov
     camera.updateProjectionMatrix()
     camera.lookAt(center)
-    if (gl.__orbitControls) {
-      gl.__orbitControls.target.copy(center)
-      gl.__orbitControls.update()
+    const oc = orbitRef.current
+    if (oc) { oc.target.copy(center); oc.minDistance = 0; oc.maxDistance = Infinity; oc.update() }
+    if (gl) gl.__orbitControls = oc
+  }, [ready, groupRef, camera, gl, freeFov])
+
+  // ── Changement de caméra ─────────────────────────────────────────────────
+  useEffect(() => {
+    if (!ready) return
+    const oc = orbitRef.current
+    if (activeCamera === 0) {
+      // Caméra libre — rétablit OrbitControls sans contrainte
+      camera.fov = freeFov
+      camera.updateProjectionMatrix()
+      if (oc) {
+        oc.minDistance = 0
+        oc.maxDistance = Infinity
+        oc.enablePan   = true
+        oc.enableZoom  = true
+        oc.update()
+      }
+    } else {
+      const cam = cameras[activeCamera - 1]
+      if (!cam) return
+
+      // ── Position (convertie OMSI→Three.js dans parseBusCameras) ──────────
+      const worldPos = new THREE.Vector3(cam.x, cam.y, cam.z)
+      camera.position.copy(worldPos)
+      camera.fov = cam.fov
+      camera.updateProjectionMatrix()
+
+      // ── Direction de regard depuis les angles OMSI (degrés → radians) ────
+      //
+      // OMSI utilise un repère main-gauche ; Three.js est main-droite.
+      // La conversion implique de NÉGATIVER les deux angles de rotation :
+      //   · -rotH : OMSI horaire vu du dessus = Three.js anti-horaire (Y+)
+      //   · -rotV : OMSI+ = regard vers le bas ; Three.js pitch+ = regard vers le haut
+      //
+      // PAS de +Math.PI sur radH :
+      //   Le vecteur de base (0,0,-1) pointe déjà vers l'avant du bus (Three.js -Z).
+      //   Ajouter π le retournerait vers l'arrière.
+      //
+      // oc.update() appelle camera.lookAt(target) → écrase tout rotation.set() manuel.
+      // On place orbitTarget dans la direction voulue pour que OrbitControls
+      // oriente la caméra correctement lors de son update().
+      //
+      const radH = -(cam.rotH * Math.PI) / 180   // yaw   — axe Y  (signe inversé)
+      const radV =  (cam.rotV * Math.PI) / 180   // pitch — axe X  (même signe : OMSI+ = bas = Three.js pitch-)
+
+      // Vecteur de regard : base -Z (avant Three.js), ordre YXZ (yaw avant pitch)
+      const lookDir = new THREE.Vector3(0, 0, -1)
+      lookDir.applyEuler(new THREE.Euler(radV, radH, 0, 'YXZ'))
+
+      // Target fixe à 0.1 m devant la caméra (pivot de rotation tête)
+      const pivotDist  = 0.1
+      const orbitTarget = worldPos.clone().addScaledVector(lookDir, pivotDist)
+
+      if (oc) {
+        oc.target.copy(orbitTarget)
+        oc.minDistance = pivotDist
+        oc.maxDistance = pivotDist
+        oc.enablePan   = false
+        oc.enableZoom  = false
+        oc.update()  // sync état interne + lookAt(orbitTarget) = orientation finale
+      }
     }
-  }, [ready, groupRef, camera, gl])
+  }, [activeCamera, cameras, ready]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Mise à jour FOV en mode libre ─────────────────────────────────────────
+  useEffect(() => {
+    if (activeCamera !== 0 || !ready) return
+    camera.fov = freeFov
+    camera.updateProjectionMatrix()
+  }, [freeFov, activeCamera, camera, ready])
 
   return (
     <OrbitControls
@@ -358,8 +518,8 @@ function BusMesh({ geometry, material, position, rotation, renderOrder = 0, visi
 
 // ── Style partagé pour les petits boutons de l'overlay ───────────────────────
 const btnBase = {
-  borderRadius: 4, padding: '3px 8px', fontSize: 11,
-  cursor: 'pointer', fontFamily: 'monospace', border: '1px solid',
+  borderRadius: 4, padding: '4px 10px', fontSize: 14,
+  cursor: 'pointer', fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", border: '1px solid',
 }
 const btnOff  = { ...btnBase, background: '#1a1c22', color: '#888', borderColor: '#333' }
 const btnOn   = { ...btnBase, background: '#e05a00', color: '#fff', borderColor: '#e05a00' }
@@ -374,14 +534,36 @@ export default function BusInspectorPage() {
 
   // ── LOD ──
   const [availableLods, setAvailableLods] = useState([])  // [0.1, 0.05, ...]
-  const [selectedLod,   setSelectedLod]   = useState('all')
+  const [selectedLod,   setSelectedLod]   = useState('0.1')
 
   // ── Variables de visibilité ──
-  // varDefs : [{ name, type: 'visible'|'alphascale' }]
-  // variables : { [name]: number }   visible → 0|1   alphascale → 0.0–1.0
+  // varDefs : [{ name, type: 'visible'|'alphascale', values?: number[] }]
+  //   visible    → values : liste triée des targetValues ([visible] tag), bouton par valeur
+  //   alphascale → slider 0.0–1.0
+  // variables : { [name]: number }
   const [varDefs,       setVarDefs]       = useState([])
   const [variables,     setVariables]     = useState({})
   const [showVarsPanel, setShowVarsPanel] = useState(false)
+
+  // ── Repaints (CTC) ──
+  // ctcAliases  : Map<alias, defaultBasename>   ex: 'body' → '2008_citelis12_3d_body.tga'
+  // repaints    : [{ name, replacements: Map<alias, absPath> }]
+  //               Le premier élément est toujours { name: '__default__', replacements: Map vide }
+  // repaintTextures : Map<alias, THREE.Texture> — textures actives du repaint sélectionné
+  const [ctcAliases,      setCtcAliases]      = useState(new Map())
+  const [repaints,        setRepaints]        = useState([])
+  const [selectedRepaint, setSelectedRepaint] = useState('__default__')
+  const [repaintTextures, setRepaintTextures] = useState(new Map())
+  const [repaintLoading,  setRepaintLoading]  = useState(false)
+
+  // ── Caméras ──
+  const [cameras,      setCameras]      = useState([])
+  const [activeCamera, setActiveCamera] = useState(0)
+  const [freeFov,      setFreeFov]      = useState(50)
+
+  // Cache de textures : absPath → THREE.Texture
+  // Évite de recharger une texture déjà en mémoire et permet l'invalidation ciblée (Refresh).
+  const textureCacheRef = useRef(new Map())
 
   const groupRef = useRef()
 
@@ -401,7 +583,25 @@ export default function BusInspectorPage() {
         // [visible] et [alphascale] déclarés DANS ce [matl] ne ciblent QUE ce slot,
         // pas les autres — ex : rain_window (slot 1) invisible sans masquer la vitre (slot 0).
         const matArray = m.slots.map(s => {
-          const mat = makeMaterial(s.texture, s.matDef, s.transmapTex, debugUV, s.envmapTex, s.roughnessMap)
+          // ── Résolution de la texture active (repaint ou défaut) ───────────────
+          // On cherche l'alias CTC de ce slot en comparant le basename de sa
+          // texturePath avec les valeurs de ctcAliases.
+          // Si un repaint actif remplace cet alias, on utilise sa texture.
+          let activeTexture    = s.texture
+          let activeRoughnessMap = s.roughnessMap
+          if (ctcAliases.size > 0 && s.matDef.texturePath) {
+            const slotBase = pathUtils.basename(s.matDef.texturePath).toLowerCase()
+            for (const [alias, defaultBase] of ctcAliases) {
+              if (defaultBase.toLowerCase() === slotBase && repaintTextures.has(alias)) {
+                activeTexture = repaintTextures.get(alias)
+                // Recalcul du roughnessMap si transmap (l'alpha de la nouvelle texture peut différer)
+                if (s.matDef.transmap) activeRoughnessMap = extractAlphaToRoughnessMap(activeTexture)
+                break
+              }
+            }
+          }
+
+          const mat = makeMaterial(activeTexture, s.matDef, s.transmapTex, debugUV, s.envmapTex, activeRoughnessMap)
 
           // ── [alphascale] au niveau matériau ────────────────────────────────
           //
@@ -418,11 +618,17 @@ export default function BusInspectorPage() {
 
             if (s.matDef.transmap) {
               // CAS A — [matl_transmap] présent :
-              //   Carrosserie opaque. alpha → intensité des reflets uniquement.
+              //   alpha → intensité des reflets. Texture toujours visible (pas de noir).
+              //   Quand alpha=0 : plus de reflets ET metalness→0 pour éviter l'assombrissement
+              //   PBR (un matériau métallique sans envMap = quasi-noir en PBR).
+              const baseMetal = mat.metalness
+              const baseRough = mat.roughness
               mat.transparent     = false
               mat.opacity         = 1.0
               mat.depthWrite      = true
-              mat.envMapIntensity = alpha * (s.matDef.envmapIntensity ?? 0.5)
+              mat.envMapIntensity = alpha * (s.matDef.envmapIntensity ?? 0.5) * 0.5
+              mat.metalness       = alpha * baseMetal
+              mat.roughness       = baseRough + (0.95 - baseRough) * (1 - alpha)
 
             } else if (s.matDef.transparent || s.matDef.alphaTest > 0) {
               // CAS B — [matl_alpha] sans transmap (pluie, overlay wet, vitres alpha) :
@@ -441,7 +647,7 @@ export default function BusInspectorPage() {
               mat.opacity     = 1.0
               mat.depthWrite  = true
               if (s.matDef.envmap) {
-                mat.envMapIntensity = alpha * (s.matDef.envmapIntensity ?? 0.5)
+                mat.envMapIntensity = alpha * (s.matDef.envmapIntensity ?? 0.5) * 0.5
               }
             }
             mat.needsUpdate = true
@@ -479,11 +685,15 @@ export default function BusInspectorPage() {
           mats.forEach((mat, idx) => {
             const slotDef = slots[idx]?.matDef || {}
             if (slotDef.transmap) {
-              // CAS A
+              // CAS A — interpolation metalness+roughness (même logique que le cas slot-level)
+              const bMetal = mat.metalness
+              const bRough = mat.roughness
               mat.transparent     = false
               mat.opacity         = 1.0
               mat.depthWrite      = true
-              mat.envMapIntensity = alpha * (slotDef.envmapIntensity ?? 0.5)
+              mat.envMapIntensity = alpha * (slotDef.envmapIntensity ?? 0.5) * 0.5
+              mat.metalness       = alpha * bMetal
+              mat.roughness       = bRough + (0.95 - bRough) * (1 - alpha)
             } else if (slotDef.transparent || slotDef.alphaTest > 0) {
               // CAS B
               mat.transparent = true; mat.opacity = alpha
@@ -492,7 +702,7 @@ export default function BusInspectorPage() {
             } else {
               // CAS C — opaque sans transmap : envmap seulement, jamais d'opacité
               mat.transparent = false; mat.opacity = 1.0; mat.depthWrite = true
-              if (slotDef.envmap) mat.envMapIntensity = alpha * (slotDef.envmapIntensity ?? 0.5)
+              if (slotDef.envmap) mat.envMapIntensity = alpha * (slotDef.envmapIntensity ?? 0.5) * 0.5
             }
             mat.needsUpdate = true
           })
@@ -510,7 +720,62 @@ export default function BusInspectorPage() {
           renderOrder: m.meshIdx, visible,
         }
       })
-  }, [rawMeshes, debugUV, selectedLod, variables])
+  }, [rawMeshes, debugUV, selectedLod, variables, ctcAliases, repaintTextures])
+
+  // ── Chargement des textures du repaint sélectionné ───────────────────────
+  useEffect(() => {
+    if (selectedRepaint === '__default__') {
+      setRepaintTextures(new Map())
+      return
+    }
+    const repaint = repaints.find(r => r.name === selectedRepaint)
+    if (!repaint) return
+
+    let cancelled = false
+    setRepaintLoading(true)
+
+    ;(async () => {
+      const cache = textureCacheRef.current
+      const newMap = new Map()
+      for (const [alias, absPath] of repaint.replacements) {
+        if (cancelled) break
+        let tex = cache.get(absPath)
+        if (!tex) {
+          tex = await loadTexture(absPath)
+          if (tex) cache.set(absPath, tex)
+        }
+        if (tex) newMap.set(alias, tex)
+      }
+      if (!cancelled) {
+        setRepaintTextures(newMap)
+        setRepaintLoading(false)
+      }
+    })()
+
+    return () => { cancelled = true }
+  }, [selectedRepaint, repaints]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Refresh : invalide le cache et recharge les textures du repaint actif ─
+  const handleRepaintRefresh = async () => {
+    const repaint = repaints.find(r => r.name === selectedRepaint)
+    if (!repaint || selectedRepaint === '__default__') return
+
+    setRepaintLoading(true)
+    const cache = textureCacheRef.current
+    const newMap = new Map()
+
+    for (const [alias, absPath] of repaint.replacements) {
+      // Invalider l'entrée de cache existante
+      const old = cache.get(absPath)
+      if (old) { old.dispose(); cache.delete(absPath) }
+      // Recharger depuis le disque
+      const tex = await loadTexture(absPath)
+      if (tex) { cache.set(absPath, tex); newMap.set(alias, tex) }
+    }
+
+    setRepaintTextures(newMap)
+    setRepaintLoading(false)
+  }
 
   // ── Pipeline de chargement ─────────────────────────────────────────────────
   useEffect(() => {
@@ -537,6 +802,10 @@ export default function BusInspectorPage() {
       const busResult = await window.api.bus.readFile(busFile)
       if (!busResult?.success) throw new Error(`Impossible de lire : ${busFile}`)
 
+      // Parse les caméras dès la lecture du .bus
+      setCameras(parseBusCameras(busResult.content))
+      setActiveCamera(0)
+
       const cfgRelPath = findModelCfgInBus(busResult.content)
       if (!cfgRelPath) throw new Error('Aucune entrée [model_cfg] dans le .bus')
 
@@ -555,33 +824,136 @@ export default function BusInspectorPage() {
       const meshDefs = parseCfg(cfgResult.content)
       if (!meshDefs.length) throw new Error('Aucun mesh dans le model.cfg')
 
+      // ── Étape 2b : Parse CTC (repaints) ──────────────────────────────────
+      const { ctcDir, ctcAliases: parsedAliases } = parseCfgCTC(cfgResult.content)
+      setCtcAliases(parsedAliases)
+
+      if (ctcDir) {
+        // Résolution du dossier CTC : relatif à la racine véhicule (busDir)
+        // avec fallback sur omsiRoot (certains packs utilisent un chemin absolu OMSI).
+        const ctcAbsDirs = [
+          pathUtils.join(busDir,   ctcDir),
+          pathUtils.join(omsiRoot, ctcDir),
+        ]
+        let ctcAbsDir = null
+        for (const candidate of ctcAbsDirs) {
+          const ctiList = await window.api.bus.listDir(candidate, '.cti')
+          if (ctiList.length > 0) { ctcAbsDir = candidate; break }
+        }
+
+        if (ctcAbsDir) {
+          try {
+            const ctiFiles = await window.api.bus.listDir(ctcAbsDir, '.cti')
+            // repaintMap : nom → Map<alias, absPath>
+            const repaintMap = new Map()
+
+            for (const ctiFile of ctiFiles) {
+              const ctiResult = await window.api.bus.readFile(ctiFile)
+              if (!ctiResult?.success) continue
+              for (const item of parseCti(ctiResult.content)) {
+                if (!repaintMap.has(item.name)) repaintMap.set(item.name, new Map())
+                // chemin absolu = ctcAbsDir / chemin relatif dans le .cti
+                repaintMap.get(item.name).set(
+                  item.alias,
+                  pathUtils.join(ctcAbsDir, item.texturePath)
+                )
+              }
+            }
+
+            const repaintsArr = [{ name: '__default__', replacements: new Map() }]
+            for (const [name, replacements] of repaintMap) {
+              repaintsArr.push({ name, replacements })
+            }
+            setRepaints(repaintsArr)
+            setSelectedRepaint('__default__')
+          } catch (e) {
+            console.warn('[BusInspector] Lecture CTC échouée :', e)
+          }
+        }
+      }
+
       // ── Collecte des LODs disponibles ─────────────────────────────────────
       const lodSet = new Set(meshDefs.map(m => m.lodDist).filter(l => l !== null))
       setAvailableLods([...lodSet].sort((a, b) => b - a))
 
       // ── Collecte des variables de visibilité ──────────────────────────────
-      // Les variables peuvent être déclarées au niveau mesh (fallback) OU au niveau
-      // matériau (cas standard : [visible]/[alphascale] après un [matl] dans le cfg).
-      const varMap = {}
-      const varDefsArr = []
+      //
+      // 1. Lecture de visual_varlist.txt (script/visual_varlist.txt dans le dossier bus)
+      //    → filtre : seules les variables présentes dans ce fichier sont listées.
+      //    Si le fichier est absent, on liste tout (fallback).
+      //
+      // 2. Pour les variables [visible] : collecte de tous les targetValues utilisés
+      //    dans le cfg (ex : 0, 1, 2 pour des portes multi-états).
+      //
+      // 3. Défauts alphascale : Rain_*_Wetness → 0, Envir_Brightness → 1 (tous les autres → 1).
 
-      const registerVar = (name, type, defaultVal) => {
-        if (name && !(name in varMap)) {
-          varMap[name] = defaultVal
-          varDefsArr.push({ name, type })
-        }
+      const ALPHASCALE_DEFAULTS = {
+        'Rain_Window_Norm_Wetness':  0,
+        'Rain_Window_Front_Wetness': 0,
+        'Rain_Window_Wiped_Wetness': 0,
+        'Envir_Brightness':          1,
       }
+      const getAlphascaleDefault = (name) => ALPHASCALE_DEFAULTS[name] ?? 1.0
+
+      // Lire visual_varlist.txt
+      let visualVarSet = null  // null = pas de filtre
+      try {
+        const vvlPath   = pathUtils.join(busDir, 'script', 'visual_varlist.txt')
+        const vvlResult = await window.api.bus.readFile(vvlPath)
+        if (vvlResult?.success) {
+          visualVarSet = new Set(
+            vvlResult.content
+              .split(/\r?\n/)
+              .map(l => l.trim())
+              .filter(l => l && !l.startsWith('//') && !l.startsWith(';'))
+          )
+        }
+      } catch { /* fichier absent : pas de filtre */ }
+
+      // Collecte depuis le CFG
+      // visibleValuesMap : varName → Set<targetValue>
+      // alphascaleNames  : Set<varName>
+      const visibleValuesMap = new Map()
+      const alphascaleNames  = new Set()
+
+      const registerVisible = (name, value) => {
+        if (!name) return
+        if (!visibleValuesMap.has(name)) visibleValuesMap.set(name, new Set())
+        visibleValuesMap.get(name).add(value)
+      }
+      const registerAlphascale = (name) => { if (name) alphascaleNames.add(name) }
 
       for (const def of meshDefs) {
-        // Niveau mesh (fallback : tag avant tout [matl])
-        if (def.visibleVar)    registerVar(def.visibleVar.name, 'visible',    def.visibleVar.value)
-        if (def.alphascaleVar) registerVar(def.alphascaleVar,   'alphascale', 1.0)
-        // Niveau matériau (cas courant : tag dans un bloc [matl])
+        if (def.visibleVar)    registerVisible(def.visibleVar.name, def.visibleVar.value)
+        if (def.alphascaleVar) registerAlphascale(def.alphascaleVar)
         for (const mat of def.materials) {
-          if (mat.visibleVar)    registerVar(mat.visibleVar.name, 'visible',    mat.visibleVar.value)
-          if (mat.alphascaleVar) registerVar(mat.alphascaleVar,   'alphascale', 1.0)
+          if (mat.visibleVar)    registerVisible(mat.visibleVar.name, mat.visibleVar.value)
+          if (mat.alphascaleVar) registerAlphascale(mat.alphascaleVar)
         }
       }
+
+      // Filtre + construction de varDefs / varMap
+      const varDefsArr = []
+      const varMap     = {}
+
+      // Variables [visible] : filtrées par visual_varlist.txt si présent
+      for (const [name, valSet] of visibleValuesMap) {
+        if (visualVarSet && !visualVarSet.has(name)) continue
+        const values = [...valSet].sort((a, b) => a - b)
+        // Ajoute 0 comme option implicite si absent (état initial = caché)
+        if (!valSet.has(0)) values.unshift(0)
+        varDefsArr.push({ name, type: 'visible', values })
+        // Défaut = 0 (état initial du véhicule)
+        varMap[name] = 0
+      }
+
+      // Variables [alphascale] : jamais filtrées par visual_varlist.txt,
+      // toujours listées si présentes dans le CFG.
+      for (const name of alphascaleNames) {
+        varDefsArr.push({ name, type: 'alphascale' })
+        varMap[name] = getAlphascaleDefault(name)
+      }
+
       setVarDefs(varDefsArr)
       setVariables(varMap)
 
@@ -728,6 +1100,22 @@ export default function BusInspectorPage() {
   // ── Utilitaire : mise à jour d'une variable ────────────────────────────────
   const setVar = (name, value) => setVariables(prev => ({ ...prev, [name]: value }))
 
+  // ── Navigation clavier : ← → pour cycler entre les caméras ──────────────
+  useEffect(() => {
+    if (status !== 'ready') return
+    const total = cameras.length  // 0 = caméra libre uniquement
+    if (total === 0) return
+    const handleKey = (e) => {
+      if (e.key === 'ArrowLeft') {
+        setActiveCamera(prev => (prev <= 0 ? total : prev - 1))
+      } else if (e.key === 'ArrowRight') {
+        setActiveCamera(prev => (prev >= total ? 0 : prev + 1))
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [status, cameras]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Rendu ──────────────────────────────────────────────────────────────────
   const isReady = status === 'ready'
 
@@ -753,7 +1141,7 @@ export default function BusInspectorPage() {
               transition: 'width 0.3s ease'
             }} />
           </div>
-          <div style={{ color: '#666', fontSize: 12 }}>
+          <div style={{ color: '#666', fontSize: 14 }}>
             {progress.loaded} / {progress.total} objets chargés
           </div>
         </div>
@@ -769,7 +1157,7 @@ export default function BusInspectorPage() {
           <div style={{ fontSize: 40, marginBottom: 16 }}>⚠</div>
           <div style={{ color: '#ff6b6b', fontSize: 15, marginBottom: 12 }}>Échec du chargement</div>
           <div style={{
-            color: '#aaa', fontSize: 12, background: '#1a1a1a',
+            color: '#aaa', fontSize: 14, background: '#1a1a1a',
             borderRadius: 8, padding: 16, textAlign: 'left',
             fontFamily: 'monospace', wordBreak: 'break-all', lineHeight: 1.7
           }}>
@@ -788,16 +1176,24 @@ export default function BusInspectorPage() {
             style={{ width: '100%', height: '100%' }}
             camera={{ fov: 50, near: 0.01, far: 10000, position: [0, 5, 20] }}
             gl={{ antialias: true, outputColorSpace: THREE.SRGBColorSpace }}
+            onCreated={({ gl }) => {
+              gl.toneMapping         = THREE.NoToneMapping
+              gl.toneMappingExposure = 1.0
+            }}
             resize={{ scroll: false, debounce: { scroll: 50, resize: 0 } }}
           >
             {/* Environment HDRI pour les réflexions envmap (metalnessMap + envMapIntensity) */}
             <Environment preset="city" background={false} />
 
-            <ambientLight intensity={1.5} />
-            <directionalLight position={[10, 20, 10]}  intensity={0.8} castShadow />
-            <directionalLight position={[-10, 15, -5]} intensity={0.4} />
+            {/* Éclairage studio neutre — fidélité colorimétrique maximale */}
+            <ambientLight intensity={1.0} color={0xffffff} />
+            <directionalLight position={[-10, 20, 10]}  intensity={0.8} />
+            <directionalLight position={[10,  15, -10]} intensity={0.8} />
+
             <gridHelper args={[200, 40, 0x333333, 0x222222]} />
             <axesHelper args={[5]} />
+
+            <ContactShadows position={[0, -0.01, 0]} opacity={0.4} scale={30} blur={2} far={20} resolution={512} />
 
             <Suspense fallback={null}>
               <group ref={groupRef}>
@@ -812,7 +1208,7 @@ export default function BusInspectorPage() {
               </group>
             </Suspense>
 
-            <CameraAutoFit groupRef={groupRef} ready={isReady} />
+            <CameraController groupRef={groupRef} ready={isReady} cameras={cameras} activeCamera={activeCamera} freeFov={freeFov} />
           </Canvas>
 
           {/* ── Overlays ── */}
@@ -822,13 +1218,66 @@ export default function BusInspectorPage() {
               <div style={{
                 position: 'absolute', bottom: 14, left: '50%',
                 transform: 'translateX(-50%)',
-                display: 'flex', gap: 20, color: '#555', fontSize: 11,
+                display: 'flex', gap: 20, color: '#555', fontSize: 13,
                 pointerEvents: 'none'
               }}>
-                <span>Gauche : rotation</span>
-                <span>Molette : zoom</span>
-                <span>Droit : déplacement</span>
+                {activeCamera === 0 ? (
+                  <>
+                    <span>Gauche : rotation</span>
+                    <span>Molette : zoom</span>
+                    <span>Droit : déplacement</span>
+                    {cameras.length > 0 && <span>← → : caméras</span>}
+                  </>
+                ) : (
+                  <>
+                    <span>Gauche : rotation tête</span>
+                    {cameras.length > 0 && <span>← → : caméras</span>}
+                  </>
+                )}
               </div>
+
+              {/* ── Caméras — haut gauche ── */}
+              {cameras.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: 10, left: 14,
+                  display: 'flex', flexDirection: 'column', gap: 6, zIndex: 10
+                }}>
+                  <select
+                    value={activeCamera}
+                    onChange={e => setActiveCamera(Number(e.target.value))}
+                    style={{
+                      background: '#1a1c22', color: '#ccc',
+                      border: '1px solid #333', borderRadius: 4,
+                      padding: '3px 6px', fontSize: 14,
+                      fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+                      cursor: 'pointer', maxWidth: 180,
+                    }}
+                  >
+                    <option value={0}>— Vue libre —</option>
+                    {cameras.map((cam, idx) => (
+                      <option key={idx} value={idx + 1}>{cam.label}</option>
+                    ))}
+                  </select>
+
+                  {/* Slider FOV — visible seulement en mode libre */}
+                  {activeCamera === 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ color: '#555', fontSize: 13, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
+                        FOV
+                      </span>
+                      <input
+                        type="range" min="20" max="120" step="1"
+                        value={freeFov}
+                        onChange={e => setFreeFov(Number(e.target.value))}
+                        style={{ width: 100, accentColor: '#e05a00' }}
+                      />
+                      <span style={{ color: '#666', fontSize: 13, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", minWidth: 28 }}>
+                        {freeFov}°
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* ── Sélecteur LOD — centré en haut ── */}
               {availableLods.length > 0 && (
@@ -837,7 +1286,7 @@ export default function BusInspectorPage() {
                   transform: 'translateX(-50%)',
                   display: 'flex', gap: 4, alignItems: 'center', zIndex: 10
                 }}>
-                  <span style={{ color: '#555', fontSize: 10, marginRight: 4, fontFamily: 'monospace' }}>
+                  <span style={{ color: '#555', fontSize: 13, marginRight: 4, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
                     LOD
                   </span>
                   <button
@@ -863,7 +1312,7 @@ export default function BusInspectorPage() {
                 position: 'absolute', top: 10, right: 14,
                 display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6
               }}>
-                <div style={{ color: '#555', fontSize: 11, pointerEvents: 'none' }}>
+                <div style={{ color: '#555', fontSize: 14, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", pointerEvents: 'none' }}>
                   {loadedMeshes.length} mesh{loadedMeshes.length > 1 ? 'es' : ''}
                 </div>
 
@@ -879,6 +1328,42 @@ export default function BusInspectorPage() {
                     Variables {showVarsPanel ? '▲' : '▼'}
                   </button>
                 )}
+
+                {/* ── Sélecteur de repaint (CTC) ── */}
+                {repaints.length > 1 && (
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <select
+                      value={selectedRepaint}
+                      onChange={e => setSelectedRepaint(e.target.value)}
+                      disabled={repaintLoading}
+                      style={{
+                        background: '#1a1c22', color: repaintLoading ? '#555' : '#ccc',
+                        border: '1px solid #333', borderRadius: 4,
+                        padding: '3px 6px', fontSize: 14, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+                        cursor: 'pointer', maxWidth: 160,
+                      }}
+                    >
+                      <option value="__default__">— Défaut —</option>
+                      {repaints.filter(r => r.name !== '__default__').map(r => (
+                        <option key={r.name} value={r.name}>{r.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleRepaintRefresh}
+                      disabled={repaintLoading || selectedRepaint === '__default__'}
+                      title="Recharger les textures depuis le disque"
+                      style={{
+                        ...btnBase,
+                        background: '#1a1c22',
+                        color: (repaintLoading || selectedRepaint === '__default__') ? '#444' : '#aaa',
+                        borderColor: '#333',
+                        padding: '3px 6px',
+                      }}
+                    >
+                      {repaintLoading ? '…' : '↺'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* ── Panneau Variables ── */}
@@ -890,32 +1375,29 @@ export default function BusInspectorPage() {
                   minWidth: 220, zIndex: 30, maxHeight: 'calc(100vh - 130px)',
                   overflowY: 'auto',
                 }}>
-                  <div style={{ color: '#777', fontSize: 10, marginBottom: 8, letterSpacing: 1, fontFamily: 'monospace' }}>
+                  <div style={{ color: '#777', fontSize: 13, marginBottom: 8, letterSpacing: 1, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
                     VARIABLES
                   </div>
                   {varDefs.map(v => (
                     <div key={v.name} style={{
                       marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4
                     }}>
-                      <div style={{ color: '#aaa', fontSize: 10, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                      <div style={{ color: '#aaa', fontSize: 13, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", wordBreak: 'break-all' }}>
                         {v.name}
                       </div>
 
                       {v.type === 'visible' ? (
-                        // Toggle 0 / 1
-                        <div style={{ display: 'flex', gap: 4 }}>
-                          <button
-                            onClick={() => setVar(v.name, 0)}
-                            style={{ ...((variables[v.name] === 0) ? btnOn : btnOff), flex: 1 }}
-                          >
-                            0 (caché)
-                          </button>
-                          <button
-                            onClick={() => setVar(v.name, 1)}
-                            style={{ ...((variables[v.name] === 1) ? btnOn : btnOff), flex: 1 }}
-                          >
-                            1 (visible)
-                          </button>
+                        // Bouton par valeur (déterminée depuis le cfg : 0, 1, 2, …)
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                          {(v.values ?? [0, 1]).map(val => (
+                            <button
+                              key={val}
+                              onClick={() => setVar(v.name, val)}
+                              style={{ ...((variables[v.name] === val) ? btnOn : btnOff), flex: 1 }}
+                            >
+                              {val}
+                            </button>
+                          ))}
                         </div>
                       ) : (
                         // Slider 0.0–1.0
@@ -926,7 +1408,7 @@ export default function BusInspectorPage() {
                             onChange={e => setVar(v.name, parseFloat(e.target.value))}
                             style={{ flex: 1, accentColor: '#e05a00' }}
                           />
-                          <span style={{ color: '#888', fontSize: 10, fontFamily: 'monospace', minWidth: 28 }}>
+                          <span style={{ color: '#888', fontSize: 13, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", minWidth: 34 }}>
                             {(variables[v.name] ?? 1).toFixed(2)}
                           </span>
                         </div>

@@ -511,6 +511,17 @@ app.whenReady().then(() => {
     }
   })
 
+  ipcMain.handle('bus:listDir', async (_, dirPath, ext) => {
+    try {
+      const entries = await readdir(dirPath)
+      return entries
+        .filter(e => !ext || e.toLowerCase().endsWith(ext.toLowerCase()))
+        .map(e => path.join(dirPath, e).replace(/\\/g, '/'))
+    } catch {
+      return []
+    }
+  })
+
   // ── Packaging projet : ZIP structuré + SFTP ──────────────────────────────
   ipcMain.handle('projects:package', async (event, { vehiclesPath, addonsPath, soundsPath, fonts, projectName }) => {
     const s        = event.sender

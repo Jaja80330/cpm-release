@@ -87,6 +87,7 @@ export function parseCfg(content) {
       lodDist:       currentLod,   // hérité du dernier [lod] rencontré
       visibleVar:    null,         // { name: string, value: 0|1 }
       alphascaleVar: null,         // nom de variable → pilote material.opacity
+      isShadow:      false,        // [isshadow] → plan d'ombre projetée OMSI à ignorer
     }
 
     i++
@@ -222,16 +223,68 @@ export function parseCfg(content) {
           i++
         }
 
+      // ── [isshadow] — plan d'ombre projetée OMSI ────────────────────────────
+      // Ces meshes sont des plans noirs semi-transparents destinés aux ombres
+      // au sol dans le moteur OMSI. Cinnamon gère les ombres en temps réel →
+      // on les marque pour les exclure du chargement.
+      } else if (sub === '[isshadow]') {
+        mesh.isShadow = true
+        i++
+
       // ── Tags ignorés ────────────────────────────────────────────────────
       } else {
         i++
       }
     }
 
-    if (mesh.o3dPath) meshes.push(mesh)
+    if (mesh.o3dPath && !mesh.isShadow) meshes.push(mesh)
   }
 
   return meshes
+}
+
+/**
+ * Parse les tags [CTC] et [CTCTexture] d'un model.cfg
+ *
+ * Retourne :
+ *   ctcDir    : string | null          — répertoire des .cti (relatif à la racine véhicule)
+ *   ctcAliases: Map<alias, basename>   — ex: 'body' → '2008_citelis12_3d_body.tga'
+ */
+export function parseCfgCTC(content) {
+  const lines = content.split(/\r?\n/).map(l => l.trim())
+  let ctcDir = null
+  const ctcAliases = new Map()
+  let i = 0
+
+  while (i < lines.length) {
+    const tag = lines[i].toLowerCase()
+
+    if (tag === '[ctc]') {
+      i++
+      // Ligne 1 : nom d'affichage (ignoré)
+      if (i < lines.length && lines[i] && !lines[i].startsWith('[')) i++
+      // Ligne 2 : chemin répertoire CTC
+      if (i < lines.length && lines[i] && !lines[i].startsWith('[')) {
+        ctcDir = lines[i].replace(/\\/g, '/').trim()
+        i++
+      }
+      // Ligne 3 : flag numérique (ignoré)
+      if (i < lines.length && /^\d+$/.test(lines[i])) i++
+
+    } else if (tag === '[ctctexture]') {
+      i++
+      const alias = (i < lines.length && lines[i] && !lines[i].startsWith('['))
+        ? lines[i++].trim() : null
+      const defaultBase = (alias && i < lines.length && lines[i] && !lines[i].startsWith('['))
+        ? lines[i++].trim() : null
+      if (alias && defaultBase) ctcAliases.set(alias, defaultBase)
+
+    } else {
+      i++
+    }
+  }
+
+  return { ctcDir, ctcAliases }
 }
 
 /**

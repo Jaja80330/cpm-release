@@ -1,6 +1,6 @@
 {
   "name": "cinnamon",
-  "version": "26.4.0",
+  "version": "26.4.3",
   "description": "Asset Manager élégant pour les créateurs de bus OMSI 2 - NEROSY",
   "main": "out/main/index.js",
   "author": "NEROSY",
