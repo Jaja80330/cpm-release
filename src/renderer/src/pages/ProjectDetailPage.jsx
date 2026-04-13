@@ -611,31 +611,54 @@ function TabDescription({ project, thumb, cinStatus, onUninstall, isUninstalling
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {busFiles.map((bus, i) => (
-                  <div key={`bus-${i}`} style={{
-                    padding: '6px 8px', borderRadius: 5,
-                    background: 'rgba(255,255,255,0.025)',
-                    border: '1px solid rgba(255,255,255,0.05)',
-                  }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {bus.model || '—'}
-                    </div>
-                    {bus.manufacturer && (
-                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
-                        {bus.manufacturer}
+                  <div key={`bus-${i}`}
+                    onClick={() => bus.filePath && window.api.busInspector.open(bus.filePath)}
+                    title={bus.filePath ? 'Ouvrir dans le Bus Inspector 3D' : undefined}
+                    style={{
+                      padding: '6px 8px', borderRadius: 5,
+                      background: 'rgba(255,255,255,0.025)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      cursor: bus.filePath ? 'pointer' : 'default',
+                      transition: 'background 0.15s, border-color 0.15s',
+                      display: 'flex', alignItems: 'center', gap: 6,
+                    }}
+                    onMouseEnter={e => {
+                      if (!bus.filePath) return
+                      e.currentTarget.style.background = 'rgba(224,90,0,0.08)'
+                      e.currentTarget.style.borderColor = 'rgba(224,90,0,0.3)'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.025)'
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'
+                    }}
+                  >
+                    {/* Infos texte */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {bus.model || '—'}
                       </div>
-                    )}
-                    <div style={{ display: 'flex', gap: 8, marginTop: 2, alignItems: 'center' }}>
-                      {bus.size != null && (
-                        <span style={{ fontSize: 10, color: '#42a5f5', fontWeight: 500 }}>
-                          {formatBytes(bus.size)}
-                        </span>
+                      {bus.manufacturer && (
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 1 }}>
+                          {bus.manufacturer}
+                        </div>
                       )}
-                      <span style={{ fontSize: 10, color: 'var(--text-muted)', overflow: 'hidden',
-                        textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                        title={bus.filename}>
-                        {bus.filename}
-                      </span>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 2, alignItems: 'center' }}>
+                        {bus.size != null && (
+                          <span style={{ fontSize: 10, color: '#42a5f5', fontWeight: 500 }}>
+                            {formatBytes(bus.size)}
+                          </span>
+                        )}
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', overflow: 'hidden',
+                          textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          title={bus.filename}>
+                          {bus.filename}
+                        </span>
+                      </div>
                     </div>
+                    {/* Icône 3D */}
+                    {bus.filePath && (
+                      <VisibilityOutlinedIcon sx={{ fontSize: 14, color: 'var(--text-muted)', flexShrink: 0 }} />
+                    )}
                   </div>
                 ))}
               </div>

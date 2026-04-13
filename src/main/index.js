@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, dialog, nativeTheme } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog, nativeTheme, protocol } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
@@ -156,13 +156,105 @@ function createWindow() {
 app.commandLine.appendSwitch('disable-features', 'RendererCodeIntegrity,OutOfBlinkCors')
 app.commandLine.appendSwitch('no-sandbox')
 
+// ── Protocole cinnamon:// ─────────────────────────────────────────────────────
+// Permet au renderer du Bus Inspector de charger des textures locales
+// (.dds, .tga, .bmp, .png, .jpg) sans restriction CORS/sécurité.
+// Enregistrement AVANT app.whenReady() car protocol.registerSchemesAsPrivileged
+// doit être appelé avant 'ready'.
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme:     'cinnamon',
+    privileges: {
+      standard:       true,
+      secure:         true,
+      supportFetchAPI: true,
+      corsEnabled:    false,
+      bypassCSP:      true
+    }
+  }
+])
+
 // ── Auto-updater : configuration ────────────────────────────────────────────
 autoUpdater.autoDownload    = false  // on déclenche le DL manuellement
 autoUpdater.autoInstallOnAppQuit = false
 
+// ── Ouverture du Bus Inspector ────────────────────────────────────────────────
+function createBusInspectorWindow(busFilePath) {
+  const omsiPath = (store.get('settings', {}).omsiPath || '').replace(/\\/g, '/')
+
+  const win = new BrowserWindow({
+    width:           1280,
+    height:          800,
+    minWidth:        800,
+    minHeight:       600,
+    show:            true,
+    center:          true,
+    resizable:       true,
+    maximizable:     true,
+    minimizable:     true,
+    movable:         true,
+    autoHideMenuBar: true,
+    frame:           true,
+    backgroundColor: '#0d0f14',
+    title:           'Bus Inspector — Cinnamon',
+    icon:            nativeAsset('cinnamon_icon.png'),
+    webPreferences:  {
+      preload:          join(__dirname, '../preload/index.js'),
+      sandbox:          false,
+      contextIsolation: true,
+      nodeIntegration:  false,
+      webSecurity:      false   // nécessaire pour le protocole cinnamon://
+    }
+  })
+
+  const busFileEncoded  = encodeURIComponent(busFilePath)
+  const omsiPathEncoded = encodeURIComponent(omsiPath)
+  const query           = `busInspector=1&busFile=${busFileEncoded}&omsiPath=${omsiPathEncoded}`
+
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(`${process.env['ELECTRON_RENDERER_URL']}?${query}`)
+  } else {
+    win.loadFile(join(__dirname, '../renderer/index.html'), {
+      query: { busInspector: '1', busFile: busFilePath, omsiPath: omsiPath }
+    })
+  }
+
+  return win
+}
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.nerosy.cinnamon')
   app.on('browser-window-created', (_, w) => optimizer.watchWindowShortcuts(w))
+
+  // ── Protocole cinnamon:// : sert les fichiers locaux (textures) ────────────
+  protocol.registerBufferProtocol('cinnamon', (request, callback) => {
+    try {
+      // URL : cinnamon:///C:/chemin/vers/fichier.dds
+      let rawPath = decodeURIComponent(
+        request.url.replace(/^cinnamon:\/\/\/?/, '')
+      ).replace(/\//g, '\\')
+
+      // Sur Windows, le chemin commence par la lettre de lecteur (ex: C:\...)
+      // Si le premier char est '\', c'est un artefact → on le retire
+      if (rawPath.startsWith('\\')) rawPath = rawPath.slice(1)
+
+      const MIME = {
+        '.dds':  'image/vnd.ms-dds',
+        '.tga':  'image/x-tga',
+        '.bmp':  'image/bmp',
+        '.png':  'image/png',
+        '.jpg':  'image/jpeg',
+        '.jpeg': 'image/jpeg'
+      }
+      const ext      = path.extname(rawPath).toLowerCase()
+      const mimeType = MIME[ext] || 'application/octet-stream'
+      const buf      = readFileSync(rawPath)
+      callback({ data: buf, mimeType })
+    } catch (e) {
+      debugLog(`[cinnamon://] Erreur : ${e.message}`)
+      callback({ error: -2 })  // net::ERR_FAILED
+    }
+  })
 
   // ── Splash screen ────────────────────────────────────────────────────────
   const splash = createSplashWindow()
@@ -301,10 +393,13 @@ app.whenReady().then(() => {
     })
   })
 
-  // Window controls
-  ipcMain.on('window:minimize', () => win.minimize())
-  ipcMain.on('window:maximize', () => win.isMaximized() ? win.unmaximize() : win.maximize())
-  ipcMain.on('window:close', () => win.close())
+  // Window controls — cible la fenêtre émettrice (fonctionne pour la main ET le Bus Inspector)
+  ipcMain.on('window:minimize', (e) => BrowserWindow.fromWebContents(e.sender)?.minimize())
+  ipcMain.on('window:maximize', (e) => {
+    const w = BrowserWindow.fromWebContents(e.sender)
+    if (w) w.isMaximized() ? w.unmaximize() : w.maximize()
+  })
+  ipcMain.on('window:close', (e) => BrowserWindow.fromWebContents(e.sender)?.close())
 
   // Native theme
   ipcMain.handle('nativeTheme:isDark', () => nativeTheme.shouldUseDarkColors)
@@ -314,6 +409,17 @@ app.whenReady().then(() => {
     }
   })
 
+
+  // ── Bus Inspector ────────────────────────────────────────────────────────────
+  ipcMain.handle('busInspector:open', (_, busFilePath) => {
+    if (!busFilePath) return { success: false, error: 'Chemin .bus manquant' }
+    try {
+      createBusInspectorWindow(busFilePath)
+      return { success: true }
+    } catch (e) {
+      return { success: false, error: e.message }
+    }
+  })
 
   // Store
   ipcMain.handle('app:getVersion', () => app.getVersion())
@@ -1055,6 +1161,7 @@ app.whenReady().then(() => {
             if (lines[i].replace(/\s+$/, '') === '[friendlyname]') {
               results.push({
                 filename:     path.basename(fp),
+                filePath:     fp,
                 manufacturer: lines[i + 1]?.trim() || '',
                 model:        lines[i + 2]?.trim() || ''
               })

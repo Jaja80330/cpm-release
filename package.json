@@ -31,6 +31,8 @@
     "@mui/icons-material": "^7.3.9",
     "@mui/lab": "^7.0.1-beta.23",
     "@mui/material": "^7.3.9",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.17.10",
     "archiver": "^7.0.1",
     "axios": "^1.14.0",
     "electron-store": "^8.2.0",
@@ -42,7 +44,8 @@
     "react-dom": "^18.2.0",
     "react-i18next": "^17.0.2",
     "react-markdown": "^10.1.0",
-    "ssh2-sftp-client": "^10.0.3"
+    "ssh2-sftp-client": "^10.0.3",
+    "three": "^0.170.0"
   },
   "build": {
     "appId": "com.nerosy.cinnamon",

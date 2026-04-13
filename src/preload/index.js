@@ -111,5 +111,9 @@ contextBridge.exposeInMainWorld('api', {
     check:     ()   => ipcRenderer.invoke('updater:check'),
     onStatus:  (cb) => ipcRenderer.on('updater:status',  (_, d) => cb(d)),
     offStatus: ()   => ipcRenderer.removeAllListeners('updater:status')
+  },
+  busInspector: {
+    /** Ouvre la fenêtre Bus Inspector pour le fichier .bus donné */
+    open: (busFilePath) => ipcRenderer.invoke('busInspector:open', busFilePath)
   }
 })
