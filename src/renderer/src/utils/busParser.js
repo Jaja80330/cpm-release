@@ -29,8 +29,25 @@ const CAMERA_CONFIG = {
   'add_camera_reflexion': { type: 'reflexion', fields: ['x','y','z','rotX','rotY','rotZ'] },
 }
 
-/** Champs d'un essieu — 6 lignes. */
-const AXLE_FIELDS = ['posX', 'posY', 'posZ', 'radius', 'springType', 'brakeType']
+/** Champs d'un essieu — format OMSI : paires étiquette/valeur lues séquentiellement.
+ *  Ligne impaire = nom du paramètre OMSI, ligne paire = valeur.
+ *  labelLong / achse_long   → position longitudinale
+ *  labelMax  / achse_maxwidth → largeur de voie maximale
+ *  labelMin  / achse_minwidth → largeur de voie minimale
+ */
+const AXLE_FIELDS = [
+  'labelLong',  'achse_long',
+  'labelMax',   'achse_maxwidth',
+  'labelMin',   'achse_minwidth',
+  'labelRad',   'achse_raddurchmesser',
+  'labelFeder', 'achse_feder',
+  'labelForce', 'achse_maxforce',
+  'labelDamp',  'achse_daempfer',
+  'labelDrive', 'achse_antrieb',
+]
+
+/** Champs de la bounding box — 6 lignes. */
+const BBOX_FIELDS = ['width', 'length', 'height', 'offsetX', 'offsetY', 'offsetZ']
 
 // ── Parse ──────────────────────────────────────────────────────────────────
 
@@ -123,6 +140,17 @@ export function parse(rawContent) {
       continue
     }
 
+    // ── [boundingbox] : boîte englobante — 6 valeurs ─────────────────
+    if (keyLower === 'boundingbox') {
+      i++
+      const values = {}
+      for (const field of BBOX_FIELDS) {
+        values[field] = (lines[i++] ?? '').trim()
+      }
+      tokens.push({ kind: 'bbox', key, keyLower, fields: BBOX_FIELDS, values })
+      continue
+    }
+
     // ── [newachse] : essieu (collection) ──────────────────────────────
     if (keyLower === 'newachse') {
       i++
@@ -191,6 +219,7 @@ export function serialize(tokens) {
         tok.fields.forEach(f => out.push(tok.values[f] ?? '0'))
         break
 
+      case 'bbox':
       case 'axle':
         out.push(`[${tok.key}]`)
         tok.fields.forEach(f => out.push(tok.values[f] ?? '0'))
@@ -305,10 +334,82 @@ export function removeCamera(tokens, cameraType, index) {
   })
 }
 
+/**
+ * Déplace une caméra vers le haut (direction = -1) ou vers le bas (direction = +1).
+ * Échange les tokens caméra adjacents du même type dans le tableau complet.
+ */
+export function moveCameraAt(tokens, cameraType, index, direction) {
+  const positions = []
+  tokens.forEach((t, i) => {
+    if (t.kind === 'camera' && t.cameraType === cameraType) positions.push(i)
+  })
+  const targetPos = positions[index]
+  const swapPos   = direction < 0 ? positions[index - 1] : positions[index + 1]
+  if (targetPos === undefined || swapPos === undefined) return tokens
+  const result = [...tokens]
+  ;[result[targetPos], result[swapPos]] = [result[swapPos], result[targetPos]]
+  return result
+}
+
+/**
+ * Réordonne une caméra de fromIndex vers toIndex par drag-and-drop.
+ * Les tokens non-caméra restent à leurs positions absolues ; seuls les tokens
+ * caméra du type donné sont réorganisés dans leurs emplacements d'origine.
+ */
+export function reorderCameras(tokens, cameraType, fromIndex, toIndex) {
+  if (fromIndex === toIndex) return tokens
+  const entries = []
+  tokens.forEach((t, i) => {
+    if (t.kind === 'camera' && t.cameraType === cameraType) entries.push({ pos: i, token: t })
+  })
+  if (fromIndex < 0 || fromIndex >= entries.length) return tokens
+  if (toIndex   < 0 || toIndex   >= entries.length) return tokens
+  const reordered = entries.map(e => e.token)
+  const [moved] = reordered.splice(fromIndex, 1)
+  reordered.splice(toIndex, 0, moved)
+  const result = [...tokens]
+  entries.forEach((entry, i) => { result[entry.pos] = reordered[i] })
+  return result
+}
+
+// ── Accesseurs — Bounding Box ─────────────────────────────────────────────
+
+/**
+ * Retourne la bounding box, ou null si absente.
+ * @returns {{ width, length, height, offsetX, offsetY, offsetZ }|null}
+ */
+export function getBoundingBox(tokens) {
+  const t = tokens.find(t => t.kind === 'bbox')
+  if (!t) return null
+  return {
+    width:   parseFloat(t.values.width)   || 0,
+    length:  parseFloat(t.values.length)  || 0,
+    height:  parseFloat(t.values.height)  || 0,
+    offsetX: parseFloat(t.values.offsetX) || 0,
+    offsetY: parseFloat(t.values.offsetY) || 0,
+    offsetZ: parseFloat(t.values.offsetZ) || 0,
+  }
+}
+
 // ── Accesseurs — Essieux ───────────────────────────────────────────────────
 
+/**
+ * Retourne les essieux avec leurs valeurs sémantiques :
+ *   achse_long      — position longitudinale (OMSI Y)
+ *   achse_maxwidth  — largeur de voie maximale
+ *   achse_minwidth  — largeur de voie minimale
+ */
 export function getAxles(tokens) {
-  return tokens.filter(t => t.kind === 'axle').map(t => ({ ...t.values }))
+  return tokens.filter(t => t.kind === 'axle').map(t => ({
+    achse_long:           t.values.achse_long,
+    achse_maxwidth:       t.values.achse_maxwidth,
+    achse_minwidth:       t.values.achse_minwidth,
+    achse_raddurchmesser: t.values.achse_raddurchmesser,
+    achse_feder:          t.values.achse_feder,
+    achse_maxforce:       t.values.achse_maxforce,
+    achse_daempfer:       t.values.achse_daempfer,
+    achse_antrieb:        t.values.achse_antrieb,
+  }))
 }
 
 export function setAxleAt(tokens, index, newValues) {

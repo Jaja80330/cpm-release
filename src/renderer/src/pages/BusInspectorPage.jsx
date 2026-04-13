@@ -12,6 +12,7 @@ import { TGALoader }     from 'three/examples/jsm/loaders/TGALoader.js'
 import { parseO3D, o3dToBufferGeometry } from '../utils/o3dParser'
 import { findModelCfgInBus, parseCfg, parseCfgCTC, pathUtils } from '../utils/cfgParser'
 import { parseCti } from '../utils/ctiParser'
+import * as BP from '../utils/busParser'
 
 // ── Paramètres uniformes sur toutes les textures ─────────────────────────────
 //
@@ -393,6 +394,493 @@ function parseBusCameras(content) {
   return cameras
 }
 
+// ── Convertit les tokens busParser en caméras Three.js ────────────────────────
+//
+// Mapping des champs busParser vers les valeurs OMSI sémantiques :
+//   x     → posX (latéral)
+//   y     → posY (longitudinal)
+//   z     → posZ (hauteur)
+//   rotX  → neckOffset
+//   rotY  → fov
+//   rotZ  → rotH (rotation horizontale)
+//   fov   → rotV (rotation verticale)
+//
+function tokensTo3DCameras(tokens) {
+  const cameras = []
+  let driverIdx = 0, paxIdx = 0
+
+  for (const tok of tokens) {
+    if (tok.kind !== 'camera') continue
+    if (tok.cameraType !== 'driver' && tok.cameraType !== 'pax') continue
+
+    const type = tok.cameraType
+    const v    = tok.values
+    const px      = parseFloat(v.x)    || 0
+    const py      = parseFloat(v.y)    || 0
+    const pz      = parseFloat(v.z)    || 0
+    const neckOff = parseFloat(v.rotX) || 0
+    const fov     = parseFloat(v.rotY) || 60
+    const rotH    = parseFloat(v.rotZ) || 0
+    const rotV    = parseFloat(v.fov)  || 0
+
+    const threeX    =  px
+    const threeY    =  pz
+    const threeZ    = -py
+    const neckThreeZ = -neckOff
+
+    const index = type === 'driver' ? ++driverIdx : ++paxIdx
+    cameras.push({
+      type, index,
+      label: type === 'driver' ? `Conducteur ${index}` : `Passager ${index}`,
+      x: threeX, y: threeY, z: threeZ,
+      neckX: 0, neckY: 0, neckZ: neckThreeZ,
+      fov, rotH, rotV,
+    })
+  }
+  return cameras
+}
+
+// ── Éditeur de caméras — panneau flottant ─────────────────────────────────────
+//
+// Mapping champs busParser → labels UI :
+//   x    → Pos X    rotX → Pivot   rotY → FOV °
+//   y    → Pos Y    rotZ → Rot H °  fov → Rot V °
+//   z    → Pos Z
+//
+const CAM_FIELDS = [
+  { key: 'x',    label: 'Pos X' },
+  { key: 'y',    label: 'Pos Y' },
+  { key: 'z',    label: 'Pos Z' },
+  { key: 'rotX', label: 'Pivot' },
+  { key: 'rotY', label: 'FOV °' },
+  { key: 'rotZ', label: 'Rot H °' },
+  { key: 'fov',  label: 'Rot V °' },
+]
+
+function CameraEditorPanel({ tokens, onTokensChange, onSave, isSaving, isDirty, activeCamera, onSelectCamera }) {
+  // ── Édition en direct ──────────────────────────────────────────────────────
+  const [editingCam, setEditingCam] = useState(null) // { type, localIndex }
+  const [editVals,   setEditVals]   = useState({})
+  const [origVals,   setOrigVals]   = useState({})   // snapshot pour Annuler
+
+  // ── Drag-and-drop ──────────────────────────────────────────────────────────
+  const dragSrc  = useRef(null)                   // { type, index } — source du drag
+  const [dragOver,       setDragOver]       = useState(null) // { type, index } — survol actuel
+  const [recentlyDropped, setRecentlyDropped] = useState(null) // { type, index } — flash post-drop
+
+  const drivers = BP.getCameras(tokens, 'driver')
+  const paxes   = BP.getCameras(tokens, 'pax')
+  const stdRaw  = BP.getValue(tokens, 'set_camera_std')
+  const stdIdx  = stdRaw !== '' ? parseInt(stdRaw, 10) : -1
+
+  const globalIdx = (type, localIdx) =>
+    type === 'driver' ? localIdx : drivers.length + localIdx
+
+  // ── Handlers édition ──────────────────────────────────────────────────────
+  const handleSetStd = (type, i) =>
+    onTokensChange(BP.setValue(tokens, 'set_camera_std', String(globalIdx(type, i))))
+
+  const handleAdd = (type) => onTokensChange(BP.addCamera(tokens, type))
+
+  const handleDelete = (type, i) => {
+    if (editingCam?.type === type && editingCam?.localIndex === i) setEditingCam(null)
+    onTokensChange(BP.removeCamera(tokens, type, i))
+  }
+
+  const startEdit = (type, localIndex) => {
+    const vals = { ...(type === 'driver' ? drivers : paxes)[localIndex] }
+    setEditingCam({ type, localIndex })
+    setEditVals(vals)
+    setOrigVals(vals)
+  }
+
+  // Mise à jour en direct : modifie les tokens à chaque frappe
+  const handleFieldChange = (key, value) => {
+    const newVals = { ...editVals, [key]: value }
+    setEditVals(newVals)
+    onTokensChange(BP.setCameraAt(tokens, editingCam.type, editingCam.localIndex, newVals))
+  }
+
+  const cancelEdit = () => {
+    onTokensChange(BP.setCameraAt(tokens, editingCam.type, editingCam.localIndex, origVals))
+    setEditingCam(null)
+  }
+
+  const closeEdit = () => setEditingCam(null)
+
+  // ── Handlers drag-and-drop ────────────────────────────────────────────────
+  const handleDragStart = (e, type, index) => {
+    dragSrc.current = { type, index }
+    e.dataTransfer.effectAllowed = 'move'
+    // Fantôme transparent (le curseur CSS suffit)
+    const ghost = document.createElement('div')
+    ghost.style.cssText = 'position:fixed;top:-999px'
+    document.body.appendChild(ghost)
+    e.dataTransfer.setDragImage(ghost, 0, 0)
+    setTimeout(() => document.body.removeChild(ghost), 0)
+  }
+
+  const handleDragOver = (e, type, index) => {
+    e.preventDefault()
+    if (dragSrc.current?.type !== type) return
+    e.dataTransfer.dropEffect = 'move'
+    setDragOver({ type, index })
+  }
+
+  const handleDrop = (e, type, index) => {
+    e.preventDefault()
+    const src = dragSrc.current
+    if (!src || src.type !== type || src.index === index) { setDragOver(null); return }
+
+    const from = src.index
+    const to   = index
+
+    let newTokens = BP.reorderCameras(tokens, type, from, to)
+
+    // ── Mise à jour de [set_camera_std] si la caméra standard est affectée ──
+    // Les indices globaux des caméras de l'autre type ne bougent pas.
+    // Seules les caméras du type déplacé changent d'index local.
+    if (stdIdx >= 0) {
+      const dCount = drivers.length
+      // Convertir stdIdx en index local dans le type courant (si applicable)
+      let stdLocal = -1
+      if (type === 'driver' && stdIdx < dCount) {
+        stdLocal = stdIdx
+      } else if (type === 'pax' && stdIdx >= dCount) {
+        stdLocal = stdIdx - dCount
+      }
+
+      if (stdLocal >= 0) {
+        // Calculer le nouvel index local après le déplacement
+        let newLocal = stdLocal
+        if (stdLocal === from) {
+          newLocal = to
+        } else if (from < to && stdLocal > from && stdLocal <= to) {
+          newLocal = stdLocal - 1        // décalage vers l'arrière
+        } else if (from > to && stdLocal >= to && stdLocal < from) {
+          newLocal = stdLocal + 1        // décalage vers l'avant
+        }
+
+        if (newLocal !== stdLocal) {
+          const newGlobal = type === 'driver' ? newLocal : dCount + newLocal
+          newTokens = BP.setValue(newTokens, 'set_camera_std', String(newGlobal))
+        }
+      }
+    }
+
+    // Ferme le formulaire d'édition
+    setEditingCam(null)
+    onTokensChange(newTokens)
+    dragSrc.current = null
+    setDragOver(null)
+
+    // Flash sur la caméra déposée + sélection 3D
+    const newGlobalIdx = globalIdx(type, to)
+    onSelectCamera(newGlobalIdx + 1)
+    setRecentlyDropped({ type, index: to })
+    setTimeout(() => setRecentlyDropped(null), 900)
+  }
+
+  const handleDragEnd = () => { dragSrc.current = null; setDragOver(null) }
+
+  // ── Styles helpers ────────────────────────────────────────────────────────
+  const panelBtn = (label, onClick, opts = {}) => (
+    <button
+      onClick={onClick}
+      disabled={opts.disabled}
+      title={opts.title}
+      style={{
+        ...btnBase,
+        background: opts.active ? '#e05a00' : '#1a1c22',
+        color: opts.active ? '#fff' : (opts.disabled ? '#444' : '#999'),
+        borderColor: opts.active ? '#e05a00' : '#2e3140',
+        padding: '2px 6px', fontSize: 13, lineHeight: '18px',
+        minWidth: opts.minWidth ?? 24,
+      }}
+    >
+      {label}
+    </button>
+  )
+
+  // ── Formulaire d'édition inline ───────────────────────────────────────────
+  const renderEditForm = () => (
+    <div style={{
+      margin: '2px 0 6px 22px', padding: '8px 10px',
+      background: '#12141a', border: '1px solid #2e3140', borderRadius: 4,
+    }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px 8px', marginBottom: 8 }}>
+        {CAM_FIELDS.map(({ key, label }) => (
+          <label key={key} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ color: '#555', fontSize: 11 }}>{label}</span>
+            <input
+              type="number" step="any"
+              value={editVals[key] ?? '0'}
+              onChange={e => handleFieldChange(key, e.target.value)}
+              style={{
+                background: '#1a1c22', color: '#ddd', border: '1px solid #333',
+                borderRadius: 3, padding: '2px 4px', fontSize: 12, width: '100%',
+                boxSizing: 'border-box',
+              }}
+            />
+          </label>
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+        {panelBtn('Annuler', cancelEdit)}
+        {panelBtn('OK', closeEdit, { active: true })}
+      </div>
+    </div>
+  )
+
+  // ── Section (driver | pax) ────────────────────────────────────────────────
+  const renderSection = (type, cams, label) => {
+    const count = cams.length
+    return (
+      <div style={{ marginBottom: 8 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: 4,
+        }}>
+          <span style={{ color: '#666', fontSize: 11, letterSpacing: 1 }}>
+            {label} <span style={{ color: '#444' }}>({count})</span>
+          </span>
+          {panelBtn('+', () => handleAdd(type),
+            { title: `Ajouter une caméra ${label.toLowerCase()}`, minWidth: 20 })}
+        </div>
+
+        {count === 0 && (
+          <div style={{ color: '#444', fontSize: 12, padding: '4px 0 2px 4px', fontStyle: 'italic' }}>
+            Aucune caméra
+          </div>
+        )}
+
+        {cams.map((_, i) => {
+          const gIdx    = globalIdx(type, i)
+          const isStd   = gIdx === stdIdx
+          const isEdit  = editingCam?.type === type && editingCam?.localIndex === i
+          const is3D    = activeCamera === gIdx + 1
+          const isDragTarget  = dragOver?.type === type && dragOver?.index === i
+          const isJustDropped = recentlyDropped?.type === type && recentlyDropped?.index === i
+
+          return (
+            <div key={`${type}-${i}`}>
+              {/* ── Ligne caméra ── */}
+              <div
+                draggable
+                onDragStart={e => handleDragStart(e, type, i)}
+                onDragOver={e  => handleDragOver(e, type, i)}
+                onDrop={e      => handleDrop(e, type, i)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '3px 4px', borderRadius: 3,
+                  marginBottom: 2, userSelect: 'none',
+                  background: isJustDropped ? '#1a2e1a'
+                            : isDragTarget  ? '#1e2a3a'
+                            : is3D          ? '#1e2030'
+                            : isEdit        ? '#181a26'
+                            : 'transparent',
+                  border: `1px solid ${
+                    isJustDropped ? '#3a6a3a'
+                    : isDragTarget ? '#3a5a8a'
+                    : is3D         ? '#2e3a5a'
+                    : 'transparent'
+                  }`,
+                  transition: isJustDropped
+                    ? 'background 0.9s ease-out, border-color 0.9s ease-out'
+                    : 'background 0.1s, border-color 0.1s',
+                }}
+              >
+                {/* Poignée drag */}
+                <span
+                  title="Glisser pour réorganiser"
+                  style={{
+                    cursor: 'grab', color: '#333', fontSize: 14, padding: '0 2px',
+                    lineHeight: 1, flexShrink: 0,
+                  }}
+                >
+                  ⠿
+                </span>
+
+                {/* Index */}
+                <span style={{ fontSize: 11, minWidth: 16, textAlign: 'right', color: '#444', flexShrink: 0 }}>
+                  {i}
+                </span>
+
+                {/* Label — clic → active la caméra 3D */}
+                <span
+                  onClick={() => onSelectCamera(gIdx + 1)}
+                  style={{
+                    flex: 1, fontSize: 13, cursor: 'pointer',
+                    color: is3D ? '#e05a00' : '#bbb',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                >
+                  {isStd ? '★ ' : ''}{type === 'driver' ? `Conducteur ${i}` : `Passager ${i}`}
+                </span>
+
+                {/* Boutons */}
+                <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                  {type === 'driver' && panelBtn('★', () => handleSetStd(type, i),
+                    { active: isStd, title: '[set_camera_std]', minWidth: 20 })}
+                  {panelBtn('✎', () => isEdit ? closeEdit() : startEdit(type, i),
+                    { active: isEdit, title: 'Modifier', minWidth: 20 })}
+                  {panelBtn('✕', () => handleDelete(type, i),
+                    { title: 'Supprimer', minWidth: 20 })}
+                </div>
+              </div>
+
+              {/* ── Formulaire édition ── */}
+              {isEdit && renderEditForm()}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      background: '#161820', border: '1px solid #252836', borderRadius: 6,
+      padding: '10px 10px 8px', width: 290, maxHeight: 'calc(100vh - 80px)',
+      overflowY: 'auto', fontSize: 13,
+    }}>
+      {renderSection('driver', drivers, 'CONDUCTEUR')}
+      <div style={{ height: 1, background: '#1e2030', margin: '6px 0' }} />
+      {renderSection('pax', paxes, 'PASSAGERS')}
+
+      {isDirty && (
+        <>
+          <div style={{ height: 1, background: '#1e2030', margin: '8px 0 6px' }} />
+          <button
+            onClick={onSave}
+            disabled={isSaving}
+            style={{
+              ...btnBase, width: '100%', textAlign: 'center',
+              background: isSaving ? '#1a1c22' : '#e05a00',
+              color: isSaving ? '#666' : '#fff',
+              borderColor: isSaving ? '#333' : '#e05a00',
+              padding: '5px 0', fontSize: 13,
+            }}
+          >
+            {isSaving ? 'Sauvegarde…' : '● Sauvegarder'}
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Overlay physique — Bounding Box, Essieux, Centre de gravité ──────────────
+//
+// Rendu R3F à l'intérieur du Canvas.
+// Système de coordonnées OMSI → Three.js :
+//   X_three =  X_omsi   (latéral, identique)
+//   Y_three =  Z_omsi   (hauteur → up)
+//   Z_three = -Y_omsi   (longitudinal, inversé)
+//
+function PhysicsOverlay({ tokens }) {
+  const bbox  = BP.getBoundingBox(tokens)
+  const axles = BP.getAxles(tokens)
+
+  const cgRaw      = BP.getValue(tokens, 'schwerpunkt')
+  const cgY        = cgRaw !== '' ? parseFloat(cgRaw) : null
+
+  const rotPntRaw  = BP.getValue(tokens, 'rot_pnt_long')
+  const rotPntLong = rotPntRaw !== '' ? parseFloat(rotPntRaw) : null
+
+  return (
+    <group>
+
+      {/* ── Bounding Box (fil de fer vert) ── */}
+      {bbox && (
+        <mesh position={[-bbox.offsetX, bbox.offsetZ, -bbox.offsetY]}>
+          <boxGeometry args={[bbox.width, bbox.height, bbox.length]} />
+          <meshBasicMaterial color="#00ff88" wireframe />
+        </mesh>
+      )}
+
+      {/* ── Essieux ── */}
+      {axles.map((axle, i) => {
+        const long     = parseFloat(axle.achse_long)           || 0
+        const maxW     = parseFloat(axle.achse_maxwidth)       || 2.4
+        const diameter = parseFloat(axle.achse_raddurchmesser) || 0
+        const r        = diameter / 2   // rayon réel de la roue
+
+        return (
+          <group key={i} position={[0, 0, -long]}>
+            {/* Barre d'essieu */}
+            <mesh rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[0.03, 0.03, maxW, 8]} />
+              <meshBasicMaterial color="#ffcc44" />
+            </mesh>
+
+            {/* Cercles de roue gauche et droite */}
+            {r > 0 && [-1, 1].map(side => (
+              <mesh key={side}
+                position={[side * maxW / 2, r, 0]}
+                rotation={[0, 0, Math.PI / 2]}
+              >
+                <cylinderGeometry args={[r, r, 0.06, 32]} />
+                <meshBasicMaterial color="#ff8800" wireframe />
+              </mesh>
+            ))}
+
+            {/* Anneau au sol */}
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[0.06, 0.12, 20]} />
+              <meshBasicMaterial color="#ff8800" side={2} />
+            </mesh>
+          </group>
+        )
+      })}
+
+      {/* ── Centre de gravité ([schwerpunkt]) — sphère rouge ── */}
+      {cgY !== null && !isNaN(cgY) && (
+        <group position={[0, cgY, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.07, 16, 16]} />
+            <meshBasicMaterial color="#ff2222" />
+          </mesh>
+          {[
+            [[0.35, 0, 0], [0, 0, Math.PI / 2]],
+            [[0, 0.35, 0], [0, 0, 0]],
+            [[0, 0, 0.35], [Math.PI / 2, 0, 0]],
+          ].map(([pos, rot], j) => (
+            <mesh key={j} position={pos} rotation={rot}>
+              <cylinderGeometry args={[0.012, 0.012, 0.7, 6]} />
+              <meshBasicMaterial color="#ff4444" />
+            </mesh>
+          ))}
+        </group>
+      )}
+
+      {/* ── Point de rotation ([rot_pnt_long]) — repère bleu vertical ── */}
+      {rotPntLong !== null && !isNaN(rotPntLong) && (
+        <group position={[0, 0, -rotPntLong]}>
+          {/* Tige verticale */}
+          <mesh position={[0, 1.5, 0]}>
+            <cylinderGeometry args={[0.025, 0.025, 3.0, 8]} />
+            <meshBasicMaterial color="#2288ff" />
+          </mesh>
+          {/* Disque au sol */}
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[0.15, 0.22, 24]} />
+            <meshBasicMaterial color="#2288ff" side={2} />
+          </mesh>
+          {/* Croix horizontale */}
+          {[[Math.PI / 2, 0, 0], [Math.PI / 2, 0, Math.PI / 2]].map((rot, j) => (
+            <mesh key={j} position={[0, 0.05, 0]} rotation={rot}>
+              <cylinderGeometry args={[0.015, 0.015, 0.7, 6]} />
+              <meshBasicMaterial color="#44aaff" />
+            </mesh>
+          ))}
+        </group>
+      )}
+    </group>
+  )
+}
+
 // ── Contrôleur de caméra (libre + caméras bus) ────────────────────────────────
 //
 // activeCamera = 0      → caméra libre (OrbitControls plein)
@@ -560,6 +1048,16 @@ export default function BusInspectorPage() {
   const [cameras,      setCameras]      = useState([])
   const [activeCamera, setActiveCamera] = useState(0)
   const [freeFov,      setFreeFov]      = useState(50)
+
+  // ── Physique ──
+  const [showPhysics, setShowPhysics] = useState(false)
+
+  // ── Éditeur de caméras ──
+  const [busTokens,       setBusTokens]       = useState(null)
+  const [cameraDirty,     setCameraDirty]     = useState(false)
+  const [cameraSaving,    setCameraSaving]    = useState(false)
+  const [showCameraPanel, setShowCameraPanel] = useState(false)
+  const busFilePathRef = useRef(null)
 
   // Cache de textures : absPath → THREE.Texture
   // Évite de recharger une texture déjà en mémoire et permet l'invalidation ciblée (Refresh).
@@ -777,6 +1275,32 @@ export default function BusInspectorPage() {
     setRepaintLoading(false)
   }
 
+  // ── Synchronisation caméras 3D ← tokens éditeur ──────────────────────────
+  useEffect(() => {
+    if (!busTokens) return
+    setCameras(tokensTo3DCameras(busTokens))
+  }, [busTokens])
+
+  // ── Sauvegarde du fichier .bus depuis les tokens éditeur ──────────────────
+  const handleSaveCameras = async () => {
+    if (!busFilePathRef.current || !busTokens) return
+    setCameraSaving(true)
+    try {
+      const content = BP.serialize(busTokens)
+      const res = await window.api.bus.writeFile(busFilePathRef.current, content)
+      if (res?.success) setCameraDirty(false)
+      else console.error('[BusInspector] Erreur sauvegarde :', res?.error)
+    } finally {
+      setCameraSaving(false)
+    }
+  }
+
+  // ── Mise à jour tokens depuis l'éditeur ───────────────────────────────────
+  const handleTokensChange = (newTokens) => {
+    setBusTokens(newTokens)
+    setCameraDirty(true)
+  }
+
   // ── Pipeline de chargement ─────────────────────────────────────────────────
   useEffect(() => {
     const params   = new URLSearchParams(window.location.search)
@@ -802,8 +1326,9 @@ export default function BusInspectorPage() {
       const busResult = await window.api.bus.readFile(busFile)
       if (!busResult?.success) throw new Error(`Impossible de lire : ${busFile}`)
 
-      // Parse les caméras dès la lecture du .bus
-      setCameras(parseBusCameras(busResult.content))
+      // Parse les caméras via les tokens (synchronise aussi cameras via l'effect)
+      busFilePathRef.current = busFile
+      setBusTokens(BP.parse(busResult.content))
       setActiveCamera(0)
 
       const cfgRelPath = findModelCfgInBus(busResult.content)
@@ -1208,6 +1733,8 @@ export default function BusInspectorPage() {
               </group>
             </Suspense>
 
+            {showPhysics && busTokens && <PhysicsOverlay tokens={busTokens} />}
+
             <CameraController groupRef={groupRef} ready={isReady} cameras={cameras} activeCamera={activeCamera} freeFov={freeFov} />
           </Canvas>
 
@@ -1237,44 +1764,65 @@ export default function BusInspectorPage() {
               </div>
 
               {/* ── Caméras — haut gauche ── */}
-              {cameras.length > 0 && (
+              {busTokens && (
                 <div style={{
                   position: 'absolute', top: 10, left: 14,
-                  display: 'flex', flexDirection: 'column', gap: 6, zIndex: 10
+                  display: 'flex', flexDirection: 'column', gap: 6, zIndex: 10,
+                  fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
                 }}>
-                  <select
-                    value={activeCamera}
-                    onChange={e => setActiveCamera(Number(e.target.value))}
-                    style={{
-                      background: '#1a1c22', color: '#ccc',
-                      border: '1px solid #333', borderRadius: 4,
-                      padding: '3px 6px', fontSize: 14,
-                      fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-                      cursor: 'pointer', maxWidth: 180,
-                    }}
-                  >
-                    <option value={0}>— Vue libre —</option>
-                    {cameras.map((cam, idx) => (
-                      <option key={idx} value={idx + 1}>{cam.label}</option>
-                    ))}
-                  </select>
+                  {/* Bouton toggle panneau */}
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <button
+                      onClick={() => setShowCameraPanel(v => !v)}
+                      style={{
+                        ...btnBase,
+                        background: showCameraPanel ? '#252836' : '#1a1c22',
+                        color: showCameraPanel ? '#ccc' : '#888',
+                        borderColor: showCameraPanel ? '#3a3f55' : '#333',
+                        padding: '3px 10px', fontSize: 14,
+                      }}
+                    >
+                      Caméras {showCameraPanel ? '▲' : '▼'}
+                      {cameraDirty && <span style={{ color: '#e05a00', marginLeft: 6 }}>●</span>}
+                    </button>
+
+                    {/* Vue libre */}
+                    <button
+                      onClick={() => setActiveCamera(0)}
+                      style={activeCamera === 0 ? btnOn : btnOff}
+                      title="Vue libre"
+                    >
+                      ⊙
+                    </button>
+                  </div>
 
                   {/* Slider FOV — visible seulement en mode libre */}
                   {activeCamera === 0 && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ color: '#555', fontSize: 13, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif" }}>
-                        FOV
-                      </span>
+                      <span style={{ color: '#555', fontSize: 13 }}>FOV</span>
                       <input
                         type="range" min="20" max="120" step="1"
                         value={freeFov}
                         onChange={e => setFreeFov(Number(e.target.value))}
                         style={{ width: 100, accentColor: '#e05a00' }}
                       />
-                      <span style={{ color: '#666', fontSize: 13, fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif", minWidth: 28 }}>
+                      <span style={{ color: '#666', fontSize: 13, minWidth: 28 }}>
                         {freeFov}°
                       </span>
                     </div>
+                  )}
+
+                  {/* Panneau éditeur */}
+                  {showCameraPanel && (
+                    <CameraEditorPanel
+                      tokens={busTokens}
+                      onTokensChange={handleTokensChange}
+                      onSave={handleSaveCameras}
+                      isSaving={cameraSaving}
+                      isDirty={cameraDirty}
+                      activeCamera={activeCamera}
+                      onSelectCamera={setActiveCamera}
+                    />
                   )}
                 </div>
               )}
@@ -1319,6 +1867,65 @@ export default function BusInspectorPage() {
                 <button onClick={() => setDebugUV(d => !d)} style={debugUV ? btnOn : btnOff}>
                   UV debug {debugUV ? 'ON' : 'OFF'}
                 </button>
+
+                {busTokens && (
+                  <>
+                    <button onClick={() => setShowPhysics(v => !v)} style={showPhysics ? btnOn : btnOff}>
+                      Physics {showPhysics ? 'ON' : 'OFF'}
+                    </button>
+
+                    {/* ── Panneau debug valeurs brutes ── */}
+                    {showPhysics && (() => {
+                      const axles   = BP.getAxles(busTokens)
+                      const bbox    = BP.getBoundingBox(busTokens)
+                      const cg      = BP.getValue(busTokens, 'schwerpunkt')
+                      const rotPnt  = BP.getValue(busTokens, 'rot_pnt_long')
+                      const monoStyle = { fontFamily: 'monospace', fontSize: 11 }
+                      const row = (label, val) => (
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                          <span style={{ color: '#555' }}>{label}</span>
+                          <span style={{ color: '#aaa' }}>{val}</span>
+                        </div>
+                      )
+                      return (
+                        <div style={{
+                          background: '#161820', border: '1px solid #252836', borderRadius: 6,
+                          padding: '8px 10px', minWidth: 210, ...monoStyle,
+                        }}>
+                          {bbox && <>
+                            <div style={{ color: '#00ff88', fontSize: 10, letterSpacing: 1, marginBottom: 4 }}>BOUNDINGBOX</div>
+                            {row('width',   bbox.width)}
+                            {row('length',  bbox.length)}
+                            {row('height',  bbox.height)}
+                            {row('offsetX', bbox.offsetX)}
+                            {row('offsetY', bbox.offsetY)}
+                            {row('offsetZ', bbox.offsetZ)}
+                          </>}
+
+                          {axles.length > 0 && <>
+                            <div style={{ color: '#ff8800', fontSize: 10, letterSpacing: 1, margin: '6px 0 4px' }}>ESSIEUX ({axles.length})</div>
+                            {axles.map((a, i) => (
+                              <div key={i} style={{ marginBottom: 4, paddingBottom: 4, borderBottom: '1px solid #1e2030' }}>
+                                <div style={{ color: '#666', fontSize: 10, marginBottom: 2 }}>#{i}</div>
+                                {row('achse_long',           a.achse_long)}
+                                {row('achse_maxwidth',       a.achse_maxwidth)}
+                                {row('achse_minwidth',       a.achse_minwidth)}
+                                {row('achse_raddurchmesser', a.achse_raddurchmesser)}
+                                {row('achse_antrieb',        a.achse_antrieb)}
+                              </div>
+                            ))}
+                          </>}
+
+                          {(cg || rotPnt) && <>
+                            <div style={{ color: '#aaaaff', fontSize: 10, letterSpacing: 1, margin: '6px 0 4px' }}>PHYSIQUE</div>
+                            {cg     && row('schwerpunkt',  cg)}
+                            {rotPnt && row('rot_pnt_long', rotPnt)}
+                          </>}
+                        </div>
+                      )
+                    })()}
+                  </>
+                )}
 
                 {varDefs.length > 0 && (
                   <button
